@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --color-main-bg: var(--main-bg);
+  --color-main-fg: var(--main-fg);
+  --color-border-subtle: var(--border-subtle);
+  --color-card-inner: var(--card-inner);
+}
+
+:root {
+  --main-bg: #f5f5f5; /* nền xám nhẹ */
+  --main-fg: #1a1a1a;
+
+  --card-bg: #ffffff; /* card trắng */
+  --card-inner: #fafafa; /* inner nhẹ hơn nền */
+
+  --border-subtle: #e5e5e5;
+  --primary-color: #00a884;
+  --button-color: #006d55;
+  --secondary-color: #d5eef2;
+}
+
+.dark {
+  --main-bg: #0a0a0a;
+  --main-fg: #ededed;
+  --border-subtle: #1a1a1a;
+  --card-inner: #111111; /* Màu cho các box nhỏ khi ở Dark mode */
+}
+
+@layer base {
+  body {
+    @apply bg-main-bg text-main-fg transition-colors duration-200;
+  }
+}
