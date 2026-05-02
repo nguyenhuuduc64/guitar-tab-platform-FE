@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { publicRoutes, privateRoutes } from "./routes";
-import { DefaultLayout } from "./layouts/DefaultLayout";
+import { publicRoutes, privateRoutes, adminRoutes } from "./routes";
+import { DefaultLayout } from "./layouts/user/DefaultLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
-
+import AdminDefaultLayout from "./layouts/admin/AdminDefaultLayout";
 function App() {
     return (
         <Router>
@@ -33,6 +33,23 @@ function App() {
                                     <DefaultLayout>
                                         <Page />
                                     </DefaultLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                    );
+                })}
+
+                {adminRoutes.map((route, index) => {
+                    const Page = route.component;
+                    return (
+                        <Route
+                            key={`admin-${index}`}
+                            path={route.path}
+                            element={
+                                <ProtectedRoute>
+                                    <AdminDefaultLayout>
+                                        <Page />
+                                    </AdminDefaultLayout>
                                 </ProtectedRoute>
                             }
                         />

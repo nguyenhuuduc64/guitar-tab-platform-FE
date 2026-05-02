@@ -1,5 +1,5 @@
 import { Hero } from "../components/Hero";
-import { SongTable } from "../components/SongTable";
+import { SongTable } from "../../../components/common/SongTable";
 import { DiscoverPanel } from "../components/DiscoverPanel";
 import { SidebarLeft } from "../components/SidebarLeft";
 import { RankingRight } from "../components/RankingRight";

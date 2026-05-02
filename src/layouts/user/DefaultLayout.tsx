@@ -1,6 +1,6 @@
 import { Header } from "./Header";
-import { SidebarLeft } from "../features/home/components/SidebarLeft";
-import { RankingRight } from "../features/home/components/RankingRight";
+import { SidebarLeft } from "../../features/home/components/SidebarLeft";
+import { RankingRight } from "../../features/home/components/RankingRight";
 import { Navigation } from "./Navigation";
 import SubNavigation from "./SubNavigation";
 

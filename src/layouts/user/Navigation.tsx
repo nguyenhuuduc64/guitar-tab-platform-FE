@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Music, Search, Bell, Menu, Sun, Moon } from "lucide-react";
-import ButtonCustom from "../components/ui/ButtonCustom";
-import { Input } from "../components/ui/Input";
-import { Avatar } from "../components/ui/Avatar";
-import { useTheme } from "../context/ThemeContext";
-import instance from "../config/axios";
-import Dropdown from "../components/ui/Dropdown";
+import ButtonCustom from "../../components/ui/ButtonCustom";
+import { Input } from "../../components/ui/Input";
+import { Avatar } from "../../components/ui/Avatar";
+import { useTheme } from "../../context/ThemeContext";
+import instance from "../../config/axios";
+import Dropdown from "../../components/ui/Dropdown";
 import { faUser, faSignOutAlt, faCog } from "@fortawesome/free-solid-svg-icons";
-import logo from "../assets/logo.png";
+import logo from "../../assets/logo.png";
 export const Navigation = () => {
     const { theme, toggleTheme } = useTheme();
 

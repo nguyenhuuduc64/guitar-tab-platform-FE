@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChords } from "../../../services/chordService";
-import { formatTime } from "../../../helper";
+import { getChords } from "../../services/chordService";
+import { formatTime } from "../../helper";
 export const SongTable = () => {
     const [songs, setSongs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ export const SongTable = () => {
             {songs.map((song) => (
                 <div
                     key={song.id}
-                    className="bg-card-bg border border-border-subtle rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    className="bg-white bg-card-bg border border-border-subtle rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     onClick={() => navigate(`/song/${song.id}`)}
                 >
                     {/* Header */}
