@@ -5,6 +5,8 @@ import UpLoadChordPage from "../features/upload/page/uploadChordPage";
 import ChordPage from "../features/chord/page/ChordPage";
 import DashBoard from "../features/dashboard/page/DashBoard";
 import ArtistManagement from "../features/artist/page/ArtistManagement";
+import RegisterPage from "../features/register/page/RegisterPage";
+import ArtistDetailPage from "../features/artist/page/ArtistDetailPage";
 interface RouteConfig {
     path: string;
     component: React.ComponentType;
@@ -15,6 +17,8 @@ export const publicRoutes: RouteConfig[] = [
     { path: "/login", component: LoginPage },
     { path: "/test", component: TestPage },
     { path: "/song/:id", component: ChordPage },
+    { path: "/dang-ky", component: RegisterPage },
+    { path: "/nghe-sy/:id", component: ArtistDetailPage },
 ];
 
 export const privateRoutes: RouteConfig[] = [

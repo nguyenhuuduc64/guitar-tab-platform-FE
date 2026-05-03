@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Music, Search, Bell, Menu, Sun, Moon } from "lucide-react";
 import ButtonCustom from "../../components/ui/ButtonCustom";
 import { Input } from "../../components/ui/Input";
-import { Avatar } from "../../components/ui/Avatar";
+import {
+    Avatar,
+    AvatarImage,
+    AvatarFallback,
+} from "../../components/ui/Avatar";
 import { useTheme } from "../../context/ThemeContext";
 import instance from "../../config/axios";
 import Dropdown from "../../components/ui/Dropdown";
@@ -62,7 +66,6 @@ export const Navigation = () => {
     return (
         <nav className="h-[var(--header-height)] px-35 sticky top-0 z-50 w-full border-b border-border-subtle bg-[var(--primary-color)] backdrop-blur-md">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                {/* Logo */}
                 <div
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => (window.location.href = "/")}
@@ -73,7 +76,6 @@ export const Navigation = () => {
                     </span>
                 </div>
 
-                {/* Menu */}
                 <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white">
                     <a
                         href="#"
@@ -101,9 +103,7 @@ export const Navigation = () => {
                     </a>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-3">
-                    {/* Search */}
                     <div className="relative hidden md:flex items-center">
                         <Search className="absolute left-3 h-4 w-4 opacity-40" />
                         <Input
@@ -113,12 +113,10 @@ export const Navigation = () => {
                         />
                     </div>
 
-                    {/* Notification */}
                     <ButtonCustom variant="ghost" className="p-2">
                         <Bell className="h-5 w-5 text-white" />
                     </ButtonCustom>
 
-                    {/* Theme */}
                     <ButtonCustom
                         variant="ghost"
                         className="p-2"
@@ -131,20 +129,23 @@ export const Navigation = () => {
                         )}
                     </ButtonCustom>
 
-                    {/* 🔥 AUTH AREA */}
                     {!loading && (
                         <>
                             {user ? (
                                 <Dropdown
                                     items={menuItems}
                                     trigger={
-                                        <Avatar
-                                            src={user.avatar || ""}
-                                            fallback={
-                                                user.name?.charAt(0) || "U"
-                                            }
-                                            className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                                        />
+                                        <Avatar className="cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+                                            <AvatarImage
+                                                src={
+                                                    user.avatar ||
+                                                    "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+                                                }
+                                            />
+                                            <AvatarFallback>
+                                                {user.name?.charAt(0) || "U"}
+                                            </AvatarFallback>
+                                        </Avatar>
                                     }
                                 />
                             ) : (

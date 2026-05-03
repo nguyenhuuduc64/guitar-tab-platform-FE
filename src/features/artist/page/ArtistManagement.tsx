@@ -38,7 +38,6 @@ export default function ArtistManagement() {
 
     const { openForm } = useFormStore();
 
-    // ================= FETCH =================
     const fetchArtists = async () => {
         try {
             const res = await instance.get("/artists");
@@ -52,14 +51,11 @@ export default function ArtistManagement() {
         fetchArtists();
     }, []);
 
-    // ================= CREATE / UPDATE =================
     const handleSubmit = async (data: any) => {
         try {
             if (editingArtist) {
-                // UPDATE
                 await instance.put(`/artists/${editingArtist.id}`, data);
             } else {
-                // CREATE
                 await instance.post("/artists", data);
             }
 
@@ -70,7 +66,6 @@ export default function ArtistManagement() {
         }
     };
 
-    // ================= DELETE =================
     const handleDelete = async (id: string) => {
         try {
             await instance.delete(`/artists/${id}`);
@@ -80,7 +75,6 @@ export default function ArtistManagement() {
         }
     };
 
-    // ================= FILTER =================
     const filteredArtists = artists.filter((artist) =>
         artist.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );

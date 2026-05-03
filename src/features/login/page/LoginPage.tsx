@@ -115,6 +115,15 @@ export default function LoginPage() {
                                 </p>
                             </div>
                         </div>
+                        <p className="text-sm text-gray-500 mt-6 text-center">
+                            Chưa có tài khoản?{" "}
+                            <span
+                                onClick={() => navigate("/dang-ky")}
+                                className="text-blue-500 cursor-pointer hover:underline font-medium"
+                            >
+                                Đăng ký ngay
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
