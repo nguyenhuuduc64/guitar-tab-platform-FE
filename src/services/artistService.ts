@@ -9,3 +9,12 @@ export const getArtistById = async (id: string) => {
         console.log(error);
     }
 };
+export const fetchArtists = async () => {
+    try {
+        const res = await instance.get("/artists");
+        console.log("danh sach nghe sy ", res.data.result);
+        return res.data?.result;
+    } catch (err) {
+        console.error("Fetch artists error:", err);
+    }
+};

@@ -7,6 +7,9 @@ import DashBoard from "../features/dashboard/page/DashBoard";
 import ArtistManagement from "../features/artist/page/ArtistManagement";
 import RegisterPage from "../features/register/page/RegisterPage";
 import ArtistDetailPage from "../features/artist/page/ArtistDetailPage";
+import PostDetailPage from "../features/post/page/PostDetailPage";
+import Profile from "../features/profile/page/Profile";
+import { PlaylistPage } from "../features/playlist/page/PlaylistPage";
 interface RouteConfig {
     path: string;
     component: React.ComponentType;
@@ -19,10 +22,13 @@ export const publicRoutes: RouteConfig[] = [
     { path: "/song/:id", component: ChordPage },
     { path: "/dang-ky", component: RegisterPage },
     { path: "/nghe-sy/:id", component: ArtistDetailPage },
+    { path: "/bai-viet/:slug", component: PostDetailPage },
+    { path: "/playlist", component: PlaylistPage },
 ];
 
 export const privateRoutes: RouteConfig[] = [
     { path: "/dang-tai", component: UpLoadChordPage },
+    { path: "/trang-ca-nhan", component: Profile },
 ];
 
 export const adminRoutes: RouteConfig[] = [

@@ -3,7 +3,8 @@ const BannerCard = () => {
         <div
             className="h-40 md:h-48 rounded-xl p-4 md:p-6 text-white"
             style={{
-                background: "linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)",
+                background:
+                    "linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%)",
             }}
         >
             <p className="text-sm opacity-80">✔ Verified Artist</p>

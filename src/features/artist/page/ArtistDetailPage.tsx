@@ -14,10 +14,13 @@ function ArtistDetailPage() {
         const fetchData = async () => {
             try {
                 const artistData = await getArtistById(id);
-
                 setArtist(artistData);
+
+                const songRes = await instance.get(`/chords/artist/${id}`);
+                setSongs(songRes?.data?.result || []);
             } catch (err) {
                 console.error(err);
+                setSongs([]);
             } finally {
                 setLoading(false);
             }
@@ -30,28 +33,35 @@ function ArtistDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-6xl mx-auto grid grid-cols-12 gap-4">
-                <div className="col-span-4 bg-white rounded-sm shadow-sm p-5">
+            <div className="max-w-6xl mx-auto grid grid-cols-12 gap-6 items-start">
+                {/* LEFT - ARTIST */}
+                <div className="col-span-4 bg-white rounded-md shadow-sm p-6">
                     <div className="flex flex-col items-center text-center">
-                        <img
-                            src={
-                                artist?.avatar ||
-                                "https://via.placeholder.com/150"
-                            }
-                            className="w-28 h-28 rounded-full object-cover mb-3"
-                        />
+                        {/* AVATAR */}
+                        <div className="w-32 h-32 mb-4">
+                            <img
+                                src={
+                                    artist?.imageUrl ||
+                                    "https://via.placeholder.com/150"
+                                }
+                                className="w-full h-full rounded-full object-cover border"
+                            />
+                        </div>
 
+                        {/* NAME */}
                         <h2 className="text-xl font-semibold text-gray-800">
                             {artist?.name}
                         </h2>
 
-                        <p className="text-gray-500 text-xs mt-2 leading-relaxed whitespace-pre-line">
+                        {/* DESCRIPTION */}
+                        <p className="text-gray-500 text-xs mt-3 leading-relaxed whitespace-pre-line text-justify">
                             {artist?.description}
                         </p>
                     </div>
                 </div>
 
-                <div className="col-span-8 bg-white rounded-sm shadow-sm p-5">
+                {/* RIGHT - SONG LIST */}
+                <div className="col-span-8 bg-white rounded-md shadow-sm p-6">
                     <h3 className="text-lg font-semibold mb-4 text-gray-800">
                         Danh sách bài hát
                     </h3>
@@ -63,10 +73,10 @@ function ArtistDetailPage() {
                             </p>
                         )}
 
-                        {songs?.map((song, index) => (
+                        {songs.map((song, index) => (
                             <div
                                 key={song.id}
-                                className="flex items-center justify-between p-2 rounded-sm hover:bg-gray-50 transition"
+                                className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 transition"
                             >
                                 <div className="flex items-center gap-3">
                                     <span className="text-gray-400 text-sm w-5">

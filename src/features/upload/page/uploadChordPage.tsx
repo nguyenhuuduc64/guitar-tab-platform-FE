@@ -15,7 +15,7 @@ const UpLoadChordPage = () => {
     const [collections, setCollections] = useState<any[]>([]);
     const [collectionId, setCollectionId] = useState("");
 
-    // ===== ARTIST SEARCH =====
+    // ================= ARTIST SEARCH =================
     const [artistId, setArtistId] = useState("");
     const [artistQuery, setArtistQuery] = useState("");
     const [artistSuggestions, setArtistSuggestions] = useState<any[]>([]);
@@ -23,7 +23,7 @@ const UpLoadChordPage = () => {
 
     const debouncedQuery = useDebounce(artistQuery, 400);
 
-    // ================= FETCH =================
+    // ================= INIT DATA =================
     useEffect(() => {
         fetchCategories();
         fetchCollections();
@@ -36,10 +36,8 @@ const UpLoadChordPage = () => {
     const fetchCategories = async () => {
         try {
             const res = await instance.get("/categories");
-            const data = res.data.result || res.data;
-            safeSet(setCategories, data);
-        } catch (err) {
-            console.error("Fetch categories error:", err);
+            safeSet(setCategories, res.data.result || res.data);
+        } catch {
             setCategories([]);
         }
     };
@@ -47,43 +45,49 @@ const UpLoadChordPage = () => {
     const fetchCollections = async () => {
         try {
             const res = await instance.get("/collections");
-            const data = res.data.result || res.data;
-            safeSet(setCollections, data);
-        } catch (err) {
-            console.error("Fetch collections error:", err);
+            safeSet(setCollections, res.data.result || res.data);
+        } catch {
             setCollections([]);
         }
     };
 
-    // ================= SEARCH ARTIST =================
+    // ================= SEARCH ARTIST (REALTIME) =================
     useEffect(() => {
-        if (!debouncedQuery.trim()) {
-            setArtistSuggestions([]);
-            return;
-        }
+        const fetchArtists = async () => {
+            const keyword = debouncedQuery.trim();
 
-        searchArtists(debouncedQuery);
+            // ❌ Không gọi API nếu rỗng
+            if (!keyword) {
+                setArtistSuggestions([]);
+                setShowDropdown(false);
+                return;
+            }
+
+            try {
+                const res = await instance.get(
+                    `/artists?keyword=${encodeURIComponent(keyword)}`,
+                );
+
+                const data = res.data.result || [];
+
+                setArtistSuggestions(Array.isArray(data) ? data : []);
+                setShowDropdown(true);
+            } catch (err) {
+                console.error("Artist search error:", err);
+                setArtistSuggestions([]);
+            }
+        };
+
+        fetchArtists();
     }, [debouncedQuery]);
-
-    const searchArtists = async (keyword: string) => {
-        try {
-            const res = await instance.get(`/artists?keyword=${keyword}`);
-            const data = res.data.result || res.data;
-
-            setArtistSuggestions(Array.isArray(data) ? data : []);
-            setShowDropdown(true);
-        } catch (err) {
-            console.error("Search artist error:", err);
-        }
-    };
 
     // ================= SUBMIT =================
     const handleSubmit = async () => {
         const payload = {
             title: songTitle,
-            content: content,
+            content,
             categoryId: categoryId || null,
-            artistId: artistId,
+            artistId,
             collectionId: collectionId || null,
         };
 
@@ -91,6 +95,7 @@ const UpLoadChordPage = () => {
 
         try {
             await instance.post("/chords", payload);
+
             alert("Đăng bài hát thành công!");
 
             setSongTitle("");
@@ -99,6 +104,8 @@ const UpLoadChordPage = () => {
             setArtistId("");
             setArtistQuery("");
             setCollectionId("");
+            setArtistSuggestions([]);
+            setShowDropdown(false);
         } catch (error) {
             console.error(error);
             alert("Lỗi khi đăng bài");
@@ -141,7 +148,14 @@ const UpLoadChordPage = () => {
                             }}
                             placeholder="Tìm nghệ sĩ..."
                             className="w-full border rounded px-3 py-2 text-sm"
-                            onFocus={() => setShowDropdown(true)}
+                            onFocus={() => {
+                                if (artistSuggestions.length > 0) {
+                                    setShowDropdown(true);
+                                }
+                            }}
+                            onBlur={() =>
+                                setTimeout(() => setShowDropdown(false), 150)
+                            }
                         />
 
                         {showDropdown && artistSuggestions.length > 0 && (
@@ -149,7 +163,7 @@ const UpLoadChordPage = () => {
                                 {artistSuggestions.map((artist) => (
                                     <div
                                         key={artist.id}
-                                        onClick={() => {
+                                        onMouseDown={() => {
                                             setArtistId(artist.id);
                                             setArtistQuery(artist.name);
                                             setShowDropdown(false);
@@ -185,7 +199,7 @@ const UpLoadChordPage = () => {
                     {/* COLLECTION */}
                     <div>
                         <label className="block text-sm font-bold mb-1">
-                            Collection (tuỳ chọn):
+                            Collection:
                         </label>
                         <select
                             value={collectionId}
@@ -206,33 +220,6 @@ const UpLoadChordPage = () => {
                         <label className="block text-sm font-bold mb-1">
                             Lời bài hát:
                         </label>
-
-                        <div className="flex justify-between bg-[#F5F5F5] border border-gray-300 border-b-0 rounded-t p-1">
-                            <div className="flex gap-1">
-                                <button className="px-2 py-1 bg-white border rounded text-xs flex gap-1 items-center">
-                                    <Type size={14} /> Format
-                                </button>
-                                <button className="px-2 py-1 bg-white border rounded text-xs flex gap-1 items-center">
-                                    <CornerDownLeft size={14} /> Enter
-                                </button>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs">
-                                <SquareAsterisk size={14} />
-                                Auto [ ]
-                                <input
-                                    type="checkbox"
-                                    checked={autoBracket}
-                                    onChange={() =>
-                                        setAutoBracket(!autoBracket)
-                                    }
-                                />
-                            </div>
-
-                            <button className="px-2 py-1 bg-white border rounded text-xs flex gap-1 items-center">
-                                <Eye size={14} /> Preview
-                            </button>
-                        </div>
 
                         <textarea
                             value={content}

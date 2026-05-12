@@ -64,7 +64,7 @@ export default function AdminSidebar({ open, setOpen }: Props) {
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition",
                                     isActive
-                                        ? "bg-indigo-50 text-indigo-600 font-medium"
+                                        ? "bg-[var(--click-color)] text-white font-medium"
                                         : "text-gray-500 hover:bg-gray-50",
                                 )}
                             >
@@ -72,7 +72,7 @@ export default function AdminSidebar({ open, setOpen }: Props) {
                                 <span>{item.name}</span>
 
                                 {isActive && (
-                                    <div className="ml-auto w-1 h-6 bg-indigo-600 rounded-full" />
+                                    <div className="ml-auto w-1 h-6 bg-white rounded-full" />
                                 )}
                             </div>
                         );

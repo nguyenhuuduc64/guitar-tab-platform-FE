@@ -1,5 +1,5 @@
 import React from "react";
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import type { FieldConfig } from "../../types/SchemaFormProps";
 
 export const SchemaFormField: React.FC<{
@@ -9,16 +9,17 @@ export const SchemaFormField: React.FC<{
     const {
         register,
         formState: { errors },
-        control,
+        watch,
     } = useFormContext();
 
     const fieldName = parentName ? `${parentName}.${field.name}` : field.name;
 
-    // 👉 HANDLE NESTED OBJECT
-    if (field.children && field.children.length > 0) {
+    if (field.children?.length > 0) {
         return (
             <div
-                className={`space-y-4 border p-4 rounded-md bg-gray-50 ${field.className || ""}`}
+                className={`space-y-4 border p-4 rounded-md bg-gray-50 ${
+                    field.className || ""
+                }`}
             >
                 {field.label && (
                     <h3 className="font-semibold text-gray-700">
@@ -37,9 +38,10 @@ export const SchemaFormField: React.FC<{
         );
     }
 
-    // 👉 GET ERROR FROM NESTED
     const getError = (name: string, errors: any) => {
-        return name.split(".").reduce((obj, key) => obj?.[key], errors);
+        return name
+            .split(".")
+            .reduce((obj: any, key: string) => obj?.[key], errors);
     };
 
     const error = getError(fieldName, errors);
@@ -54,6 +56,48 @@ export const SchemaFormField: React.FC<{
             : "border-gray-300 focus:ring-blue-500"
     }`;
 
+    // 👉 FILE INPUT FIX
+    if (field.type === "file") {
+        const watchedValue = watch(fieldName);
+
+        const previewUrl =
+            watchedValue instanceof FileList && watchedValue.length > 0
+                ? URL.createObjectURL(watchedValue[0])
+                : typeof watchedValue === "string"
+                  ? watchedValue
+                  : "";
+
+        return (
+            <div className={`flex flex-col gap-1 ${field.className || ""}`}>
+                {field.label && (
+                    <label className="text-sm font-medium text-gray-700">
+                        {field.label}
+                    </label>
+                )}
+
+                <input
+                    type="file"
+                    accept="image/*"
+                    {...register(fieldName)}
+                    className={inputClass}
+                />
+
+                {/* PREVIEW */}
+                {previewUrl && (
+                    <img
+                        src={previewUrl}
+                        className="w-24 h-24 rounded object-cover mt-2 border"
+                        alt="preview"
+                    />
+                )}
+
+                {errorMessage && (
+                    <span className="text-xs text-red-500">{errorMessage}</span>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className={`flex flex-col gap-1 ${field.className || ""}`}>
             {/* LABEL */}
@@ -63,7 +107,7 @@ export const SchemaFormField: React.FC<{
                 </label>
             )}
 
-            {/* FIELD TYPES */}
+            {/* TEXTAREA */}
             {field.type === "textarea" ? (
                 <textarea
                     {...register(fieldName, field.validation)}

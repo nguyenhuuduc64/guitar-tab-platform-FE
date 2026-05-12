@@ -7,7 +7,8 @@ export type FieldType =
     | "number"
     | "textarea"
     | "select"
-    | "editor";
+    | "editor"
+    | "file";
 
 export interface FieldOption {
     label: string;

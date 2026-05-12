@@ -12,17 +12,18 @@ import instance from "../../config/axios";
 import Dropdown from "../../components/ui/Dropdown";
 import { faUser, faSignOutAlt, faCog } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/logo.png";
+import { useNavigate } from "react-router-dom";
 export const Navigation = () => {
     const { theme, toggleTheme } = useTheme();
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const navigate = useNavigate();
     const menuItems = [
         {
             name: "Profile",
             icon: faUser,
-            onClick: () => console.log("Profile"),
+            onClick: () => navigate("/trang-ca-nhan"),
         },
         {
             name: "Settings",
@@ -72,7 +73,7 @@ export const Navigation = () => {
                 >
                     <img src={logo} alt="" className="h-10 w-auto" />
                     <span className="text-xl font-bold text-white">
-                        SmartChord AI
+                        Hatcungtoi
                     </span>
                 </div>
 

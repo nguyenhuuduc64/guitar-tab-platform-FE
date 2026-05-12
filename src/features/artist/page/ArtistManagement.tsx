@@ -5,6 +5,8 @@ import { Input } from "../../../components/ui/Input";
 import instance from "../../../config/axios";
 import { useFormStore } from "../../../store/useFormStore";
 import { DynamicForm } from "../../../components/common/DynamicForm";
+import uploadImageToCloudinary from "../../../services/cloudinary";
+import { fetchArtists } from "../../../services/artistService";
 
 import {
     Table,
@@ -24,59 +26,96 @@ import {
 import { AlertDialogDemo } from "../../../components/common/AlertDialog";
 import { artistSchema } from "../../../constants/artist";
 
-interface Artist {
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-}
-
 export default function ArtistManagement() {
-    const [artists, setArtists] = useState<Artist[]>([]);
+    const [artists, setArtists] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
+    const [editingArtist, setEditingArtist] = useState(null);
 
     const { openForm } = useFormStore();
 
-    const fetchArtists = async () => {
+    const loadData = async () => {
         try {
-            const res = await instance.get("/artists");
-            setArtists(res.data.result);
+            const data = await fetchArtists();
+            setArtists(data || []);
         } catch (err) {
-            console.error("Fetch artists error:", err);
+            console.error(err);
         }
     };
 
     useEffect(() => {
-        fetchArtists();
+        loadData();
     }, []);
 
-    const handleSubmit = async (data: any) => {
+    const handleEdit = (artist) => {
+        setEditingArtist(artist);
+        openForm("artist-form");
+    };
+
+    const handleSubmit = async (data) => {
         try {
-            if (editingArtist) {
-                await instance.put(`/artists/${editingArtist.id}`, data);
+            console.log("📩 RAW FORM DATA:", data);
+            console.log("📦 EDITING ARTIST:", editingArtist);
+
+            let imageUrl = editingArtist?.imageUrl || null;
+
+            console.log("🖼 CURRENT IMAGE URL (before upload):", imageUrl);
+
+            const file =
+                data.image instanceof File ? data.image : data.image?.[0];
+
+            console.log("📁 EXTRACTED FILE:", file);
+
+            if (file instanceof File) {
+                console.log("🚀 START UPLOAD TO CLOUDINARY...");
+
+                imageUrl = await uploadImageToCloudinary(file);
+
+                console.log("📡 UPLOAD RESULT IMAGE URL:", imageUrl);
             } else {
-                await instance.post("/artists", data);
+                console.log("⚠️ NO NEW FILE UPLOADED → KEEP OLD IMAGE");
             }
 
+            const payload = {
+                name: data.name,
+                description: data.description,
+                imageUrl: imageUrl,
+            };
+
+            console.log("📦 FINAL PAYLOAD BEFORE SEND:", payload);
+
+            let response;
+
+            if (editingArtist) {
+                console.log("✏️ MODE: UPDATE (PUT)");
+                response = await instance.put(
+                    `/artists/${editingArtist.id}`,
+                    payload,
+                );
+            } else {
+                console.log("➕ MODE: CREATE (POST)");
+                response = await instance.post("/artists", payload);
+            }
+
+            console.log("📨 SERVER RESPONSE:", response?.data);
+
             setEditingArtist(null);
-            fetchArtists();
+            loadData();
         } catch (err) {
-            console.error("Submit error:", err);
+            console.error("❌ SUBMIT ERROR:", err);
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id) => {
         try {
             await instance.delete(`/artists/${id}`);
-            fetchArtists();
+            loadData();
         } catch (err) {
-            console.error("Delete error:", err);
+            console.error(err);
         }
     };
 
-    const filteredArtists = artists.filter((artist) =>
-        artist.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    const filteredArtists = artists.filter((a) =>
+        a.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     return (
@@ -121,7 +160,7 @@ export default function ArtistManagement() {
             </div>
 
             {/* TABLE */}
-            <div className="border rounded-xl overflow-hidden">
+            <div className="border rounded-md overflow-hidden">
                 <Table>
                     <TableHeader className="bg-slate-50">
                         <TableRow>
@@ -139,11 +178,17 @@ export default function ArtistManagement() {
                             <TableRow key={artist.id}>
                                 <TableCell className="flex items-center gap-3">
                                     <Avatar className="h-10 w-10">
-                                        <AvatarImage src="" />
+                                        <AvatarImage
+                                            src={
+                                                artist.imageUrl ||
+                                                "https://picsum.photos/150"
+                                            }
+                                        />
                                         <AvatarFallback>
-                                            {artist.name[0]}
+                                            {artist.name?.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
+
                                     {artist.name}
                                 </TableCell>
 
@@ -155,19 +200,14 @@ export default function ArtistManagement() {
 
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        {/* EDIT */}
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => {
-                                                setEditingArtist(artist);
-                                                openForm("artist-form");
-                                            }}
+                                            onClick={() => handleEdit(artist)}
                                         >
                                             <Pencil size={18} />
                                         </Button>
 
-                                        {/* DELETE */}
                                         <AlertDialogDemo
                                             buttonName={<Trash2 size={18} />}
                                             message={`Xóa ${artist.name}?`}
@@ -183,11 +223,16 @@ export default function ArtistManagement() {
                 </Table>
             </div>
 
-            {/* FORM */}
+            {/* FORM - FIX QUAN TRỌNG NHẤT */}
             <DynamicForm
                 name="artist-form"
                 schema={artistSchema}
-                defaultValues={editingArtist || {}}
+                defaultValues={{
+                    name: editingArtist?.name || "",
+                    description: editingArtist?.description || "",
+                    image: editingArtist?.imageUrl || null,
+                }}
+                key={editingArtist?.id || "create"}
                 onSubmit={handleSubmit}
             />
         </div>
