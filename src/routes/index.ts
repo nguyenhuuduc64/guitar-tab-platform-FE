@@ -10,6 +10,7 @@ import ArtistDetailPage from "../features/artist/page/ArtistDetailPage";
 import PostDetailPage from "../features/post/page/PostDetailPage";
 import Profile from "../features/profile/page/Profile";
 import { PlaylistPage } from "../features/playlist/page/PlaylistPage";
+import ManagementRequestPage from "../features/mângement/page/ManagementRequestPage";
 interface RouteConfig {
     path: string;
     component: React.ComponentType;
@@ -33,7 +34,7 @@ export const privateRoutes: RouteConfig[] = [
 
 export const adminRoutes: RouteConfig[] = [
     { path: "/admin/bang-dieu-khien", component: DashBoard },
-    { path: "/admin/thi-truong", component: UpLoadChordPage },
+    { path: "/admin/yeu-cau-duyet", component: ManagementRequestPage },
     { path: "/admin/bang-tinh", component: UpLoadChordPage },
     { path: "/admin/ma-giam-gia", component: UpLoadChordPage },
     { path: "/admin/nghe-si", component: ArtistManagement },

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Star, Plus, Music2, X } from "lucide-react";
-
+import { getYoutubeEmbedUrl } from "../../../helper/youtube";
 import { getChordById } from "../../../services/chordService";
 import { getArtistById } from "../../../services/artistService";
 import GuitarChordDiagram from "../../../components/chords/GuitarChordDiagram";
@@ -64,6 +64,7 @@ const ChordPage = () => {
                 setUser(userData);
 
                 const chordData = await getChordById(id);
+                console.log("chord", chordData);
                 setChord(chordData);
 
                 // CHỈ GỌI TĂNG VIEW NẾU CHƯA GỌI TRONG LẦN MOUNT NÀY
@@ -295,7 +296,7 @@ const ChordPage = () => {
                         >
                             <div className="bg-white shadow-2xl rounded-xl p-2 border border-gray-100 scale-75">
                                 <GuitarChordDiagram
-                                    chordData={currentChordData}
+                                    initialChordName={hoveredChord}
                                 />
                             </div>
                         </div>
@@ -303,6 +304,16 @@ const ChordPage = () => {
                 </div>
 
                 <div className="w-full md:flex-[1] bg-white rounded-sm shadow-sm p-4 border border-gray-100">
+                    {chord.youtubeUrl && (
+                        <div className="w-full h-1/2 md:flex-[1] bg-white shadow-sm border border-gray-100">
+                            <iframe
+                                className="w-full h-full rounded-xl"
+                                src={getYoutubeEmbedUrl(chord.youtubeUrl)}
+                                title="YouTube video"
+                                allowFullScreen
+                            />
+                        </div>
+                    )}
                     <iframe
                         title="Metronome"
                         src="https://guitarapp.com/metronome.html?embed=true"
@@ -318,7 +329,10 @@ const ChordPage = () => {
                             <h2 className="text-xl font-bold">
                                 Thêm vào playlist
                             </h2>
-                            <button onClick={() => setOpenPlaylistModal(false)}>
+                            <button
+                                onClick={() => setOpenPlaylistModal(false)}
+                                className="cursor-pointer"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
@@ -333,7 +347,7 @@ const ChordPage = () => {
                             />
                             <button
                                 onClick={handleCreatePlaylist}
-                                className="px-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition"
+                                className="px-4 bg-[var(--primary-color)] text-white rounded-xl hover:bg-purple-700 transition"
                             >
                                 <Plus size={18} />
                             </button>

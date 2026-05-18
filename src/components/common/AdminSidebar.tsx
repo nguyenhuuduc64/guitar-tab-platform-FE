@@ -1,14 +1,23 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PanelLeftClose } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Music2 } from "lucide-react";
+
 import { cn } from "../../utils/cn";
 import { sidebarItems } from "../../constants/sidebar";
 
 type Props = {
     open: boolean;
     setOpen: (value: boolean) => void;
+
+    collapsed: boolean;
+    setCollapsed: (value: boolean) => void;
 };
 
-export default function AdminSidebar({ open, setOpen }: Props) {
+export default function AdminSidebar({
+    open,
+    setOpen,
+    collapsed,
+    setCollapsed,
+}: Props) {
     const { pathname } = useLocation();
     const navigate = useNavigate();
 
@@ -23,35 +32,72 @@ export default function AdminSidebar({ open, setOpen }: Props) {
 
             <aside
                 className={cn(
-                    "fixed top-0 left-0 h-screen w-64 bg-white z-[1001]",
-                    "transform transition-transform duration-300",
+                    "fixed top-0 left-0 h-screen bg-white z-[1001]",
+                    "transition-all duration-300 ease-in-out",
+                    "border-r border-slate-200 shadow-sm",
+                    collapsed ? "w-[82px]" : "w-[270px]",
                     open ? "translate-x-0" : "-translate-x-full",
                     "md:translate-x-0",
                 )}
             >
-                <div className="p-6 flex items-center justify-between border-b">
-                    <div className="flex items-center gap-2">
-                        <div className="flex gap-0.5">
-                            <div className="w-2 h-6 bg-cyan-400 rounded-full" />
-                            <div className="w-2 h-6 bg-purple-500 rounded-full mt-1" />
-                            <div className="w-2 h-6 bg-orange-400 rounded-full" />
-                        </div>
-                        <span className="text-2xl font-bold text-slate-900">
-                            Design
-                        </span>
+                <div className="h-[72px] bg-[var(--primary-color)] px-5 flex items-center justify-between">
+                    <div
+                        className={cn(
+                            "flex items-center",
+                            collapsed ? "justify-center w-full" : "gap-3",
+                        )}
+                    >
+                        {!collapsed && (
+                            <div>
+                                <h1 className="text-white font-semibold text-[20px] leading-none">
+                                    Hatcungtoi
+                                </h1>
+
+                                <p className="text-violet-100 text-[11px] mt-1">
+                                    Admin Dashboard
+                                </p>
+                            </div>
+                        )}
                     </div>
+
+                    {!collapsed && (
+                        <button
+                            onClick={() => setCollapsed(true)}
+                            className="hidden md:flex text-white/90 hover:text-white transition"
+                        >
+                            <PanelLeftClose size={18} />
+                        </button>
+                    )}
+
+                    {collapsed && (
+                        <button
+                            onClick={() => setCollapsed(false)}
+                            className="hidden md:flex absolute top-6 right-3 text-white/90 hover:text-white transition"
+                        >
+                            <PanelLeftOpen size={18} />
+                        </button>
+                    )}
 
                     <button
                         onClick={() => setOpen(false)}
-                        className="md:hidden text-slate-400"
+                        className="md:hidden text-white"
                     >
-                        <PanelLeftClose size={20} />
+                        <PanelLeftClose size={18} />
                     </button>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <div className="px-5 pt-6 pb-3">
+                    {!collapsed && (
+                        <p className="text-[11px] font-semibold tracking-[1.5px] uppercase text-slate-400">
+                            Navigation
+                        </p>
+                    )}
+                </div>
+
+                <nav className="space-y-1">
                     {sidebarItems.map((item) => {
                         const isActive = pathname === item.path;
+
                         const Icon = item.icon;
 
                         return (
@@ -59,20 +105,58 @@ export default function AdminSidebar({ open, setOpen }: Props) {
                                 key={item.path}
                                 onClick={() => {
                                     setOpen(false);
+
                                     setTimeout(() => navigate(item.path), 0);
                                 }}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition",
+                                    "relative flex items-center cursor-pointer transition-all duration-200",
+                                    collapsed
+                                        ? "justify-center h-12"
+                                        : "gap-3 px-4 py-3",
                                     isActive
-                                        ? "bg-[var(--click-color)] text-white font-medium"
-                                        : "text-gray-500 hover:bg-gray-50",
+                                        ? "bg-[var(--secondary-color)] text-[var(--primary-color)]"
+                                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
                                 )}
                             >
-                                <Icon size={20} />
-                                <span>{item.name}</span>
-
                                 {isActive && (
-                                    <div className="ml-auto w-1 h-6 bg-white rounded-full" />
+                                    <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full bg-[var(--primary-color)]" />
+                                )}
+
+                                <Icon
+                                    size={16}
+                                    className={cn(
+                                        isActive
+                                            ? "text-[var(--primary-color)]"
+                                            : "text-slate-500",
+                                        collapsed
+                                            ? "text-[var(--primary-color)]"
+                                            : "",
+                                    )}
+                                />
+
+                                {!collapsed && (
+                                    <span className="text-[14px] font-medium">
+                                        {item.name}
+                                    </span>
+                                )}
+
+                                {collapsed && (
+                                    <div
+                                        className="
+                                            absolute left-full ml-3
+                                            px-3 py-1.5 rounded-lg
+                                            bg-slate-900
+                                            text-xs text-white
+                                            opacity-0 invisible
+                                            group-hover:opacity-100
+                                            group-hover:visible
+                                            whitespace-nowrap
+                                            transition-all
+                                            z-50
+                                        "
+                                    >
+                                        {item.name}
+                                    </div>
                                 )}
                             </div>
                         );

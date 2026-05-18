@@ -1,5 +1,4 @@
 export const C_CHORDS = [
-    // Open C
     {
         name: "C",
         startingFret: 1,
@@ -11,41 +10,107 @@ export const C_CHORDS = [
             [3, 5, 3],
         ],
     },
-
-    // C barre (A shape - fret 3)
+];
+export const D_CHORDS = [
     {
-        name: "C",
-        startingFret: 3,
+        name: "D",
+        startingFret: 1,
+        openStrings: [4],
+        mutedStrings: [5, 6],
+        fingerings: [
+            [1, 3, 2],
+            [2, 1, 2],
+            [3, 2, 3],
+        ],
+    },
+];
+export const E_CHORDS = [
+    {
+        name: "E",
+        startingFret: 1,
+        openStrings: [1, 2, 6],
+        mutedStrings: [],
+        fingerings: [
+            [1, 3, 1],
+            [2, 5, 2],
+            [3, 4, 2],
+        ],
+    },
+];
+export const F_CHORDS = [
+    {
+        name: "F",
+        startingFret: 1,
         openStrings: [],
         mutedStrings: [],
         fingerings: [
-            [1, 5, 3],
-            [1, 1, 3],
-            [3, 4, 5],
-            [4, 3, 5],
-            [2, 2, 5],
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+            [4, 4, 3],
         ],
     },
-
-    // C triad (high)
+];
+export const G_CHORDS = [
     {
-        name: "C",
-        startingFret: 5,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
+        name: "G",
+        startingFret: 1,
+        openStrings: [2, 3, 4],
+        mutedStrings: [],
         fingerings: [
-            [1, 3, 5],
-            [2, 2, 5],
-            [3, 1, 5],
+            [1, 1, 3],
+            [2, 5, 2],
+            [3, 6, 3],
+        ],
+    },
+];
+export const A_CHORDS = [
+    {
+        name: "A",
+        startingFret: 1,
+        openStrings: [1, 5],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 4, 2],
+            [2, 3, 2],
+            [3, 2, 2],
+        ],
+    },
+];
+export const B_CHORDS = [
+    {
+        name: "B",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 4, 3],
+            [3, 3, 3],
+            [4, 2, 3],
+        ],
+    },
+];
+
+export const CM_CHORDS = [
+    {
+        name: "Cm",
+        startingFret: 3,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+            [4, 3, 3],
         ],
     },
 ];
 export const DM_CHORDS = [
-    // Open Dm
     {
         name: "Dm",
         startingFret: 1,
-        openStrings: [1, 4],
+        openStrings: [4],
         mutedStrings: [5, 6],
         fingerings: [
             [1, 1, 1],
@@ -53,165 +118,50 @@ export const DM_CHORDS = [
             [3, 2, 3],
         ],
     },
-
-    // Dm barre (A shape - fret 5)
-    {
-        name: "Dm",
-        startingFret: 5,
-        openStrings: [],
-        mutedStrings: [],
-        fingerings: [
-            [1, 5, 5],
-            [1, 1, 5],
-            [3, 4, 7],
-            [4, 3, 7],
-            [2, 2, 6],
-        ],
-    },
-
-    // Dm triad
-    {
-        name: "Dm",
-        startingFret: 5,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 3, 5],
-            [2, 2, 6],
-            [3, 1, 5],
-        ],
-    },
 ];
 export const EM_CHORDS = [
-    // Open Em
     {
         name: "Em",
         startingFret: 1,
         openStrings: [1, 2, 3, 6],
         mutedStrings: [],
         fingerings: [
-            [1, 5, 2],
-            [2, 4, 2],
-        ],
-    },
-
-    // Em barre (E shape - fret 7)
-    {
-        name: "Em",
-        startingFret: 7,
-        openStrings: [],
-        mutedStrings: [],
-        fingerings: [
-            [1, 6, 7],
-            [1, 1, 7],
-            [3, 5, 9],
-            [4, 4, 9],
-        ],
-    },
-
-    // Em triad
-    {
-        name: "Em",
-        startingFret: 7,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 3, 7],
-            [2, 2, 8],
-            [3, 1, 7],
+            [2, 5, 2],
+            [3, 4, 2],
         ],
     },
 ];
-export const F_CHORDS = [
-    // F barre (E shape)
+export const FM_CHORDS = [
     {
-        name: "F",
+        name: "Fm",
         startingFret: 1,
         openStrings: [],
         mutedStrings: [],
         fingerings: [
-            [1, 6, 1],
-            [1, 1, 1],
-            [2, 3, 2],
+            [1, "1-6", 1],
             [3, 5, 3],
             [4, 4, 3],
         ],
     },
-
-    // F mini (easy)
-    {
-        name: "F",
-        startingFret: 1,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 1, 1],
-            [2, 3, 2],
-            [3, 2, 1],
-        ],
-    },
-
-    // F high triad
-    {
-        name: "F",
-        startingFret: 8,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 3, 8],
-            [2, 2, 10],
-            [3, 1, 8],
-        ],
-    },
 ];
-export const G_CHORDS = [
-    // Open G
+export const GM_CHORDS = [
     {
-        name: "G",
-        startingFret: 1,
-        openStrings: [2, 3],
-        mutedStrings: [],
-        fingerings: [
-            [1, 5, 2],
-            [2, 6, 3],
-            [3, 1, 3],
-        ],
-    },
-
-    // G barre (E shape - fret 3)
-    {
-        name: "G",
+        name: "Gm",
         startingFret: 3,
         openStrings: [],
         mutedStrings: [],
         fingerings: [
-            [1, 6, 3],
-            [1, 1, 3],
-            [3, 5, 5],
-            [4, 4, 5],
-            [2, 3, 4],
-        ],
-    },
-
-    // G triad
-    {
-        name: "G",
-        startingFret: 7,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 3, 7],
-            [2, 2, 8],
-            [3, 1, 7],
+            [1, "1-6", 1],
+            [3, 5, 3],
+            [4, 4, 3],
         ],
     },
 ];
 export const AM_CHORDS = [
-    // Open Am
     {
         name: "Am",
         startingFret: 1,
-        openStrings: [1, 2, 3, 5],
+        openStrings: [1, 5],
         mutedStrings: [6],
         fingerings: [
             [1, 2, 1],
@@ -219,42 +169,394 @@ export const AM_CHORDS = [
             [3, 3, 2],
         ],
     },
-
-    // Am barre (E shape - fret 5)
+];
+export const BM_CHORDS = [
     {
-        name: "Am",
-        startingFret: 5,
+        name: "Bm",
+        startingFret: 2,
         openStrings: [],
-        mutedStrings: [],
+        mutedStrings: [6],
         fingerings: [
-            [1, 6, 5],
-            [1, 1, 5],
-            [3, 5, 7],
-            [4, 4, 7],
-            [2, 3, 6],
-        ],
-    },
-
-    // Am triad
-    {
-        name: "Am",
-        startingFret: 9,
-        openStrings: [],
-        mutedStrings: [4, 5, 6],
-        fingerings: [
-            [1, 3, 9],
-            [2, 2, 10],
-            [3, 1, 9],
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+            [4, 3, 3],
         ],
     },
 ];
+
+export const C7_CHORDS = [
+    {
+        name: "C7",
+        startingFret: 1,
+        openStrings: [3, 5],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 2, 1],
+            [2, 4, 2],
+            [3, 5, 3],
+            [4, 3, 3],
+        ],
+    },
+];
+export const D7_CHORDS = [
+    {
+        name: "D7",
+        startingFret: 1,
+        openStrings: [4],
+        mutedStrings: [5, 6],
+        fingerings: [
+            [1, 2, 1],
+            [2, 3, 2],
+            [3, 1, 2],
+        ],
+    },
+];
+export const E7_CHORDS = [
+    {
+        name: "E7",
+        startingFret: 1,
+        openStrings: [1, 2, 4, 6],
+        mutedStrings: [],
+        fingerings: [
+            [1, 3, 1],
+            [2, 5, 2],
+        ],
+    },
+];
+export const F7_CHORDS = [
+    {
+        name: "F7",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+        ],
+    },
+];
+export const G7_CHORDS = [
+    {
+        name: "G7",
+        startingFret: 1,
+        openStrings: [2, 3, 4],
+        mutedStrings: [],
+        fingerings: [
+            [1, 1, 1],
+            [2, 5, 2],
+            [3, 6, 3],
+        ],
+    },
+];
+export const A7_CHORDS = [
+    {
+        name: "A7",
+        startingFret: 1,
+        openStrings: [1, 3, 5],
+        mutedStrings: [6],
+        fingerings: [
+            [2, 4, 2],
+            [3, 2, 2],
+        ],
+    },
+];
+export const B7_CHORDS = [
+    {
+        name: "B7",
+        startingFret: 1,
+        openStrings: [2, 4, 6],
+        mutedStrings: [],
+        fingerings: [
+            [1, 4, 1],
+            [2, 5, 2],
+            [3, 3, 2],
+            [4, 1, 2],
+        ],
+    },
+];
+
+export const DM7_CHORDS = [
+    {
+        name: "Dm7",
+        startingFret: 1,
+        openStrings: [4],
+        mutedStrings: [5, 6],
+        fingerings: [
+            [1, "1-2", 1],
+            [2, 3, 2],
+        ],
+    },
+];
+export const EM7_CHORDS = [
+    {
+        name: "Em7",
+        startingFret: 1,
+        openStrings: [1, 2, 3, 4, 6],
+        mutedStrings: [],
+        fingerings: [[2, 5, 2]],
+    },
+];
+export const AM7_CHORDS = [
+    {
+        name: "Am7",
+        startingFret: 1,
+        openStrings: [1, 3, 5],
+        mutedStrings: [6, 4],
+        fingerings: [
+            [1, 2, 1],
+            [2, 4, 2],
+        ],
+    },
+    {
+        name: "Am7",
+        startingFret: 5,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 3, 2],
+        ],
+    },
+];
+
+// C# / Db
+export const CS_CHORDS = [
+    {
+        name: "C#",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 4, 3],
+            [3, 3, 3],
+            [4, 2, 3],
+        ],
+    },
+];
+export const CSM_CHORDS = [
+    {
+        name: "C#m",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+            [4, 3, 3],
+        ],
+    },
+];
+
+// D# / Eb
+export const DS_CHORDS = [
+    {
+        name: "D#",
+        startingFret: 6,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 4, 3],
+            [3, 3, 3],
+            [4, 2, 3],
+        ],
+    },
+];
+export const DSM_CHORDS = [
+    {
+        name: "D#m",
+        startingFret: 6,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+            [4, 3, 3],
+        ],
+    },
+];
+
+// F# / Gb
+export const FS_CHORDS = [
+    {
+        name: "F#",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+            [4, 4, 3],
+        ],
+    },
+];
+export const FSM_CHORDS = [
+    {
+        name: "F#m",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [3, 5, 3],
+            [4, 4, 3],
+        ],
+    },
+];
+
+// G# / Ab
+export const GS_CHORDS = [
+    {
+        name: "G#",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+            [4, 4, 3],
+        ],
+    },
+];
+export const GSM_CHORDS = [
+    {
+        name: "G#m",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [3, 5, 3],
+            [4, 4, 3],
+        ],
+    },
+];
+
+// A# / Bb
+export const AS_CHORDS = [
+    {
+        name: "A#",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 4, 3],
+            [3, 3, 3],
+            [4, 2, 3],
+        ],
+    },
+];
+export const ASM_CHORDS = [
+    {
+        name: "A#m",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+            [4, 3, 3],
+        ],
+    },
+];
+
+// Một số hợp âm 7 thăng phổ biến
+export const FS7_CHORDS = [
+    {
+        name: "F#7",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+        ],
+    },
+];
+export const GS7_CHORDS = [
+    {
+        name: "G#7",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, "1-6", 1],
+            [2, 3, 2],
+            [3, 5, 3],
+        ],
+    },
+];
+export const CSM7_CHORDS = [
+    {
+        name: "C#m7",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, "1-5", 1],
+            [2, 2, 2],
+            [3, 4, 3],
+        ],
+    },
+];
+const CHORD_DATA_MAP = {
+    C: C_CHORDS,
+    ["C#"]: CS_CHORDS,
+    D: D_CHORDS,
+    ["D#"]: DS_CHORDS,
+    E: E_CHORDS,
+    F: F_CHORDS,
+    ["F#"]: FS_CHORDS,
+    G: G_CHORDS,
+    ["G#"]: GS_CHORDS,
+    A: A_CHORDS,
+    ["A#"]: AS_CHORDS,
+    B: B_CHORDS,
+
+    Cm: CM_CHORDS,
+    ["C#m"]: CSM_CHORDS,
+    Dm: DM_CHORDS,
+    ["D#m"]: DSM_CHORDS,
+    Em: EM_CHORDS,
+    Fm: FM_CHORDS,
+    ["F#m"]: FSM_CHORDS,
+    Gm: GM_CHORDS,
+    ["G#m"]: GSM_CHORDS,
+    Am: AM_CHORDS,
+    ["A#m"]: ASM_CHORDS,
+    Bm: BM_CHORDS,
+
+    C7: C7_CHORDS,
+    D7: D7_CHORDS,
+    E7: E7_CHORDS,
+    F7: F7_CHORDS,
+    ["F#7"]: FS7_CHORDS,
+    G7: G7_CHORDS,
+    ["G#7"]: GS7_CHORDS,
+    A7: A7_CHORDS,
+    B7: B7_CHORDS,
+
+    ["C#m7"]: CSM7_CHORDS,
+    Dm7: DM7_CHORDS,
+    Em7: EM7_CHORDS,
+    Am7: AM7_CHORDS,
+};
+
 export const getChordData = (name) => {
-    if (name === "C") return C_CHORDS;
-    if (name === "Dm") return DM_CHORDS;
-    if (name === "Em") return EM_CHORDS;
-    if (name === "F") return F_CHORDS;
-    if (name === "G") return G_CHORDS;
-    if (name === "Am") return AM_CHORDS;
-    console.log("❌ Chưa có chord:", name); // debug ngay đây
-    return null;
+    const data = CHORD_DATA_MAP[name];
+    if (!data) {
+        console.log("❌ Chưa có chord:", name);
+        return null;
+    }
+    return data;
 };

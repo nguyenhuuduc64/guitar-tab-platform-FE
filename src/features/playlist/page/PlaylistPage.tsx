@@ -1,24 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Music2, CalendarDays } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 import instance from "../../../config/axios";
 import { getUserInfo } from "../../../utils/auth";
 import { formatTime } from "../../../helper";
-const extractChords = (text: string): string[] => {
-    if (!text) return [];
-
-    const matches = text.match(/\[(.*?)\]/g) || [];
-
-    const chords = matches.map((c) => c.replace(/[\[\]]/g, ""));
-
-    return [...new Set(chords)];
-};
+import { SongTable } from "../../../components/common/SongTable";
 
 export const PlaylistPage = () => {
-    const navigate = useNavigate();
-
-    const [user, setUser] = useState(null);
+    const [_, setUser] = useState(null);
 
     const [playlists, setPlaylists] = useState([]);
 
@@ -38,7 +27,7 @@ export const PlaylistPage = () => {
                 const response = await instance.get(
                     `/playlists/user/${userData.id}`,
                 );
-
+                console.log("playlist", response.data.result);
                 setPlaylists(response.data.result || []);
             } catch (err) {
                 console.error(err);
@@ -165,42 +154,9 @@ export const PlaylistPage = () => {
                                         Playlist chưa có bài hát
                                     </div>
                                 ) : (
-                                    selectedPlaylist.chords.map((song) => (
-                                        <div
-                                            key={song.id}
-                                            className="bg-white border border-gray-100 rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                                            onClick={() =>
-                                                navigate(`/song/${song.id}`)
-                                            }
-                                        >
-                                            {/* HEADER */}
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-gray-800">
-                                                        {song.title}
-                                                    </h3>
-
-                                                    <p className="text-[11px] text-gray-400 mt-1">
-                                                        Chord song
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* TAG */}
-                                            <div className="flex gap-2 flex-wrap mt-4">
-                                                {extractChords(
-                                                    song.content,
-                                                ).map((tag) => (
-                                                    <span
-                                                        key={tag}
-                                                        className="text-[11px] px-2 py-1 bg-gray-100 border border-gray-200 rounded-lg text-gray-500"
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
+                                    <SongTable
+                                        songs={selectedPlaylist.chords}
+                                    />
                                 )}
                             </div>
                         )}

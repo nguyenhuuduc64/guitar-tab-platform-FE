@@ -20,9 +20,9 @@
     --card-inner: #fafafa; /* inner nhẹ hơn nền */
 
     --border-subtle: #e5e5e5;
-    --primary-color: #00a884;
-    --button-color: #006d55;
-    --secondary-color: #003f31;
+    --primary-color: #097fc3;
+    --button-color: #097fc3;
+    --secondary-color: #d0dde4;
     --click-color: #5fdcc1;
     --header-height: 64px;
     --background: oklch(1 0 0);

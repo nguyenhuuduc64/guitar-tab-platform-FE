@@ -7,7 +7,7 @@ import { useFormStore } from "../../../store/useFormStore";
 import { DynamicForm } from "../../../components/common/DynamicForm";
 import uploadImageToCloudinary from "../../../services/cloudinary";
 import { fetchArtists } from "../../../services/artistService";
-
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     Table,
     TableBody,
@@ -30,9 +30,11 @@ export default function ArtistManagement() {
     const [artists, setArtists] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [editingArtist, setEditingArtist] = useState(null);
-
+    const [prefillArtistName, setPrefillArtistName] = useState("");
+    const location = useLocation();
+    const requestId = location.state?.requestId;
     const { openForm } = useFormStore();
-
+    const navigate = useNavigate();
     const loadData = async () => {
         try {
             const data = await fetchArtists();
@@ -50,7 +52,19 @@ export default function ArtistManagement() {
         setEditingArtist(artist);
         openForm("artist-form");
     };
+    useEffect(() => {
+        if (location.state?.autoOpenForm) {
+            setEditingArtist(null);
 
+            setPrefillArtistName(location.state.artistName || "");
+
+            openForm("artist-form");
+            navigate(location.pathname, {
+                replace: true,
+                state: {},
+            });
+        }
+    }, [location.state]);
     const handleSubmit = async (data) => {
         try {
             console.log("📩 RAW FORM DATA:", data);
@@ -94,6 +108,14 @@ export default function ArtistManagement() {
             } else {
                 console.log("➕ MODE: CREATE (POST)");
                 response = await instance.post("/artists", payload);
+                const createdArtist = response.data?.result || response.data;
+                if (requestId && createdArtist?.id) {
+                    await instance.put(`/requests/${requestId}/assign-artist`, {
+                        artistId: createdArtist.id,
+                    });
+
+                    navigate("/admin/requests");
+                }
             }
 
             console.log("📨 SERVER RESPONSE:", response?.data);
@@ -228,7 +250,7 @@ export default function ArtistManagement() {
                 name="artist-form"
                 schema={artistSchema}
                 defaultValues={{
-                    name: editingArtist?.name || "",
+                    name: editingArtist?.name || prefillArtistName || "",
                     description: editingArtist?.description || "",
                     image: editingArtist?.imageUrl || null,
                 }}

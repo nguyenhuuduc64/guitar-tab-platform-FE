@@ -1,26 +1,59 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { transposeChord } from "../../helper/transpose";
+import { getChordData } from "../../constants/chords";
 
-const GuitarChordDiagram = ({ chordData }) => {
+const GuitarChordDiagram = ({ initialChordName = "C" }) => {
+    const [transpose, setTranspose] = useState(0);
     const [currentIdx, setCurrentIdx] = useState(0);
+
+    const displayedName = transposeChord(initialChordName, transpose);
+    const chordData = getChordData(displayedName) || [];
+
+    useEffect(() => {
+        setCurrentIdx(0);
+    }, [displayedName]);
+
+    if (chordData.length === 0) {
+        return (
+            <div className="text-red-500 p-5">
+                Không có dữ liệu cho {displayedName}
+            </div>
+        );
+    }
 
     const currentChord = chordData[currentIdx];
     const { name, startingFret, openStrings, mutedStrings, fingerings } =
         currentChord;
 
-    const nextVariation = () => {
+    const nextVariation = () =>
         setCurrentIdx((prev) => (prev + 1) % chordData.length);
-    };
-
-    const prevVariation = () => {
+    const prevVariation = () =>
         setCurrentIdx(
             (prev) => (prev - 1 + chordData.length) % chordData.length,
         );
-    };
 
     return (
         <div className="w-[200px] text-center font-sans select-none bg-white p-5">
-            <div className="flex justify-end text-[#3366cc] text-[14px]">
-                guitar
+            {/* Phần tăng hạ tone mới thêm */}
+            <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-1 border rounded px-1 text-[12px]">
+                    <button
+                        onClick={() => setTranspose((t) => t - 1)}
+                        className="px-1 hover:bg-gray-100"
+                    >
+                        -
+                    </button>
+                    <span className="min-w-[45px] font-bold">
+                        Tone {transpose > 0 ? `+${transpose}` : transpose}
+                    </span>
+                    <button
+                        onClick={() => setTranspose((t) => t + 1)}
+                        className="px-1 hover:bg-gray-100"
+                    >
+                        +
+                    </button>
+                </div>
+                <div className="text-[#3366cc] text-[14px]">guitar</div>
             </div>
 
             <div className="text-[24px] font-bold my-[5px]">

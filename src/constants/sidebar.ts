@@ -1,6 +1,6 @@
 import {
     LayoutDashboard,
-    TrendingUp,
+    CheckCheckIcon,
     FileSpreadsheet,
     Ticket,
     Wallet,
@@ -15,7 +15,11 @@ export const sidebarItems = [
         path: "/admin/bang-dieu-khien",
         icon: LayoutDashboard,
     },
-    { name: "Thị trường", path: "/admin/thi-truong", icon: TrendingUp },
+    {
+        name: "Yêu cầu duyệt",
+        path: "/admin/yeu-cau-duyet",
+        icon: CheckCheckIcon,
+    },
     {
         name: "Bảng tính",
         path: "/admin/bang-tinh",
