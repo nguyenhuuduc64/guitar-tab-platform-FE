@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Search, Menu, Sun, Moon, X } from "lucide-react";
 import ButtonCustom from "../../components/ui/ButtonCustom";
 import { Input } from "../../components/ui/Input";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
     Avatar,
     AvatarImage,
@@ -20,6 +21,14 @@ export const Navigation = () => {
     const [loading, setLoading] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 400);
+    const searchRef = useRef<HTMLDivElement>(null);
 
     const menuItems = [
         {
@@ -68,7 +77,43 @@ export const Navigation = () => {
         fetchUser();
     }, []);
 
-    // Khóa cuộn trang khi mở menu
+    useEffect(() => {
+        const searchChords = async () => {
+            if (!debouncedSearchQuery.trim()) {
+                setSearchResults([]);
+                return;
+            }
+            setIsSearching(true);
+            try {
+                const res = await instance.get(`/chords`, {
+                    params: { search: debouncedSearchQuery },
+                });
+                setSearchResults(res.data.result || []);
+            } catch (err) {
+                console.error("Lỗi tìm kiếm:", err);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        searchChords();
+    }, [debouncedSearchQuery]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                searchRef.current &&
+                !searchRef.current.contains(event.target as Node)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     useEffect(() => {
         if (isMenuOpen) {
             document.body.style.overflow = "hidden";
@@ -81,7 +126,6 @@ export const Navigation = () => {
         <>
             <nav className="h-[var(--header-height)] lg:px-20 sticky top-0 z-50 w-full border-b border-border-subtle bg-[var(--primary-color)] backdrop-blur-md">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    {/* Logo */}
                     <div
                         className="flex items-center gap-2 cursor-pointer"
                         onClick={() => navigate("/")}
@@ -92,7 +136,6 @@ export const Navigation = () => {
                         </span>
                     </div>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white">
                         {navLinks.map((link) => (
                             <a
@@ -105,20 +148,67 @@ export const Navigation = () => {
                         ))}
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-3">
-                        <div className="relative hidden lg:flex items-center">
-                            <Search className="absolute left-3 h-4 w-4 opacity-40 text-white" />
+                        <div
+                            ref={searchRef}
+                            className="relative hidden lg:flex items-center"
+                        >
+                            <Search className="absolute left-3 h-4 w-4 opacity-40 text-white z-10" />
                             <Input
                                 type="search"
                                 placeholder="Tìm kiếm..."
-                                className="w-48 pl-10 rounded-full bg-white/10 border-none text-white placeholder:text-white/50"
+                                value={searchQuery || ""}
+                                onFocus={() => setShowSuggestions(true)}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-64 pl-10 rounded-full bg-white border-none text-black placeholder:text-black/50"
                             />
+
+                            {showSuggestions && searchQuery.trim() !== "" && (
+                                <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 py-2">
+                                    {isSearching ? (
+                                        <div className="px-4 py-2 text-sm text-gray-500 text-center">
+                                            Đang tìm kiếm...
+                                        </div>
+                                    ) : searchResults.length > 0 ? (
+                                        searchResults.map((chord) => (
+                                            <div
+                                                key={chord.id}
+                                                onClick={() => {
+                                                    navigate(
+                                                        `/song/${chord.id}`,
+                                                    );
+                                                    setShowSuggestions(false);
+                                                    setSearchQuery("");
+                                                }}
+                                                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex flex-col transition-colors"
+                                            >
+                                                <span className="font-medium text-sm text-gray-900 dark:text-white">
+                                                    {chord.title}
+                                                </span>
+                                                <span className="text-xs text-gray-400 line-clamp-1">
+                                                    {chord.artistName ||
+                                                        "Chưa rõ nghệ sĩ"}{" "}
+                                                    •{" "}
+                                                    {chord.content
+                                                        ?.replace(
+                                                            /\[.*?\]/g,
+                                                            "",
+                                                        )
+                                                        .substring(0, 35)}
+                                                    ...
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-2 text-sm text-gray-500 text-center">
+                                            Không tìm thấy bài hát nào
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <ButtonCustom
-                            variant="ghost"
-                            className="p-2"
                             onClick={toggleTheme}
                         >
                             {theme === "dark" ? (
@@ -158,7 +248,6 @@ export const Navigation = () => {
                             </div>
                         )}
 
-                        {/* Mobile Menu Button (Dấu 3 gạch) */}
                         <ButtonCustom
                             variant="ghost"
                             className="md:hidden p-2"
@@ -170,7 +259,6 @@ export const Navigation = () => {
                 </div>
             </nav>
 
-            {/* OVERLAY */}
             {isMenuOpen && (
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] md:hidden transition-opacity"
@@ -178,12 +266,10 @@ export const Navigation = () => {
                 />
             )}
 
-            {/* SIDE MENU (Mobile) */}
             <div
                 className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-slate-900 z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
             >
                 <div className="flex flex-col h-full">
-                    {/* Header Side Menu */}
                     <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
                         <span className="font-bold text-lg dark:text-white">
                             Menu
@@ -196,7 +282,6 @@ export const Navigation = () => {
                         </ButtonCustom>
                     </div>
 
-                    {/* User Info in Mobile Menu */}
                     {user && (
                         <div className="p-5 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50">
                             <Avatar className="h-10 w-10">
@@ -216,7 +301,6 @@ export const Navigation = () => {
                         </div>
                     )}
 
-                    {/* Nav Links */}
                     <div className="flex flex-col p-4 gap-2">
                         {navLinks.map((link) => (
                             <a

@@ -14,7 +14,7 @@ interface ButtonProps {
 const ButtonCustom = ({
   name,
   onClick,
-  variant = "primary",
+  variant,
   icon,
   className = "",
   type = "button",

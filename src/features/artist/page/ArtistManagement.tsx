@@ -31,6 +31,7 @@ export default function ArtistManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [editingArtist, setEditingArtist] = useState(null);
     const [prefillArtistName, setPrefillArtistName] = useState("");
+    const [pendingRequestId, setPendingRequestId] = useState(null);
     const location = useLocation();
     const requestId = location.state?.requestId;
     const { openForm } = useFormStore();
@@ -58,7 +59,12 @@ export default function ArtistManagement() {
 
             setPrefillArtistName(location.state.artistName || "");
 
+            // QUAN TRỌNG
+            setPendingRequestId(location.state.requestId || null);
+
             openForm("artist-form");
+
+            // clear state trên URL
             navigate(location.pathname, {
                 replace: true,
                 state: {},
@@ -107,14 +113,34 @@ export default function ArtistManagement() {
                 );
             } else {
                 console.log("➕ MODE: CREATE (POST)");
-                response = await instance.post("/artists", payload);
-                const createdArtist = response.data?.result || response.data;
-                if (requestId && createdArtist?.id) {
-                    await instance.put(`/requests/${requestId}/assign-artist`, {
-                        artistId: createdArtist.id,
-                    });
 
-                    navigate("/admin/requests");
+                response = await instance.post("/artists", payload);
+
+                console.log("📨 CREATE ARTIST RESPONSE:", response.data);
+
+                const createdArtist = response.data?.result;
+
+                console.log("🎤 CREATED ARTIST:", createdArtist);
+
+                console.log("🧾 PENDING REQUEST:", pendingRequestId);
+
+                // AUTO MAP ARTIST VÀO REQUEST
+                if (pendingRequestId && createdArtist?.id) {
+                    console.log("🚀 START ASSIGN ARTIST");
+
+                    await instance.put(
+                        `/requests/${pendingRequestId}/assign-artist`,
+                        {
+                            type: "CHORD",
+                            data: {
+                                artistId: createdArtist.id,
+                            },
+                        },
+                    );
+
+                    console.log("✅ ASSIGN SUCCESS");
+
+                    navigate("/admin/yeu-cau-duyet");
                 }
             }
 

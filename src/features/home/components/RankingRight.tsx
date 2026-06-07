@@ -28,7 +28,7 @@ export const RankingRight = () => {
 
     return (
         <div className="flex flex-col border-l border-border-subtle h-full bg-white">
-            <h3 className="font-bold text-white text-center bg-[var(--secondary-color)] py-5 uppercase tracking-wider text-sm">
+            <h3 className="font-bold text-white text-center bg-[var(--primary-color)] py-5 uppercase tracking-wider text-sm">
                 Xem nhiều nhất
             </h3>
 

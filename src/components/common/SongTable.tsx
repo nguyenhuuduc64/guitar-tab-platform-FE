@@ -1,17 +1,20 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { formatTime } from "../../helper";
+import {type Chord} from "../../types/chord";
+
 
 interface SongTableProps {
-    songs: any[];
+    songs: Chord[];
     loading?: boolean;
     error?: string | null;
+    isHasMenu?: boolean; 
 }
 
 export const SongTable = ({
     songs = [],
     loading = false,
     error = null,
+    isHasMenu = false, 
 }: SongTableProps) => {
     const navigate = useNavigate();
 
@@ -23,7 +26,7 @@ export const SongTable = ({
 
         artist: song.artist?.name || song.artistName || "Chưa cập nhật",
 
-        user: song.user?.username || song.createdBy || "Ẩn danh",
+        user: song.user?.username || song.user?.fullName || "Ẩn danh",
 
         views: song.views || 0,
 
@@ -55,7 +58,7 @@ export const SongTable = ({
             {mappedSongs.map((song, index) => (
                 <div
                     key={song.id}
-                    className="bg-white bg-card-bg border border-border-subtle rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    className="relative bg-white bg-card-bg border border-border-subtle rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     onClick={() => navigate(`/song/${song.id}`)}
                 >
                     {/* HEADER */}
@@ -123,7 +126,7 @@ export const SongTable = ({
                     </div>
 
                     {/* TAG */}
-                    <div className="flex gap-2 flex-wrap mt-4">
+                    <div className="flex gap-2 flex-wrap mt-4 pr-8">
                         {song.tags.map((tag: string) => (
                             <span
                                 key={tag}
@@ -133,6 +136,33 @@ export const SongTable = ({
                             </span>
                         ))}
                     </div>
+
+                    {/* NUT 3 CHAM CAU HINH */}
+                    {isHasMenu && (
+                        <button
+                            className="absolute bottom-4 right-4 p-1 rounded-full hover:bg-gray-100 text-main-fg/60 hover:text-main-fg transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation(); // Không cho navigate vào bài hát khi click nút này
+                                // Logic cấu hình xử lý sau
+                            }}
+                            title="Cấu hình"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2}
+                                stroke="currentColor"
+                                className="w-5 h-5"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+                                />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             ))}
         </div>
@@ -144,7 +174,7 @@ const extractChords = (text: string): string[] => {
 
     const matches = text.match(/\[(.*?)\]/g) || [];
 
-    const chords = matches.map((c) => c.replace(/[\[\]]/g, ""));
+    const chords = matches.map((c) => c.replace(/[[\]]/g, ""));
 
     return [...new Set(chords)];
 };

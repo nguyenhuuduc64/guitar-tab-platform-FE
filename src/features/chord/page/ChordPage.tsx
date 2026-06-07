@@ -57,7 +57,6 @@ const ChordPage = () => {
             try {
                 setLoading(true);
 
-                // Reset flag khi đổi sang bài hát mới
                 viewCountedRef.current = false;
 
                 const userData = await getUserInfo();
@@ -228,7 +227,7 @@ const ChordPage = () => {
     const currentChordData = hoveredChord ? getChordData(hoveredChord) : null;
 
     return (
-        <div className="h-[calc(100vh-64px)] p-4 bg-gray-50">
+        <div className="h-[calc(100vh-64px)] p-4 bg-white">
             <div className="flex flex-col md:flex-row gap-6 h-full">
                 <div
                     ref={scrollContainerRef}
