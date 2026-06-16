@@ -1,20 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { formatTime } from "../../helper";
-import {type Chord} from "../../types/chord";
+import { type Chord } from "../../types/chord";
 
 
 interface SongTableProps {
     songs: Chord[];
     loading?: boolean;
     error?: string | null;
-    isHasMenu?: boolean; 
+    isHasMenu?: boolean;
 }
 
 export const SongTable = ({
     songs = [],
     loading = false,
     error = null,
-    isHasMenu = false, 
+    isHasMenu = false,
 }: SongTableProps) => {
     const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ export const SongTable = ({
         slug: song.slug,
         content: song.content || "",
 
-        artist: song.artist?.name || song.artistName || "Chưa cập nhật",
+        artist: song.artistName || "Chưa cập nhật",
 
         user: song.user?.username || song.user?.fullName || "Ẩn danh",
 
@@ -58,7 +58,7 @@ export const SongTable = ({
             {mappedSongs.map((song, index) => (
                 <div
                     key={song.id}
-                    className="relative bg-white bg-card-bg border border-border-subtle rounded-sm p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    className="relative bg-white bg-card-bg border border-border-subtle  p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     onClick={() => navigate(`/song/${song.id}`)}
                 >
                     {/* HEADER */}
@@ -69,12 +69,11 @@ export const SongTable = ({
                                 className={`
                                     w-8 h-8 rounded-full flex items-center justify-center
                                     text-sm font-bold shrink-0
-                                    ${
-                                        index === 0
-                                            ? "bg-yellow-400 text-white"
-                                            : index === 1
-                                              ? "bg-gray-300 text-white"
-                                              : index === 2
+                                    ${index === 0
+                                        ? "bg-yellow-400 text-white"
+                                        : index === 1
+                                            ? "bg-gray-300 text-white"
+                                            : index === 2
                                                 ? "bg-orange-400 text-white"
                                                 : "bg-gray-100 text-gray-600"
                                     }

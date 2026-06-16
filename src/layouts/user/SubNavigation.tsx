@@ -29,7 +29,7 @@ const SubNavigation = () => {
     };
 
     return (
-        <div className="w-full bg-gray-200 text-black text-[13px] py-1.5 px-4 shadow-sm sticky top-[var(--header-height)] z-5 w-full">
+        <div className="w-full bg-gray-200 text-black text-[13px] py-1.5 px-4 shadow-sm sticky top-[var(--header-height)] z-20 w-full">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Left Side: Navigation Links */}
                 <nav className="flex flex-wrap items-center gap-x-5">

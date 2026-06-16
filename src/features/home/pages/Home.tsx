@@ -7,6 +7,7 @@ import { SidebarLeft } from "../components/SidebarLeft";
 import { RankingRight } from "../components/RankingRight";
 
 import instance from "../../../config/axios";
+import { AudioGrid } from "../../../components/common/AudioGrid";
 
 export default function Home() {
     const [trendingSongs, setTrendingSongs] = useState([]);
@@ -38,30 +39,28 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="flex flex-col gap-4 animate-in fade-in duration-500">
-            <div className="flex-1 w-full mx-auto flex gap-0">
-                {/* LEFT */}
-                <aside className="w-1/5 border-r border-border-subtle hidden lg:block">
+        <div className="w-full mx-auto animate-in fade-in duration-500">
+            {/* Sử dụng layout grid hoặc flex đồng bộ, thêm gap hợp lý */}
+            <div className="w-full flex items-start gap-6">
+
+                {/* 1. SIDEBAR TRÁI: Đảm bảo có chiều rộng cố định */}
+                <aside className="w-[240px] shrink-0 hidden lg:block">
                     <SidebarLeft />
                 </aside>
 
-                {/* MAIN */}
-                <main className="flex-1 px-4 overflow-hidden">
-                    <div className="w-full max-w-[1440px] mx-auto">
-                        <Hero />
 
-                        <DiscoverPanel />
+                <main className="flex-1 min-w-0 flex flex-col gap-6">
+                    <div className="w-full mx-auto flex flex-col gap-6">
+                        <Hero />
+                        <div>
+                            <AudioGrid />
+                        </div>
                     </div>
 
-                    {/* HOT SONGS */}
-                    <div className="border border-border-subtle rounded-sm overflow-hidden bg-white">
-                        <div className="p-4 border-b border-border-subtle bg-main-fg/[0.02]">
-                            <h2 className="text-[11px] font-bold text-main-fg opacity-60 uppercase tracking-[0.2em]">
-                                Hot trong tuần
-                            </h2>
-                        </div>
+                    <div className="border border-border-subtle/80 overflow-hidden bg-white dark:bg-card shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
 
-                        <div className="p-4">
+
+                        <div className="p-5">
                             <SongTable
                                 songs={trendingSongs}
                                 loading={loading}
@@ -71,8 +70,8 @@ export default function Home() {
                     </div>
                 </main>
 
-                {/* RIGHT */}
-                <aside className="w-1/4 border-l bg-white border-border-subtle hidden xl:block">
+                {/* 3. RANKING PHẢI */}
+                <aside className="w-[280px] shrink-0 hidden xl:block">
                     <RankingRight />
                 </aside>
             </div>

@@ -1,55 +1,62 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Music, RefreshCw, Settings } from "lucide-react";
+import { Music, RefreshCw, Settings, Layers, SlidersHorizontal } from "lucide-react";
 
 export function AiSidebar() {
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Xác định tab active dựa trên path URL hiện tại
     const currentPath = location.pathname;
 
     return (
-        <div className="h-screen w-64 border-r border-border-subtle bg-white text-gray-700 flex flex-col justify-between relative shadow-sm shrink-0">
-            <div>
-                {/* Header Tiêu đề Sidebar */}
-                <div className="p-4 border-b border-border-subtle">
-                    <span className="font-extrabold tracking-wider uppercase text-gray-900 text-sm">
-                        AI Sáng Tác
-                    </span>
+        <div className="w-64 h-screen border-r border-zinc-200 bg-[#FBFBFB] text-zinc-800 flex flex-col justify-between relative shrink-0 antialiased font-sans">
+            <div className="flex flex-col h-full overflow-hidden">
+                {/* Header Brand tinh tế */}
+                <div className="p-4 border-b border-zinc-200/60">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                        <SlidersHorizontal size={14} /> Meloflow AI Studio
+                    </h2>
                 </div>
 
-                {/* Navigation Menu Links */}
-                <nav className="p-3 space-y-1">
+                {/* Navigation Menu */}
+                <nav className="p-3 space-y-1 border-b border-zinc-200/60">
                     <button
                         onClick={() => navigate("/ai-composer/text2melody")}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${currentPath.includes("text2melody")
-                                ? "bg-[var(--primary-color)] text-white shadow-md shadow-purple-600/20"
-                                : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${currentPath.includes("text2melody")
+                                ? "bg-zinc-900 text-white"
+                                : "hover:bg-zinc-200/50 text-zinc-500 hover:text-zinc-900"
                             }`}
                     >
-                        <Music size={18} className="shrink-0" />
+                        <Music size={15} className="shrink-0" />
                         <span>Text to Melody</span>
                     </button>
 
                     <button
                         onClick={() => navigate("/ai-composer/melody2chord")}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${currentPath.includes("melody2chord")
-                                ? "bg-[var(--primary-color)] text-white shadow-md shadow-purple-600/20"
-                                : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${currentPath.includes("melody2chord")
+                                ? "bg-zinc-900 text-white"
+                                : "hover:bg-zinc-200/50 text-zinc-500 hover:text-zinc-900"
                             }`}
                     >
-                        <RefreshCw size={18} className="shrink-0" />
+                        <RefreshCw size={15} className="shrink-0" />
                         <span>Melody to Chord</span>
                     </button>
-                </nav>
-            </div>
 
-            {/* Footer Sidebar */}
-            <div className="p-3 border-t border-border-subtle">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition">
-                    <Settings size={18} className="shrink-0" />
-                    <span>Cấu hình AI</span>
-                </button>
+                    <button
+                        onClick={() => navigate("/ai-composer/chord-generation")}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${currentPath.includes("chord-generation")
+                                ? "bg-zinc-900 text-white"
+                                : "hover:bg-zinc-200/50 text-zinc-500 hover:text-zinc-900"
+                            }`}
+                    >
+                        <Layers size={15} className="shrink-0" />
+                        <span>Chord Generating</span>
+                    </button>
+                </nav>
+
+                {/* Bottom Element tự lấp đầy */}
+                <div className="flex-1 overflow-y-auto p-4 bg-[#F5F5F3]/50">
+                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Workspace Info</p>
+                    <p className="text-xs text-zinc-500 font-medium leading-relaxed">Luồng tạo nhạc tự động đồng bộ theo thời gian thực.</p>
+                </div>
             </div>
         </div>
     );

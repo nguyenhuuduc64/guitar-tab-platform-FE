@@ -9,7 +9,7 @@ export const DefaultLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="min-h-screen flex flex-col bg-main-bg">
             <Navigation />
             <SubNavigation />
-            <div className="w-full max-w-[1200px] mx-auto p-4">{children}</div>
+            <div className="w-full mx-auto">{children}</div>
         </div>
     );
 };

@@ -21,7 +21,7 @@ const ButtonCustom = ({
   children,
 }: ButtonProps) => {
   const baseStyles =
-    "flex items-center justify-center gap-2 px-6 py-2.5 rounded-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm cursor-pointer";
+    "flex items-center justify-center gap-2 px-6 py-2.5 rounded-md font-semibold transition-all duration-200 active:scale-95 shadow-sm cursor-pointer";
 
   const variants = {
     primary:

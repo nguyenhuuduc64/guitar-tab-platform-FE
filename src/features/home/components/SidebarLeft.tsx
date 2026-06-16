@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User2, Guitar, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { User2, Guitar, X, Compass, FileText, Gift, Plus, Activity } from "lucide-react";
 
 import ButtonCustom from "../../../components/ui/ButtonCustom";
 import { fetchUser } from "../../../utils/user";
@@ -7,9 +7,8 @@ import { fetchUser } from "../../../utils/user";
 export const SidebarLeft = () => {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
-    // Popup tuner
     const [openTuner, setOpenTuner] = useState(false);
+    const [openMetronome, setOpenMetronome] = useState(false);
 
     useEffect(() => {
         const getUserData = async () => {
@@ -22,166 +21,141 @@ export const SidebarLeft = () => {
                 setLoading(false);
             }
         };
-
         getUserData();
     }, []);
 
     if (loading) {
-        return <div className="p-4 opacity-50">Đang tải...</div>;
+        return <div className="p-6 text-sm text-gray-500">Đang tải...</div>;
     }
 
     return (
         <>
-            <div className="flex flex-col gap-6">
-                {/* Profile Card */}
-                <div className="bg-white border border-border-subtle rounded-sm p-4">
-                    <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.25em] mb-4">
-                        Cá nhân
-                    </p>
+            <div className="w-64 bg-white dark:bg-slate-900 flex flex-col font-sans border-r border-gray-200 dark:border-slate-800 fixed"
+                style={{
+                    top: 'calc(var(--header-height) + 34px)',
+                    height: 'calc(100vh - var(--header-height) - 34px)'
+                }}>
 
-                    <div className="flex items-center gap-4 group cursor-pointer">
-                        <div className="h-12 w-12 border border-border-subtle rounded flex items-center justify-center bg-gray-50">
-                            <User2
-                                size={24}
-                                strokeWidth={1.5}
-                                className="opacity-40"
-                            />
-                        </div>
-
-                        <div className="overflow-hidden">
-                            <p className="text-sm font-bold tracking-tight truncate">
+                <div className="p-4 border-b border-gray-100 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                        {user?.imageUrl ? (
+                            <img src={user.imageUrl} alt="Avatar" className="h-10 w-10 rounded-full object-cover" />
+                        ) : (
+                            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-slate-800 text-gray-500">
+                                <User2 size={20} />
+                            </div>
+                        )}
+                        <div className="overflow-hidden flex-1">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
                                 {user ? user.fullName : "Khách"}
                             </p>
-
-                            <p className="text-[11px] opacity-60 truncate">
-                                {user
-                                    ? user.roles.description
-                                    : "Vui lòng đăng nhập"}
+                            <p className="text-xs text-gray-500 truncate">
+                                {user ? user.roles.description : "Vui lòng đăng nhập"}
                             </p>
-
-                            <div className="flex gap-1.5 mt-1.5">
-                                {user?.roles.name === "recruiter" && (
-                                    <span className="flex items-center gap-1 text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold uppercase">
-                                        <ShieldCheck size={10} />
-                                        PRO
-                                    </span>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Action Button */}
-                <ButtonCustom variant="primary">Đăng bài hát</ButtonCustom>
+                <div className="p-4">
+                    <ButtonCustom variant="primary" className="w-full py-2 rounded-md font-medium text-sm tracking-wide uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        Đăng bài hát
+                    </ButtonCustom>
+                </div>
 
-                {/* Tools Card */}
-                <div className="bg-white border border-border-subtle rounded-sm p-4">
-                    <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.25em] mb-4">
-                        Công cụ
-                    </p>
-
-                    {/* Guitar Tuner Button */}
+                <div className="py-2 border-b border-gray-100 dark:border-slate-800">
                     <div
                         onClick={() => setOpenTuner(true)}
-                        className="flex items-center gap-3 px-3 py-3 text-[13px] bg-card-inner border border-border-subtle rounded-sm cursor-pointer hover:bg-main-bg transition-colors"
+                        className="flex items-center gap-4 px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                     >
-                        <Guitar
-                            size={16}
-                            strokeWidth={1.5}
-                            className="text-primary"
-                        />
-                        Guitar Tuner
+                        <Guitar size={18} className="text-gray-500" />
+                        <span>Guitar Tuner</span>
+                    </div>
+
+                    <div
+                        onClick={() => setOpenMetronome(true)}
+                        className="flex items-center gap-4 px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                    >
+                        <Activity size={18} className="text-gray-500" />
+                        <span>Máy đếm nhịp</span>
                     </div>
                 </div>
 
-                {/* Discover Card */}
-                <div className="bg-white border border-border-subtle rounded-sm overflow-hidden">
-                    <div className="px-4 py-3 border-b border-border-subtle">
-                        <p className="text-sm font-semibold">Khám phá thêm</p>
+                <div className="py-2 border-b border-gray-100 dark:border-slate-800">
+                    <div className="px-6 py-2 flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <span>Khám phá thêm</span>
+                        <Plus size={14} className="cursor-pointer hover:text-gray-600" />
                     </div>
-
                     {["Pick gảy đàn", "Dịch vụ hòa âm"].map((item) => (
                         <div
                             key={item}
-                            className="flex items-center justify-between px-4 py-3 text-sm cursor-pointer hover:bg-card-inner transition-colors group"
+                            className="flex items-center gap-4 px-6 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                         >
+                            <Compass size={18} className="text-gray-400" />
                             <span>{item}</span>
-
-                            <ChevronRight
-                                size={16}
-                                className="opacity-40 group-hover:opacity-100"
-                            />
                         </div>
                     ))}
                 </div>
 
-                {/* Related Posts */}
-                <div className="bg-white border border-border-subtle rounded-sm overflow-hidden mt-4">
-                    <div className="px-4 py-3 border-b border-border-subtle">
-                        <p className="text-sm font-semibold">
-                            Bài viết liên quan
-                        </p>
+                <div className="py-2 flex-1 overflow-y-auto">
+                    <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Bài viết nổi bật
                     </div>
-
                     {[
-                        {
-                            title: "Cách đệm hát guitar căn bản",
-                            slug: "cach-dem-hat-guitar-can-ban",
-                        },
-                        {
-                            title: "Cách chơi guitar cho người mới bắt đầu",
-                            slug: "cach-choi-guitar-cho-nguoi-moi-bat-dau",
-                        },
-                        {
-                            title: "Top 5 mẫu đàn guitar giá rẻ",
-                            slug: "top-5-mau-dan-guitar-gia-re",
-                        },
+                        { title: "Cách đệm hát guitar căn bản", slug: "cach-dem-hat-guitar-can-ban" },
+                        { title: "Cách chơi guitar cho mới bắt đầu", slug: "cach-choi-guitar-cho-nguoi-moi-bat-dau" },
+                        { title: "Top 5 mẫu đàn guitar giá rẻ", slug: "top-5-mau-dan-guitar-gia-re" },
                     ].map((post) => (
                         <div
                             key={post.slug}
-                            onClick={() =>
-                                (window.location.href = `/bai-viet/${post.slug}`)
-                            }
-                            className="flex items-center justify-between px-4 py-3 text-sm cursor-pointer hover:bg-card-inner transition-colors group"
+                            onClick={() => (window.location.href = `/bai-viet/${post.slug}`)}
+                            className="flex items-center gap-4 px-6 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                         >
-                            <span className="line-clamp-1">{post.title}</span>
-
-                            <ChevronRight
-                                size={16}
-                                className="opacity-40 group-hover:opacity-100 flex-shrink-0 ml-2"
-                            />
+                            <FileText size={18} className="text-gray-400 shrink-0" />
+                            <span className="truncate">{post.title}</span>
                         </div>
                     ))}
                 </div>
+
+                <div className="p-4 border-t border-gray-100 dark:border-slate-800 mt-auto">
+                    <div className="flex items-center gap-4 px-2 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 cursor-pointer">
+                        <Gift size={18} />
+                        <span>Nhận quà tặng</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Guitar Tuner Popup */}
             {openTuner && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="relative bg-white rounded-sm shadow-2xl overflow-hidden border border-gray-200">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                            <p className="text-sm font-semibold">
-                                Guitar Tuner
-                            </p>
-
-                            <button
-                                onClick={() => setOpenTuner(false)}
-                                className="p-1 rounded-sm hover:bg-gray-100 transition"
-                            >
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+                    <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl overflow-hidden border border-gray-200 dark:border-slate-800 w-[360px] animate-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50">
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Guitar Tuner</p>
+                            <button onClick={() => setOpenTuner(false)} className="p-1 rounded-md text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
                                 <X size={16} />
                             </button>
                         </div>
-
-                        {/* Iframe */}
                         <iframe
                             src="https://guitarapp.com/tuner.html?embed=true&theme=light"
                             allow="microphone"
                             title="GuitarApp Online Tuner"
-                            className="w-[360px] h-[520px]"
-                            style={{
-                                border: "none",
-                            }}
+                            className="w-full h-[520px] border-none"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {openMetronome && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+                    <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl overflow-hidden border border-gray-200 dark:border-slate-800 w-[360px] animate-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50">
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Máy đếm nhịp</p>
+                            <button onClick={() => setOpenMetronome(false)} className="p-1 rounded-md text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <iframe
+                            title="Metronome"
+                            src="https://guitarapp.com/metronome.html?embed=true"
+                            className="w-full h-[400px] border-none"
                         />
                     </div>
                 </div>

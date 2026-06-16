@@ -160,11 +160,11 @@ export const Navigation = () => {
                                 value={searchQuery || ""}
                                 onFocus={() => setShowSuggestions(true)}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-64 pl-10 rounded-full bg-white border-none text-black placeholder:text-black/50"
+                                className="w-64 pl-10 bg-white border-none text-black placeholder:text-black/50"
                             />
 
                             {showSuggestions && searchQuery.trim() !== "" && (
-                                <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 py-2">
+                                <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-800  shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 py-2">
                                     {isSearching ? (
                                         <div className="px-4 py-2 text-sm text-gray-500 text-center">
                                             Đang tìm kiếm...

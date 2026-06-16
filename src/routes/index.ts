@@ -28,7 +28,6 @@ export const publicRoutes: RouteConfig[] = [
     { path: "/nghe-sy/:id", component: ArtistDetailPage },
     { path: "/bai-viet/:slug", component: PostDetailPage },
     { path: "/playlist", component: PlaylistPage },
-    { path: "/ai", component: AIPage },
     { path: "/community", component: CommunityPage }
 ];
 
@@ -37,6 +36,7 @@ export const privateRoutes: RouteConfig[] = [
     { path: "/trang-ca-nhan", component: Profile },
     { path: "/ai-composer/text2melody", component: AIPage },
     { path: "/ai-composer/melody2chord", component: AIPage },
+    { path: "/ai-composer/chord-generation", component: AIPage },
 ];
 
 export const adminRoutes: RouteConfig[] = [

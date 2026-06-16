@@ -1,10 +1,10 @@
 export interface User {
-    id: string; 
+    id: string;
     username: string;
     password?: string;
     fullName: string;
     email: string;
-    roles: Role; 
+    roles: Role;
     imageUrl?: string;
 }
 

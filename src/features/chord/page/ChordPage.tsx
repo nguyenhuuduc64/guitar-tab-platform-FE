@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Star, Plus, Music2, X } from "lucide-react";
+import { Star, Plus, Music2, X, Eye } from "lucide-react";
 import { getYoutubeEmbedUrl } from "../../../helper/youtube";
 import { getChordById } from "../../../services/chordService";
 import { getArtistById } from "../../../services/artistService";
@@ -8,15 +8,18 @@ import GuitarChordDiagram from "../../../components/chords/GuitarChordDiagram";
 import { getChordData } from "../../../constants/chords";
 import { getUserInfo } from "../../../utils/auth";
 import instance from "../../../config/axios";
+import type { Chord } from "../../../types/chord";
+import type { Artist } from "../../../types/artist";
+import type { User } from "../../../types/user";
 
 const ChordPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [chord, setChord] = useState<any>(null);
-    const [artist, setArtist] = useState<any>(null);
+    const [chord, setChord] = useState<Chord>(null);
+    const [artist, setArtist] = useState<Artist>(null);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User>(null);
     const [hoveredChord, setHoveredChord] = useState<string | null>(null);
     const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
@@ -28,12 +31,15 @@ const ChordPage = () => {
     const [newPlaylistName, setNewPlaylistName] = useState("");
     const [playlistLoading, setPlaylistLoading] = useState(false);
 
+    const [relatedChords, setRelatedChords] = useState<any[]>([]);
+    const [relatedLoading, setRelatedLoading] = useState(false);
+    const [relatedArtists, setRelatedArtists] = useState<Record<string, string>>({});
+
     const popupRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const scrollIntervalRef = useRef<any>(null);
     const countdownIntervalRef = useRef<any>(null);
 
-    // REF QUAN TRỌNG: Chống gọi trùng API gây Deadlock
     const viewCountedRef = useRef(false);
 
     const handleIncreaseView = async (
@@ -51,6 +57,8 @@ const ChordPage = () => {
         }
     };
 
+    // Bỏ hàm getArtistName cũ vì không thể gọi trực tiếp bất đồng bộ trong JSX
+
     useEffect(() => {
         const fetchData = async () => {
             if (!id) return;
@@ -66,7 +74,6 @@ const ChordPage = () => {
                 console.log("chord", chordData);
                 setChord(chordData);
 
-                // CHỈ GỌI TĂNG VIEW NẾU CHƯA GỌI TRONG LẦN MOUNT NÀY
                 if (!viewCountedRef.current) {
                     viewCountedRef.current = true;
                     await handleIncreaseView(id, userData?.id);
@@ -75,6 +82,24 @@ const ChordPage = () => {
                 if (chordData.artistId) {
                     const artistData = await getArtistById(chordData.artistId);
                     setArtist(artistData);
+                }
+
+                if (chordData.categoryName) {
+                    setRelatedLoading(true);
+                    try {
+                        const res = await instance.get("/chords/related", {
+                            params: {
+                                categoryName: chordData.categoryName,
+                                currentChordId: id
+                            }
+                        });
+                        console.log("related", res.data);
+                        setRelatedChords(res.data.result || []);
+                    } catch (err) {
+                        console.error("Lỗi tải bài hát liên quan:", err);
+                    } finally {
+                        setRelatedLoading(false);
+                    }
                 }
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
@@ -89,6 +114,36 @@ const ChordPage = () => {
             viewCountedRef.current = false;
         };
     }, [id]);
+
+    useEffect(() => {
+        const fetchArtistsForRelated = async () => {
+            if (relatedChords.length === 0) return;
+
+            const artistIds = Array.from(
+                new Set(relatedChords.map((c) => c.artistId).filter(Boolean))
+            );
+
+            const artistResults = await Promise.all(
+                artistIds.map(async (id) => {
+                    try {
+                        const res = await getArtistById(id);
+                        return { id, name: res ? res.name : "Chưa cập nhật" };
+                    } catch {
+                        return { id, name: "Chưa cập nhật" };
+                    }
+                })
+            );
+
+            const artistMap: Record<string, string> = {};
+            artistResults.forEach((item) => {
+                artistMap[item.id] = item.name;
+            });
+
+            setRelatedArtists(artistMap);
+        };
+
+        fetchArtistsForRelated();
+    }, [relatedChords]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -227,7 +282,7 @@ const ChordPage = () => {
     const currentChordData = hoveredChord ? getChordData(hoveredChord) : null;
 
     return (
-        <div className="h-[calc(100vh-64px)] p-4 bg-white">
+        <div className="h-[calc(100vh-64px)] p-4">
             <div className="flex flex-col md:flex-row gap-6 h-full">
                 <div
                     ref={scrollContainerRef}
@@ -250,12 +305,11 @@ const ChordPage = () => {
                                 </button>
                                 <button
                                     onClick={() => setAutoScroll(!autoScroll)}
-                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                                        autoScroll
-                                            ? "bg-green-500 text-white shadow"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${autoScroll
+                                        ? "bg-green-500 text-white shadow"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        }`}
+                                    premium-color>
                                     {autoScroll
                                         ? countdown > 0
                                             ? `Cuộn sau ${countdown}s`
@@ -302,22 +356,50 @@ const ChordPage = () => {
                     )}
                 </div>
 
-                <div className="w-full md:flex-[1] bg-white rounded-sm shadow-sm p-4 border border-gray-100">
+                <div className="w-full md:flex-[1] bg-white flex flex-col gap-4 overflow-y-auto">
                     {chord.youtubeUrl && (
-                        <div className="w-full h-1/2 md:flex-[1] bg-white shadow-sm border border-gray-100">
+                        <div className="w-full aspect-video bg-white  shrink-0 rounded-0">
                             <iframe
-                                className="w-full h-full rounded-xl"
+                                className="w-full h-full"
                                 src={getYoutubeEmbedUrl(chord.youtubeUrl)}
                                 title="YouTube video"
                                 allowFullScreen
                             />
                         </div>
                     )}
-                    <iframe
-                        title="Metronome"
-                        src="https://guitarapp.com/metronome.html?embed=true"
-                        className="w-full h-full rounded-xl"
-                    />
+
+                    <div className="flex-1 border-t border-gray-100 p-4">
+                        {relatedLoading ? (
+                            <div className="text-sm text-gray-400 py-2">Đang tải bài hát liên quan...</div>
+                        ) : relatedChords.length === 0 ? (
+                            <div className="text-sm text-gray-400 py-2">Không có bài hát cùng giai điệu</div>
+                        ) : (
+                            <div className="space-y-2">
+                                {relatedChords.map((item: Chord) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(`/song/${item.id}`)}
+                                        className="p-3 border border-gray- hover:bg-gray-50 cursor-pointer transition flex flex-col gap-1"
+                                    >
+                                        <div className="font-semibold text-gray-800 text-sm line-clamp-1">
+                                            {item.title}
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-xs text-gray-400 mt-0.5">
+                                            <div className="truncate max-w-[70%]">
+                                                {item.artistId ? (relatedArtists[item.artistId] || "Đang tải...") : "Chưa cập nhật"}
+                                            </div>
+
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <Eye size={12} />
+                                                <span>{item.views?.toLocaleString() || 0}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

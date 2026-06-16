@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import instance from "../../../config/axios";
+import { getArtistById } from "../../../services/artistService";
+
+const DEFAULT_AVATAR = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRIBQSoi6wS_GnK6B_rfWWgtKY5_UrFZFs9aV-FX8SpzEmuMM2rid8KGDvvurEb4z9mjPIaCkoKYfYoUkELLxUSnfvDSk9Lh9OCfDw2tyN&s=10";
 
 export const RankingRight = () => {
     const [songs, setSongs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [artistsMap, setArtistsMap] = useState<Record<string, { name: string; imageUrl: string }>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchTopSongs = async () => {
             try {
                 setLoading(true);
-                // Sửa endpoint thành /mostViews (hoặc đường dẫn chính xác của Controller)
                 const response = await instance.get("/chords/mostViews");
-
-                // Gán trực tiếp result từ ApiResponse
                 setSongs(response.data.result || []);
             } catch (err) {
                 console.error("Lỗi tải ranking:", err);
@@ -22,59 +23,116 @@ export const RankingRight = () => {
                 setLoading(false);
             }
         };
-
         fetchTopSongs();
     }, []);
 
-    return (
-        <div className="flex flex-col border-l border-border-subtle h-full bg-white">
-            <h3 className="font-bold text-white text-center bg-[var(--primary-color)] py-5 uppercase tracking-wider text-sm">
-                Xem nhiều nhất
-            </h3>
+    useEffect(() => {
+        const fetchArtistsInfo = async () => {
+            if (songs.length === 0) return;
 
-            <div className="flex flex-col divide-y divide-border-subtle/30 overflow-y-auto">
+            const artistIds = Array.from(
+                new Set(songs.map((s) => s.artistId).filter(Boolean))
+            );
+
+            const artistResults = await Promise.all(
+                artistIds.map(async (id) => {
+                    try {
+                        const res = await getArtistById(id);
+                        return {
+                            id,
+                            name: res?.name || "Chưa cập nhật",
+                            imageUrl: res?.imageUrl || ""
+                        };
+                    } catch {
+                        return { id, name: "Chưa cập nhật", imageUrl: "" };
+                    }
+                })
+            );
+
+            const newMap: Record<string, { name: string; imageUrl: string }> = {};
+            artistResults.forEach((item) => {
+                newMap[item.id] = { name: item.name, imageUrl: item.imageUrl };
+            });
+
+            setArtistsMap(newMap);
+        };
+
+        fetchArtistsInfo();
+    }, [songs]);
+
+    const getRankColor = (idx: number) => {
+        switch (idx) {
+            case 0: return "text-orange-600 font-extrabold";
+            case 1: return "text-amber-600 font-bold";
+            case 2: return "text-yellow-600 font-bold";
+            default: return "text-gray-800 font-semibold";
+        }
+    };
+
+    return (
+        <div className="flex flex-col bg-white border border-gray-100 overflow-hidden h-full">
+            <div className="px-5 py-5 border-b border-gray-100 flex items-center bg-white">
+                <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Xem nhiều nhất
+                </h3>
+            </div>
+
+            <div className="flex flex-col divide-y divide-gray-50 bg-white">
                 {loading ? (
-                    <div className="py-10 text-center text-xs text-gray-400">
+                    <div className="py-8 text-center text-xs text-gray-400">
                         Đang tải...
                     </div>
                 ) : songs.length === 0 ? (
-                    <div className="py-10 text-center text-xs text-gray-400">
+                    <div className="py-8 text-center text-xs text-gray-400">
                         Chưa có dữ liệu
                     </div>
                 ) : (
-                    songs.map((song, index) => (
-                        <div
-                            key={song.id}
-                            className="py-5 flex gap-5 group cursor-pointer hover:bg-gray-50 px-6 transition-all"
-                            onClick={() => navigate(`/song/${song.id}`)}
-                        >
-                            <span className="text-[12px] font-black text-gray-300 pt-0.5 group-hover:text-primary transition-colors italic">
-                                {(index + 1).toString().padStart(2, "0")}
-                            </span>
+                    songs.map((song, index) => {
+                        const artistInfo = song.artistId ? artistsMap[song.artistId] : null;
+                        const displayArtistName = artistInfo?.name || song.artistName || "Chưa cập nhật";
+                        const displayAvatar = artistInfo?.imageUrl || DEFAULT_AVATAR;
 
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-semibold text-main-fg group-hover:text-primary leading-tight transition-colors truncate">
-                                    {song.title}
-                                </p>
+                        return (
+                            <div
+                                key={song.id}
+                                className="py-3 px-5 flex items-center gap-4 group cursor-pointer hover:bg-gray-50/50 transition-all bg-white"
+                                onClick={() => navigate(`/song/${song.id}`)}
+                            >
+                                <span className="text-[13px] font-bold text-gray-500 w-6 h-6 flex items-center justify-center border border-gray-200 rounded-full shrink-0">
+                                    {index + 1}
+                                </span>
 
-                                <div className="flex items-center justify-between mt-2">
-                                    <p className="text-[10px] text-gray-500 truncate">
-                                        {song.artist?.name || "Chưa cập nhật"}
+                                <img
+                                    src={displayAvatar}
+                                    alt={displayArtistName}
+                                    className="w-12 h-12 rounded-sm object-cover border border-gray-100 shrink-0"
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                                    }}
+                                />
+
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-[14px] leading-tight transition-colors truncate group-hover:text-blue-600 ${getRankColor(index)}`}>
+                                        {song.title}
                                     </p>
-                                    <p className="text-[9px] text-primary/60 font-bold">
-                                        {song.views?.toLocaleString() || 0} VIEW
+                                    <p className="text-[12px] text-gray-400 truncate mt-0.5">
+                                        {displayArtistName}
                                     </p>
                                 </div>
+
+                                <div className="text-[12px] text-gray-500 font-medium shrink-0 text-right">
+                                    {song.views?.toLocaleString() || 0}
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
-            <div className="p-4 border-t border-border-subtle mt-auto">
+            <div className="p-3 bg-white border-t border-gray-100 text-center mt-auto">
                 <button
                     onClick={() => navigate("/discover")}
-                    className="w-full py-2 text-[11px] font-bold text-gray-400 hover:text-primary transition-colors uppercase tracking-widest"
+                    className="w-full py-2 text-[11px] font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest cursor-pointer"
                 >
                     Xem tất cả
                 </button>
