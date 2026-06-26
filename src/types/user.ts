@@ -4,8 +4,9 @@ export interface User {
     password?: string;
     fullName: string;
     email: string;
-    roles: Role;
+    roles?: Role;
     imageUrl?: string;
+    isFollowing?: boolean;
 }
 
 export interface Role {

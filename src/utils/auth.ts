@@ -1,8 +1,8 @@
 import instance from "../config/axios";
+import type { User } from "../types/user";
 export const getUserInfo = async () => {
     const res = await instance.get("/users/my-info");
-    console.log(res.data.result);
-    return res.data.result;
+    return res.data.result as User;
 };
 
 export const handleLogout = () => {

@@ -8,7 +8,7 @@ const AdminDefaultLayout = ({ children }: { children: React.ReactNode }) => {
     const [collapsed, setCollapsed] = useState(false);
 
     return (
-        <div className="h-screen flex bg-[#f5f7fb] overflow-hidden">
+        <div className="h-screen flex bg-[#f5f7fb] dark:bg-slate-950 overflow-hidden">
             <AdminSidebar
                 open={open}
                 setOpen={setOpen}
@@ -23,15 +23,15 @@ const AdminDefaultLayout = ({ children }: { children: React.ReactNode }) => {
                     ${collapsed ? "md:ml-[82px]" : "md:ml-[270px]"}
                 `}
             >
-                <div className="md:hidden h-14 flex items-center px-4 bg-white border-b border-slate-200 flex-shrink-0">
+                <div className="md:hidden h-14 flex items-center px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
                     <button
                         onClick={() => setOpen(true)}
-                        className="text-slate-700 text-xl"
+                        className="text-slate-700 dark:text-slate-300 text-xl cursor-pointer"
                     >
                         ☰
                     </button>
 
-                    <span className="ml-4 font-semibold text-slate-800">
+                    <span className="ml-4 font-semibold text-slate-800 dark:text-slate-200">
                         Dashboard
                     </span>
                 </div>

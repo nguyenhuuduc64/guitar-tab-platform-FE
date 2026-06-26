@@ -9,9 +9,10 @@ interface ConfigAudioModalProps {
     audioUrl: string;
     initialLyrics: string;
     onSaveSuccess: () => void;
+    isEdit?: boolean;
 }
 
-export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLyrics, onSaveSuccess }: ConfigAudioModalProps) {
+export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLyrics, onSaveSuccess, isEdit = false }: ConfigAudioModalProps) {
     const [title, setTitle] = useState("");
     const [lyrics, setLyrics] = useState(initialLyrics || "");
     const [isPublic, setIsPublic] = useState(false);
@@ -37,8 +38,36 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
             fetchCategories();
             fetchCollections();
             setLyrics(initialLyrics || "");
+
+            if (isEdit && chordId) {
+                const fetchChordDetails = async () => {
+                    try {
+                        const res = await instance.get(`/chords/${chordId}`);
+                        const chord = res.data?.result || res.data;
+                        if (chord) {
+                            setTitle(chord.title || "");
+                            setLyrics(chord.content || "");
+                            setIsPublic(chord.isPublic || false);
+                            setArtistQuery(chord.artistName || "");
+                            setArtistId(chord.artistId || "");
+                            setCategoryId(chord.categoryId || "");
+                            setCollectionId(chord.collectionId || "");
+                        }
+                    } catch (err) {
+                        console.error("Lỗi khi tải chi tiết hợp âm:", err);
+                    }
+                };
+                fetchChordDetails();
+            } else {
+                setTitle("");
+                setIsPublic(false);
+                setArtistQuery("");
+                setArtistId("");
+                setCategoryId("");
+                setCollectionId("");
+            }
         }
-    }, [isOpen, initialLyrics]);
+    }, [isOpen, initialLyrics, isEdit, chordId]);
 
     // Tìm kiếm Nghệ sĩ bằng Debounce
     useEffect(() => {
@@ -84,29 +113,42 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
     const handleSaveConfig = async () => {
         try {
             setIsSaving(true);
-            const chordResponse = await instance.post("/chords", {
-                title: title || "AI Music Track",
-                content: lyrics,
-                isPublic: isPublic,
-                artistName: artistQuery.trim() || "AI",
-                artistId: artistId || null,
-                categoryId: categoryId || null,
-                collectionId: collectionId || null
-            });
+            if (isEdit) {
+                // EDIT MODE: Call PUT /chords/:id
+                await instance.put(`/chords/${chordId}`, {
+                    title: title || "AI Music Track",
+                    content: lyrics,
+                    isPublic: isPublic,
+                    artistName: artistQuery.trim() || "AI",
+                    artistId: artistId || null,
+                    categoryId: categoryId || null,
+                    collectionId: collectionId || null
+                });
+            } else {
+                // CREATE MODE: Call POST /chords and then POST /audios
+                const chordResponse = await instance.post("/chords", {
+                    title: title || "AI Music Track",
+                    content: lyrics,
+                    isPublic: isPublic,
+                    artistName: artistQuery.trim() || "AI",
+                    artistId: artistId || null,
+                    categoryId: categoryId || null,
+                    collectionId: collectionId || null
+                });
 
-            if (chordResponse.data) {
-                console.log("Save chord success", chordResponse.data)
-            }
+                if (chordResponse.data) {
+                    console.log("Save chord success", chordResponse.data);
+                }
 
+                // BƯỚC 2: Lưu Audio với đúng 2 trường nguyên bản (url, chordId)
+                const audioResponse = await instance.post("/audios", {
+                    url: audioUrl,
+                    chordId: chordResponse.data?.result?.id,
+                });
 
-            // BƯỚC 2: Lưu Audio với đúng 2 trường nguyên bản (url, chordId)
-            const audioResponse = await instance.post("/audios", {
-                url: audioUrl,
-                chordId: chordResponse.data?.result?.id,
-            })
-
-            if (audioResponse.data) {
-                console.log("Save audio success", audioResponse.data)
+                if (audioResponse.data) {
+                    console.log("Save audio success", audioResponse.data);
+                }
             }
 
             onSaveSuccess();
@@ -126,7 +168,7 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-zinc-100">
                     <h3 className="text-xs font-bold text-zinc-800 uppercase tracking-wider flex items-center gap-2">
-                        <Settings size={15} /> Cấu hình lưu trữ và phân loại nhạc
+                        <Settings size={15} /> {isEdit ? "Chỉnh sửa cấu hình phân loại nhạc" : "Cấu hình lưu trữ và phân loại nhạc"}
                     </h3>
                     <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 cursor-pointer">
                         <X size={18} />
@@ -219,7 +261,7 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-zinc-100 cursor-pointer">Hủy</button>
                     <button onClick={handleSaveConfig} disabled={isSaving} className="flex-1 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer disabled:bg-zinc-400">
                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Lưu vào thư viện
+                        {isEdit ? "Cập nhật thay đổi" : "Lưu vào thư viện"}
                     </button>
                 </div>
 

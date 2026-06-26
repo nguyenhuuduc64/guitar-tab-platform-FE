@@ -32,9 +32,9 @@ export default function AdminSidebar({
 
             <aside
                 className={cn(
-                    "fixed top-0 left-0 h-screen bg-white z-[1001]",
+                    "fixed top-0 left-0 h-screen bg-white dark:bg-slate-900 z-[1001]",
                     "transition-all duration-300 ease-in-out",
-                    "border-r border-slate-200 shadow-sm",
+                    "border-r border-slate-200 dark:border-slate-800 shadow-sm",
                     collapsed ? "w-[82px]" : "w-[270px]",
                     open ? "translate-x-0" : "-translate-x-full",
                     "md:translate-x-0",
@@ -63,7 +63,7 @@ export default function AdminSidebar({
                     {!collapsed && (
                         <button
                             onClick={() => setCollapsed(true)}
-                            className="hidden md:flex text-white/90 hover:text-white transition"
+                            className="hidden md:flex text-white/90 hover:text-white transition cursor-pointer"
                         >
                             <PanelLeftClose size={18} />
                         </button>
@@ -72,7 +72,7 @@ export default function AdminSidebar({
                     {collapsed && (
                         <button
                             onClick={() => setCollapsed(false)}
-                            className="hidden md:flex absolute top-6 right-3 text-white/90 hover:text-white transition"
+                            className="hidden md:flex absolute top-6 right-3 text-white/90 hover:text-white transition cursor-pointer"
                         >
                             <PanelLeftOpen size={18} />
                         </button>
@@ -80,7 +80,7 @@ export default function AdminSidebar({
 
                     <button
                         onClick={() => setOpen(false)}
-                        className="md:hidden text-white"
+                        className="md:hidden text-white cursor-pointer"
                     >
                         <PanelLeftClose size={18} />
                     </button>
@@ -88,7 +88,7 @@ export default function AdminSidebar({
 
                 <div className="px-5 pt-6 pb-3">
                     {!collapsed && (
-                        <p className="text-[11px] font-semibold tracking-[1.5px] uppercase text-slate-400">
+                        <p className="text-[11px] font-semibold tracking-[1.5px] uppercase text-slate-400 dark:text-slate-500">
                             Navigation
                         </p>
                     )}
@@ -115,7 +115,7 @@ export default function AdminSidebar({
                                         : "gap-3 px-4 py-3",
                                     isActive
                                         ? "bg-[var(--secondary-color)] text-[var(--primary-color)]"
-                                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
+                                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-800 dark:hover:text-slate-200",
                                 )}
                             >
                                 {isActive && (
@@ -127,7 +127,7 @@ export default function AdminSidebar({
                                     className={cn(
                                         isActive
                                             ? "text-[var(--primary-color)]"
-                                            : "text-slate-500",
+                                            : "text-slate-500 dark:text-slate-400",
                                         collapsed
                                             ? "text-[var(--primary-color)]"
                                             : "",

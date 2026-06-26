@@ -2,7 +2,6 @@ import { useLocation } from "react-router-dom";
 import AiSidebar from "../../../components/common/AiSidebar";
 import TextToChord from "../components/TextToChord";
 import ChordToMelody from "../components/ChordToMelody";
-import ChordGeneration from "../components/ChordGeneration";
 export default function AIPage() {
     const location = useLocation();
 
@@ -13,17 +12,14 @@ export default function AIPage() {
         if (location.pathname.includes("/ai-composer/melody2chord")) {
             return <ChordToMelody />;
         }
-        if (location.pathname.includes("/ai-composer/chord-generation")) {
-            return <ChordGeneration />;
-        }
+
         return null;
     };
 
     return (
-        <div className="relative left-1/2 right-1/2 -ml-[50vw] mr-[50vw] w-screen min-h-screen bg-gray-50 flex">
-            <AiSidebar />
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] mr-[50vw] w-screen h-[calc(100vh-var(--header-height)-var(--subnav-height))] bg-gray-50 dark:bg-zinc-950 flex overflow-hidden">
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-hidden">
                 {renderChildComponent()}
             </div>
         </div>

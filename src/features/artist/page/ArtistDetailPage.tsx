@@ -1,23 +1,66 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getArtistById } from "../../../services/artistService";
+import { useParams, useNavigate } from "react-router-dom";
+import { getArtistById, fetchArtists } from "../../../services/artistService";
 import instance from "../../../config/axios";
+import { SidebarLeft } from "../../home/components/SidebarLeft";
+import { getYoutubeThumbnailUrl } from "../../../helper/youtube";
+import { Play, Music, ChevronRight } from "lucide-react";
+import { ArtistSlider } from "../../../components/common/ArtistSlider";
 
 function ArtistDetailPage() {
     const { id } = useParams();
+    const navigate = useNavigate();
 
-    const [artist, setArtist] = useState(null);
-    const [songs, setSongs] = useState([]);
+    const [artist, setArtist] = useState<any>(null);
+    const [songs, setSongs] = useState<any[]>([]);
+    const [similarArtists, setSimilarArtists] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                setLoading(true);
+                // 1. Fetch artist details
                 const artistData = await getArtistById(id);
                 setArtist(artistData);
 
+                // 2. Fetch songs of this artist
                 const songRes = await instance.get(`/chords/artist/${id}`);
-                setSongs(songRes?.data?.result || []);
+                const artistSongs = songRes?.data?.result || [];
+                setSongs(artistSongs);
+
+                // 3. Fetch similar artists based on genre categories
+                try {
+                    const allArtists = await fetchArtists() || [];
+                    const chordsRes = await instance.get("/chords?size=150");
+                    const allChords = chordsRes.data?.result?.data || [];
+
+                    const currentCategoryIds = new Set(
+                        artistSongs.map((song: any) => song.categoryId).filter(Boolean)
+                    );
+
+                    const matchingChords = allChords.filter(
+                        (chord: any) =>
+                            chord.artistId !== id &&
+                            currentCategoryIds.has(chord.categoryId)
+                    );
+
+                    const matchingArtistIds = new Set(
+                        matchingChords.map((chord: any) => chord.artistId).filter(Boolean)
+                    );
+
+                    let recommended = allArtists.filter(
+                        (a: any) => a.id !== id && matchingArtistIds.has(a.id)
+                    );
+
+                    if (recommended.length === 0) {
+                        recommended = allArtists.filter((a: any) => a.id !== id).slice(0, 6);
+                    }
+
+                    setSimilarArtists(recommended);
+                } catch (recErr) {
+                    console.error("Failed to load recommendations:", recErr);
+                }
             } catch (err) {
                 console.error(err);
                 setSongs([]);
@@ -29,78 +72,169 @@ function ArtistDetailPage() {
         fetchData();
     }, [id]);
 
-    if (loading) return <div className="p-10">Loading...</div>;
+
+    const getMockDuration = (songId: string): string => {
+        let sum = 0;
+        for (let i = 0; i < songId.length; i++) {
+            sum += songId.charCodeAt(i);
+        }
+        const minutes = 3 + (sum % 3);
+        const seconds = sum % 60;
+        const secondsStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
+        return `0${minutes}:${secondsStr}`;
+    };
+
+    const totalViews = songs.reduce((sum, song) => sum + (song.views || 0), 0);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <div className="text-center space-y-3">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Đang tải trang cá nhân nghệ sĩ...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-6xl mx-auto grid grid-cols-12 gap-6 items-start">
-                {/* LEFT - ARTIST */}
-                <div className="col-span-4 bg-white rounded-md shadow-sm p-6">
-                    <div className="flex flex-col items-center text-center">
-                        {/* AVATAR */}
-                        <div className="w-32 h-32 mb-4">
+        <div className="w-full mx-auto animate-in fade-in duration-500 min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans">
+            {/* LEFT SIDEBAR */}
+            <aside className="w-64 shrink-0 hidden lg:block z-30">
+                <SidebarLeft />
+            </aside>
+
+            {/* MAIN CONTENT AREA */}
+            <main className="flex-1  flex flex-col gap-8 min-w-0 overflow-y-auto max-h-[calc(100vh-var(--header-height)-32px)]">
+                {/* Banner Section */}
+                <div className="relative overflow-hidden bg-artist-banner-bg p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 border border-slate-200/50 dark:border-slate-800/50 shadow-sm shrink-0">
+                    {/* Circular Avatar (No Border) */}
+                    <div className="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden shadow-md shrink-0 bg-slate-100 dark:bg-slate-800 relative">
+                        {artist?.imageUrl ? (
                             <img
-                                src={
-                                    artist?.imageUrl ||
-                                    "https://via.placeholder.com/150"
-                                }
-                                className="w-full h-full rounded-full object-cover border"
+                                src={artist.imageUrl}
+                                alt={artist.name}
+                                className="w-full h-full object-cover"
                             />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-violet-100 dark:from-slate-800 dark:to-slate-900">
+                                <Music className="w-12 h-12 text-indigo-300 dark:text-slate-600" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex-1 text-center md:text-left space-y-4">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4 justify-center md:justify-start">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-850 dark:text-white tracking-tight">
+                                {artist?.name}
+                            </h1>
+                            <button
+                                className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md mx-auto md:mx-0 shrink-0 cursor-pointer border-none"
+                                onClick={() => {
+                                    if (songs.length > 0) {
+                                        navigate(`/song/${songs[0].id}`);
+                                    }
+                                }}
+                            >
+                                <Play size={16} fill="currentColor" className="ml-0.5" />
+                            </button>
                         </div>
 
-                        {/* NAME */}
-                        <h2 className="text-xl font-semibold text-gray-800">
-                            {artist?.name}
-                        </h2>
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-bold text-slate-600 dark:text-slate-350">
+                            <span>{totalViews.toLocaleString("vi-VN")} người quan tâm</span>
+                        </div>
 
-                        {/* DESCRIPTION */}
-                        <p className="text-gray-500 text-xs mt-3 leading-relaxed whitespace-pre-line text-justify">
-                            {artist?.description}
+                        <p className="text-xs sm:text-sm text-slate-550 dark:text-slate-400 max-w-3xl leading-relaxed text-justify line-clamp-3 hover:line-clamp-none transition-all duration-300 cursor-pointer">
+                            {artist?.description || "Nghệ sĩ này hiện chưa cập nhật tiểu sử chi tiết. Hãy tiếp tục theo dõi để cập nhật các tác phẩm mới nhất của họ."}
                         </p>
                     </div>
                 </div>
 
-                {/* RIGHT - SONG LIST */}
-                <div className="col-span-8 bg-white rounded-md shadow-sm p-6">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                        Danh sách bài hát
-                    </h3>
+                {/* Popular Songs Section */}
+                <div className="space-y-4 shrink-0 p-4 md:p-8">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
+                            Bài Hát Nổi Bật
+                        </h2>
+                    </div>
 
-                    <div className="space-y-2">
-                        {songs.length === 0 && (
-                            <p className="text-gray-400 text-sm">
-                                Chưa có bài hát
-                            </p>
-                        )}
+                    {songs.length === 0 ? (
+                        <div className="py-16 text-center bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <Music className="w-10 h-10 text-slate-350 dark:text-slate-700 mx-auto mb-3" />
+                            <p className="text-sm font-medium text-slate-400 dark:text-slate-500">Nghệ sĩ chưa có bài hát nào được đăng tải</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                            {songs.map((song, index) => (
+                                <div
+                                    key={song.id}
+                                    onClick={() => navigate(`/song/${song.id}`)}
+                                    className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-900/60 transition-all duration-200 cursor-pointer group border border-transparent hover:border-slate-200/40 dark:hover:border-slate-800/40"
+                                >
+                                    <div className="flex items-center min-w-0 flex-1">
+                                        <span className="text-xs font-semibold text-slate-450 dark:text-slate-650 w-6 shrink-0">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </span>
 
-                        {songs.map((song, index) => (
-                            <div
-                                key={song.id}
-                                className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 transition"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <span className="text-gray-400 text-sm w-5">
-                                        {index + 1}
-                                    </span>
+                                        <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 shrink-0 relative bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
+                                            {getYoutubeThumbnailUrl(song.youtubeUrl) ? (
+                                                <img
+                                                    src={getYoutubeThumbnailUrl(song.youtubeUrl)}
+                                                    alt={song.title}
+                                                    className="w-full h-full object-cover transition-transform duration-350 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=150";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-violet-100 dark:from-slate-800 dark:to-slate-900">
+                                                    <Music className="w-5 h-5 text-indigo-300 dark:text-slate-600" />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                <Play size={14} className="text-white fill-white" />
+                                            </div>
+                                        </div>
 
-                                    <div>
-                                        <p className="font-medium text-gray-800 text-sm">
-                                            {song.title}
-                                        </p>
-                                        <p className="text-xs text-gray-400">
-                                            {artist?.name}
-                                        </p>
+                                        <div className="min-w-0 flex-1 pr-4">
+                                            <h3 className="font-bold text-slate-850 dark:text-slate-250 text-sm truncate group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors">
+                                                {song.title}
+                                            </h3>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
+                                                {artist?.name}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center shrink-0">
+                                        <span className="text-xs text-slate-450 dark:text-slate-500 font-medium group-hover:hidden transition-all">
+                                            {getMockDuration(song.id)}
+                                        </span>
+
+                                        <div className="hidden group-hover:flex items-center transition-all">
+                                            <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-0.5">
+                                                Hợp âm <ChevronRight size={14} />
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <button className="text-blue-500 text-xs hover:underline">
-                                    Xem hợp âm
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            </div>
+
+                {/* Similar Artists Section */}
+                <div className="shrink-0 p-4 md:p-8 border-t border-slate-200/50 dark:border-slate-800/55 pt-6">
+                    <ArtistSlider
+                        title="Nghệ sĩ tương tự"
+                        artists={similarArtists}
+                        emptyText="Chưa tìm thấy nghệ sĩ nào có thể loại nhạc tương tự"
+                        useMusicIcon={true}
+                        hasBorder={false}
+                        roundedEmptyCard={true}
+                    />
+                </div>
+            </main>
         </div>
     );
 }

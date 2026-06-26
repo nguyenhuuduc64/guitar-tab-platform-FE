@@ -6,10 +6,10 @@ import SubNavigation from "./SubNavigation";
 
 export const DefaultLayout = ({ children }: { children: React.ReactNode }) => {
     return (
-        <div className="min-h-screen flex flex-col bg-main-bg">
+        <div className=" flex flex-col min-h-screen">
             <Navigation />
             <SubNavigation />
-            <div className="w-full mx-auto">{children}</div>
+            <div className="w-full mx-auto absolute top-[calc(var(--header-height)+32px)] ">{children}</div>
         </div>
     );
 };

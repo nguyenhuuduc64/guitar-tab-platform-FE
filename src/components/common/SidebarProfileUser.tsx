@@ -42,16 +42,16 @@ export function SidebarProfileUser({ userId }: SidebarProfileUserProps) {
 
     if (loading) {
         return (
-            <div className="w-full flex items-center justify-center py-10 bg-white text-gray-400">
+            <div className="w-full flex items-center justify-center py-10 bg-white dark:bg-slate-900 text-gray-400">
                 <Loader2 className="w-5 h-5 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="w-full bg-white text-gray-700 flex flex-col items-center px-6 py-8 font-sans border-r border-gray-100 min-h-screen">
+        <div className="w-full bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-350 flex flex-col items-center px-6 py-8 font-sans border-r border-gray-100 dark:border-slate-800/60 min-h-screen">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-100 shadow-sm mb-4">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-100 dark:border-slate-800 shadow-sm mb-4">
                 <img
                     src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=cover"}
                     alt={user?.fullName || "User Avatar"}
@@ -60,10 +60,10 @@ export function SidebarProfileUser({ userId }: SidebarProfileUserProps) {
             </div>
 
             {/* Name & Followers */}
-            <h2 className="text-lg font-bold text-gray-900 tracking-wide mb-1">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-wide mb-1">
                 {user?.fullName || "Lex Cho"}
             </h2>
-            <p className="text-xs text-gray-400 mb-6">
+            <p className="text-xs text-gray-400 dark:text-slate-500 mb-6">
                 922 Followers
             </p>
 
@@ -74,55 +74,55 @@ export function SidebarProfileUser({ userId }: SidebarProfileUserProps) {
                         <button
                             onClick={handleFollowToggle}
                             className={`w-full py-2 rounded-full text-xs font-semibold tracking-wider transition-all border ${isFollowing
-                                ? "bg-transparent border-gray-200 text-gray-600 hover:bg-gray-50"
-                                : "bg-gray-900 border-gray-900 text-white hover:bg-gray-800"
+                                ? "bg-transparent border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/40"
+                                : "bg-gray-900 dark:bg-slate-200 border-gray-900 dark:border-slate-250 text-white dark:text-slate-900 hover:bg-gray-800 dark:hover:bg-slate-100"
                                 }`}
                         >
                             {isFollowing ? "Following" : "Follow"}
                         </button>
-                        <button className="w-full py-2 bg-transparent border border-gray-200 hover:border-gray-300 text-gray-700 rounded-full text-xs font-semibold tracking-wider transition-colors">
+                        <button className="w-full py-2 bg-transparent border border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700 text-gray-700 dark:text-slate-350 rounded-full text-xs font-semibold tracking-wider transition-colors">
                             Message
                         </button>
                     </>
                 ) : (
-                    <div className="text-center text-xs text-gray-400 italic border border-dashed border-gray-200 py-2 rounded">
+                    <div className="text-center text-xs text-gray-400 dark:text-slate-500 italic border border-dashed border-gray-200 dark:border-slate-800 py-2 rounded">
                         Your Profile Space
                     </div>
                 )}
             </div>
 
             {/* Bio Description */}
-            <p className="text-xs text-gray-500 text-center leading-relaxed max-w-[180px] mb-6">
+            <p className="text-xs text-gray-500 dark:text-slate-400 text-center leading-relaxed max-w-[180px] mb-6">
                 I make occasional beats when I'm bored
             </p>
 
             {/* Social Icons */}
-            <div className="flex items-center gap-4 text-gray-400 mb-8">
-                <a href="#" className="hover:text-gray-900 transition-colors"><Globe size={16} /></a>
-                <a href="#" className="hover:text-gray-900 transition-colors"><Share2 size={16} /></a>
-                <a href="#" className="hover:text-gray-900 transition-colors"><Link2 size={16} /></a>
+            <div className="flex items-center gap-4 text-gray-400 dark:text-slate-500 mb-8">
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors"><Globe size={16} /></a>
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors"><Share2 size={16} /></a>
+                <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors"><Link2 size={16} /></a>
             </div>
 
             {/* Stats Block */}
-            <div className="w-full border-t border-gray-100 pt-6 space-y-3">
-                <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-6 space-y-3">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Songs</span>
-                    <span className="font-semibold text-gray-900">16</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">16</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Albums</span>
-                    <span className="font-semibold text-gray-900">2</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">2</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Playlists</span>
-                    <span className="font-semibold text-gray-900">5</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">5</span>
                 </div>
             </div>
 
             {/* Genres Block */}
-            <div className="w-full border-t border-gray-100 pt-6 mt-6">
-                <h4 className="text-xs font-semibold text-gray-400 tracking-wider uppercase mb-3">Genres</h4>
-                <p className="text-xs text-gray-500 leading-relaxed">
+            <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-6 mt-6">
+                <h4 className="text-xs font-semibold text-gray-400 dark:text-slate-500 tracking-wider uppercase mb-3">Genres</h4>
+                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                     Ambient, Breakbeat, Experimental, Lo-fi, Minimal Techno
                 </p>
             </div>

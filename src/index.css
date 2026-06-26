@@ -10,7 +10,99 @@
     --color-main-fg: var(--main-fg);
     --color-border-subtle: var(--border-subtle);
     --color-card-inner: var(--card-inner);
+    --color-artist-banner-bg: var(--artist-banner-bg);
+    --color-card-bg: var(--card-bg);
+    --color-bg-gray: var(--bg-gray);
 }
+
+/*cấu hình thanh scroll*/
+/* ===== Scrollbar Styles ===== */
+/* Width */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Handle on active */
+::-webkit-scrollbar-thumb:active {
+    background: #6b7280;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+}
+
+/* ===== Smooth Scrolling ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===== Custom Scrollbar for Dark Mode ===== */
+.dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+    background: #9ca3af;
+}
+
+.dark * {
+    scrollbar-color: #4b5563 transparent;
+}
+
+/* ===== Hide scrollbar but still scroll (optional) ===== */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ===== Custom scrollbar for specific containers ===== */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c4b5fd;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #8b5cf6;
+}
+
 
 :root {
     --main-bg: #f5f5f5;
@@ -22,12 +114,16 @@
     --card-inner: #fafafa;
     /* inner nhẹ hơn nền */
     --sidebar-user-width: 256px;
+    --subnav-height: 34px;
+    --ranking-right-width: 400px;
     --border-subtle: #e5e5e5;
     --primary-color: #097fc3;
     --button-color: #097fc3;
     --secondary-color: #d0dde4;
     --click-color: #5fdcc1;
     --header-height: 64px;
+    --bg-gray: rgb(250, 248, 248);
+    --artist-banner-bg: #e0f2fe;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -99,6 +195,12 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --artist-banner-bg: #0b1329;
+    --card-bg: #121212;
+    --bg-gray: #0e0e0e;
+    --primary-color: #38bdf8;
+    --button-color: #0284c7;
+    --secondary-color: #0c4a6e;
 }
 
 @layer base {
@@ -156,4 +258,126 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+.dark {
+
+    /* Admin and Dashboard Theme Overrides */
+    div.bg-\[\#F8F9FC\],
+    div.bg-\[\#f5f7fb\] {
+        background-color: #090d16 !important;
+        /* dark slate/zinc-950 */
+    }
+
+    div.bg-white,
+    form.bg-white,
+    header.bg-white,
+    aside.bg-white,
+    div.bg-white {
+        background-color: #0f172a !important;
+        /* slate-900 */
+    }
+
+    div.bg-gray-50,
+    div.bg-slate-50,
+    tr.bg-slate-50,
+    thead.bg-slate-50,
+    div.bg-slate-50\/60,
+    thead.bg-slate-50\/60 {
+        background-color: #1e293b !important;
+        /* slate-800 */
+    }
+
+    .hover\:bg-gray-50:hover,
+    .hover\:bg-slate-50:hover,
+    div.hover\:bg-gray-50:hover,
+    tr.hover\:bg-gray-50:hover,
+    div.hover\:bg-slate-800\/40:hover {
+        background-color: #1e293b !important;
+        /* slate-800 */
+    }
+
+    .border,
+    .border-gray-50,
+    .border-gray-100,
+    .border-gray-200,
+    .border-gray-300,
+    .border-slate-50,
+    .border-slate-100,
+    .border-slate-200,
+    .border-border,
+    div.border {
+        border-color: #334155 !important;
+        /* slate-700 */
+    }
+
+    .text-slate-900,
+    .text-gray-900,
+    h1,
+    h2,
+    h3,
+    div.text-slate-900,
+    div.text-gray-900 {
+        color: #f8fafc !important;
+        /* slate-50 */
+    }
+
+    .text-slate-800,
+    .text-gray-800,
+    span.text-slate-800,
+    span.text-gray-800,
+    p.text-gray-800,
+    p.text-slate-800 {
+        color: #f1f5f9 !important;
+        /* slate-100 */
+    }
+
+    .text-slate-700,
+    .text-gray-700 {
+        color: #e2e8f0 !important;
+        /* slate-200 */
+    }
+
+    .text-slate-600,
+    .text-gray-600 {
+        color: #cbd5e1 !important;
+        /* slate-300 */
+    }
+
+    .text-slate-500,
+    .text-gray-500,
+    p.text-slate-500,
+    p.text-gray-500 {
+        color: #94a3b8 !important;
+        /* slate-400 */
+    }
+
+    .text-slate-400,
+    .text-gray-400,
+    span.text-gray-400,
+    p.text-gray-400 {
+        color: #64748b !important;
+        /* slate-500 */
+    }
+
+    /* Translucent badges for dark mode */
+    .bg-red-50 {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #fca5a5 !important;
+    }
+
+    .bg-orange-50 {
+        background-color: rgba(249, 115, 22, 0.2) !important;
+        color: #fdbb2d !important;
+    }
+
+    .bg-blue-50 {
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        color: #93c5fd !important;
+    }
+
+    .bg-purple-50 {
+        background-color: rgba(168, 85, 247, 0.2) !important;
+        color: #d8b4fe !important;
+    }
 }

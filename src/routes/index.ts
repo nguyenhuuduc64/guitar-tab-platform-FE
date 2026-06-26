@@ -14,6 +14,9 @@ import ManagementRequestPage from "../features/mângement/page/ManagementRequest
 import AIPage from "../features/AI/page/AIPage";
 import TextToChord from "../features/AI/components/TextToChord";
 import CommunityPage from "../features/community/page/CommunityPage";
+import UserManagement from "../features/mângement/page/UserManagement";
+import CollectionManagement from "../features/mângement/page/CollectionManagement";
+import MusicPage from "../features/music/page/MusicPage";
 interface RouteConfig {
     path: string;
     component: React.ComponentType;
@@ -28,7 +31,9 @@ export const publicRoutes: RouteConfig[] = [
     { path: "/nghe-sy/:id", component: ArtistDetailPage },
     { path: "/bai-viet/:slug", component: PostDetailPage },
     { path: "/playlist", component: PlaylistPage },
-    { path: "/community", component: CommunityPage }
+    { path: "/community", component: CommunityPage },
+    { path: "/bai-hat", component: MusicPage },
+
 ];
 
 export const privateRoutes: RouteConfig[] = [
@@ -36,16 +41,15 @@ export const privateRoutes: RouteConfig[] = [
     { path: "/trang-ca-nhan", component: Profile },
     { path: "/ai-composer/text2melody", component: AIPage },
     { path: "/ai-composer/melody2chord", component: AIPage },
-    { path: "/ai-composer/chord-generation", component: AIPage },
 ];
 
 export const adminRoutes: RouteConfig[] = [
     { path: "/admin/bang-dieu-khien", component: DashBoard },
     { path: "/admin/yeu-cau-duyet", component: ManagementRequestPage },
     { path: "/admin/bang-tinh", component: UpLoadChordPage },
-    { path: "/admin/ma-giam-gia", component: UpLoadChordPage },
+    { path: "/admin/nguoi-dung", component: UserManagement },
     { path: "/admin/nghe-si", component: ArtistManagement },
-    { path: "/admin/bo-suu-tap", component: UpLoadChordPage },
+    { path: "/admin/bo-suu-tap", component: CollectionManagement },
     { path: "/admin/lich-su", component: UpLoadChordPage },
     { path: "/admin/cai-dat", component: UpLoadChordPage },
 ];

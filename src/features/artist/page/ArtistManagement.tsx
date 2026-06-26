@@ -167,14 +167,14 @@ export default function ArtistManagement() {
     );
 
     return (
-        <div className="p-8 bg-white h-full">
+        <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200">
             {/* HEADER */}
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                         Quản lý nghệ sĩ
                     </h1>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         Quản lý thông tin nghệ sĩ
                     </p>
                 </div>
@@ -208,14 +208,14 @@ export default function ArtistManagement() {
             </div>
 
             {/* TABLE */}
-            <div className="border rounded-md overflow-hidden">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-slate-50">
-                        <TableRow>
-                            <TableHead>Nghệ sĩ</TableHead>
-                            <TableHead>Slug</TableHead>
-                            <TableHead>Mô tả</TableHead>
-                            <TableHead className="text-right">
+                    <TableHeader className="bg-slate-50 dark:bg-slate-800/60">
+                        <TableRow className="border-b border-slate-200 dark:border-slate-800">
+                            <TableHead className="dark:text-slate-300">Nghệ sĩ</TableHead>
+                            <TableHead className="dark:text-slate-300">Slug</TableHead>
+                            <TableHead className="dark:text-slate-300">Mô tả</TableHead>
+                            <TableHead className="text-right dark:text-slate-300">
                                 Hành động
                             </TableHead>
                         </TableRow>
@@ -223,16 +223,16 @@ export default function ArtistManagement() {
 
                     <TableBody>
                         {filteredArtists.map((artist) => (
-                            <TableRow key={artist.id}>
-                                <TableCell className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
+                            <TableRow key={artist.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
+                                <TableCell className="flex items-center gap-3 text-slate-800 dark:text-slate-250">
+                                    <Avatar className="h-10 w-10 border dark:border-slate-700">
                                         <AvatarImage
                                             src={
                                                 artist.imageUrl ||
                                                 "https://picsum.photos/150"
                                             }
                                         />
-                                        <AvatarFallback>
+                                        <AvatarFallback className="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
                                             {artist.name?.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
@@ -240,9 +240,9 @@ export default function ArtistManagement() {
                                     {artist.name}
                                 </TableCell>
 
-                                <TableCell>{artist.slug}</TableCell>
+                                <TableCell className="text-slate-650 dark:text-slate-350">{artist.slug}</TableCell>
 
-                                <TableCell className="max-w-[300px] truncate">
+                                <TableCell className="max-w-[300px] truncate text-slate-600 dark:text-slate-400">
                                     {artist.description}
                                 </TableCell>
 
@@ -252,6 +252,7 @@ export default function ArtistManagement() {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleEdit(artist)}
+                                            className="hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                                         >
                                             <Pencil size={18} />
                                         </Button>
@@ -259,9 +260,8 @@ export default function ArtistManagement() {
                                         <AlertDialogDemo
                                             buttonName={<Trash2 size={18} />}
                                             message={`Xóa ${artist.name}?`}
-                                            onSubmit={() =>
-                                                handleDelete(artist.id)
-                                            }
+                                            variant="destructive"
+                                            onSubmit={() => handleDelete(artist.id)}
                                         />
                                     </div>
                                 </TableCell>

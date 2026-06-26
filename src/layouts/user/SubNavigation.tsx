@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 const SubNavigation = () => {
     const menuItems = [
@@ -15,36 +16,44 @@ const SubNavigation = () => {
         "Tắt quảng cáo ?",
     ];
 
-    // Hàm chuyển đổi tiếng Việt có dấu thành không dấu để làm URL
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
     const convertToSlug = (text: string) => {
         return text
             .toLowerCase()
-            .normalize("NFD") // Chuẩn hóa tổ hợp phím
-            .replace(/[\u0300-\u036f]/g, "") // Loại bỏ các ký tự dấu
-            .replace(/[đĐ]/g, "d") // Xử lý riêng chữ đ
-            .replace(/([^0-9a-z-\s])/g, "") // Loại bỏ ký tự đặc biệt (như dấu ?)
-            .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
-            .replace(/-+/g, "-") // Tránh nhiều dấu gạch ngang liên tiếp
-            .replace(/^-+|-+$/g, ""); // Cắt bỏ gạch ngang ở đầu/cuối
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[đĐ]/g, "d")
+            .replace(/([^0-9a-z-\s])/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-")
+            .replace(/^-+|-+$/g, "");
     };
 
     return (
-        <div className="w-full bg-gray-200 text-black text-[13px] py-1.5 px-4 shadow-sm sticky top-[var(--header-height)] z-20 w-full">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-                {/* Left Side: Navigation Links */}
-                <nav className="flex flex-wrap items-center gap-x-5">
+        <div className="w-full bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[13px] py-1.5 h-[var(--subnav-height)] shadow-xs fixed top-[var(--header-height)] z-20 border-b border-slate-200/50 dark:border-slate-900/50">
+            <div className="mx-auto flex items-center justify-between md:px-[var(--sidebar-user-width)]">
+                <nav className="flex items-center gap-x-5 overflow-x-auto hide-scrollbar">
                     {menuItems.map((item, index) => (
                         <a
                             key={index}
                             href={`/${convertToSlug(item)}`}
-                            className="hover:underline transition-colors whitespace-nowrap opacity-90 hover:opacity-100"
+                            className="hover:underline transition-colors whitespace-nowrap opacity-90 hover:opacity-100 hidden sm:block"
                         >
                             {item}
                         </a>
                     ))}
                 </nav>
 
-                {/* Right Side: Management with Badge */}
+                <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity sm:hidden" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                    <span className="whitespace-nowrap font-medium">Danh mục</span>
+                    {isDropdownOpen ? (
+                        <ChevronDown className="w-4 h-4" />
+                    ) : (
+                        <ChevronRight className="w-4 h-4" />
+                    )}
+                </div>
+
                 <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity ml-4">
                     <span className="whitespace-nowrap">Quản lý</span>
                     <span className="bg-[#5A82A8] text-white text-[11px] px-1.5 py-0.5 rounded shadow-inner min-w-[24px] text-center border border-white/20">
@@ -52,6 +61,23 @@ const SubNavigation = () => {
                     </span>
                 </div>
             </div>
+
+            {isDropdownOpen && (
+                <div className="sm:hidden absolute top-full left-0 right-0 bg-slate-100 dark:bg-slate-950 shadow-lg border-t border-slate-200 dark:border-slate-900 max-h-[60vh] overflow-y-auto z-30">
+                    <div className="flex flex-col p-3 gap-1">
+                        {menuItems.map((item, index) => (
+                            <a
+                                key={index}
+                                href={`/${convertToSlug(item)}`}
+                                className="px-3 py-2 hover:bg-white/50 dark:hover:bg-slate-800/40 rounded transition-colors text-sm dark:text-slate-200"
+                                onClick={() => setIsDropdownOpen(false)}
+                            >
+                                {item}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

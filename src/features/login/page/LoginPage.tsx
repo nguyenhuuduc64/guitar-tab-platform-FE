@@ -1,8 +1,6 @@
 import { useState } from "react";
 import instance from "../../../config/axios";
-import ButtonCustom from "../../../components/ui/ButtonCustom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFacebookF, faGooglePlusG } from "@fortawesome/free-brands-svg-icons";
+import ButtonCustom from "../../../components/common/ButtonCustom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -12,20 +10,17 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const navigate = useNavigate();
+
     const handleLogin = async () => {
         setLoading(true);
         setError("");
         try {
             const res = await axios.post(
                 "http://localhost:8080/api/auth/log-in",
-                {
-                    email,
-                    password,
-                },
+                { email, password }
             );
 
             const accessToken = res.data?.result?.token;
-            console.log(res.data.result);
             if (accessToken) {
                 localStorage.setItem("accessToken", accessToken);
             }
@@ -38,93 +33,104 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center pt-10 font-sans text-[#444]">
-            <div className="w-full max-w-[700px] px-6">
-                <h2 className="text-3xl mb-1">Đăng nhập</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                    Đăng nhập bằng tài khoản có sẵn
-                </p>
+        <div className="h-[calc(100vh-var(--header-height)-var(--subnav-height)-32px)] bg-white dark:bg-zinc-950 flex p-4 font-sans text-neutral-800 dark:text-zinc-200 lg:overflow-hidden overflow-y-auto">
+            {/* Left Side: Art Banner Component */}
+            <div className="hidden lg:flex w-1/2 relative bg-neutral-900 rounded-[2.5rem] overflow-hidden flex-col justify-between p-10 bg-[url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000')] bg-cover bg-center">
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 via-transparent to-black/80 z-0" />
 
-                {/* Social Login sử dụng FontAwesomeIcon component */}
-                <div className="flex gap-4 mb-10">
-                    <button className="flex-1 flex items-center bg-[#3b5998] text-white rounded-sm overflow-hidden h-12 hover:opacity-90 transition-opacity">
-                        <span className="bg-black/10 w-12 h-full flex items-center justify-center text-xl">
-                            <FontAwesomeIcon icon={faFacebookF} />
-                        </span>
-                        <span className="flex-1 text-center font-bold tracking-wide">
-                            Facebook
-                        </span>
-                    </button>
-
-                    <button className="flex-1 flex items-center bg-[#dd4b39] text-white rounded-sm overflow-hidden h-12 hover:opacity-90 transition-opacity">
-                        <span className="bg-black/10 w-12 h-full flex items-center justify-center text-2xl">
-                            <FontAwesomeIcon icon={faGooglePlusG} />
-                        </span>
-                        <span className="flex-1 text-center font-bold tracking-wide">
-                            Google
-                        </span>
-                    </button>
+                <div className="relative z-10 flex items-center justify-between">
+                    <span className="text-white font-bold text-lg tracking-wide">Sound Library</span>
+                    <div className="flex gap-4 text-sm font-medium">
+                        <button className="text-white/80 hover:text-white" onClick={() => navigate("/dang-ky")}>Sign Up</button>
+                        <button className="bg-white/10 text-white px-4 py-1.5 rounded-full border border-white/20 backdrop-blur-sm hover:bg-white/20">Join Us</button>
+                    </div>
                 </div>
 
-                <div className="border-t border-gray-100 pt-8">
-                    <p className="text-sm text-gray-400 mb-4">
-                        Đăng nhập bằng tài khoản Hợp Âm Chuẩn
-                    </p>
+                <div className="relative z-10 flex items-center justify-between bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-fit max-w-xs">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 overflow-hidden shrink-0">
+                            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=100" alt="Track avatar" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-white text-xs font-semibold truncate">Track of the day</p>
+                            <p className="text-white/60 text-[10px] truncate">The Weeknd, Playboi Carti</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side: Main Login Form */}
+            <div className="flex-1 flex flex-col justify-center items-center px-6 lg:px-16 relative bg-white dark:bg-zinc-950">
+                <div className="absolute top-8 right-8 flex items-center gap-2 border border-neutral-200 dark:border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-neutral-600 dark:text-zinc-400 cursor-pointer hover:bg-neutral-50 dark:hover:bg-zinc-900">
+                    <span>🌐 EN</span>
+                </div>
+
+                <div className="w-full max-w-md space-y-8">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white animate-pulse">RHYTHMIC</h1>
+                        <h2 className="text-3xl font-bold tracking-tight pt-4 text-neutral-800 dark:text-zinc-100">Hi Music Lover</h2>
+                        <p className="text-neutral-400 dark:text-zinc-500 text-sm">Welcome to RHYTHMIC</p>
+                    </div>
 
                     {error && (
-                        <div className="mb-4 text-sm text-red-500">{error}</div>
+                        <div className="text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/35 text-red-500 dark:text-red-400 p-3 rounded-xl">{error}</div>
                     )}
 
-                    <div className="space-y-4 max-w-[600px]">
-                        <div>
-                            <label className="text-sm font-bold block mb-2">
-                                Tên tài khoản hoặc Email
-                            </label>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
                             <input
                                 type="text"
-                                className="w-full bg-[#f0f4f8] border border-gray-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                                placeholder="Email"
+                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-xl p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200 dark:focus:ring-zinc-850 transition-all bg-neutral-50/50 dark:bg-zinc-900/50 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
-                        <div>
-                            <label className="text-sm font-bold block mb-2">
-                                Mật khẩu
-                            </label>
+                        <div className="space-y-1.5">
                             <input
                                 type="password"
-                                className="w-full bg-[#f0f4f8] border border-gray-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                                placeholder="Password"
+                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-xl p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200 dark:focus:ring-zinc-850 transition-all bg-neutral-50/50 dark:bg-zinc-900/50 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <div className="flex items-start justify-between pt-2">
-                            <ButtonCustom
-                                name={loading ? "..." : "Đăng nhập"}
-                                onClick={handleLogin}
-                                className="bg-[#4fa6f1] text-white px-8 py-2 rounded-md shadow-sm hover:bg-[#3d95e0] text-sm font-medium transition-colors"
-                            />
-                            <div className="text-right space-y-2">
-                                <p className="text-sm text-gray-400 cursor-pointer hover:text-blue-500 hover:underline">
-                                    Quên mật khẩu?
-                                </p>
-                                <p className="text-sm text-gray-400 cursor-pointer hover:text-blue-500 hover:underline">
-                                    Gửi lại email kích hoạt
-                                </p>
-                            </div>
+                        <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-zinc-450 pt-1">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" className="rounded border-neutral-300 dark:border-zinc-800 text-blue-600 focus:ring-0 bg-transparent" />
+                                <span>Keep me logged in</span>
+                            </label>
+                            <span className="hover:underline cursor-pointer">Forgot Password?</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-6 text-center">
-                            Chưa có tài khoản?{" "}
-                            <span
-                                onClick={() => navigate("/dang-ky")}
-                                className="text-blue-500 cursor-pointer hover:underline font-medium"
-                            >
-                                Đăng ký ngay
-                            </span>
-                        </p>
                     </div>
+
+                    <div className="space-y-4">
+                        <div className="relative flex py-2 items-center text-xs text-neutral-400 dark:text-zinc-550 uppercase">
+                            <div className="flex-grow border-t border-neutral-100 dark:border-zinc-800"></div>
+                            <span className="flex-shrink mx-4">or</span>
+                            <div className="flex-grow border-t border-neutral-100 dark:border-zinc-800"></div>
+                        </div>
+
+                        <button className="w-full flex items-center justify-center gap-3 border border-neutral-200 dark:border-zinc-800 rounded-full py-3 hover:bg-neutral-50 dark:hover:bg-zinc-900 transition-all font-medium text-sm text-neutral-700 dark:text-zinc-300">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google logo" />
+                            Login with Google
+                        </button>
+
+                        <ButtonCustom
+                            name={loading ? "Processing..." : "Login"}
+                            onClick={handleLogin}
+                            className="w-full bg-[#4fa6f1] text-white py-3.5 rounded-full hover:opacity-90 transition-all font-semibold text-sm shadow-sm"
+                        />
+                    </div>
+
+                    <p className="text-center text-sm text-neutral-400 dark:text-zinc-500">
+                        Don't have an account?{" "}
+                        <span className="text-blue-500 font-semibold cursor-pointer hover:underline" onClick={() => navigate("/dang-ky")}>
+                            Sign up
+                        </span>
+                    </p>
                 </div>
             </div>
         </div>

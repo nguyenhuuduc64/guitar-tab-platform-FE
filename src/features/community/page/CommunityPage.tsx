@@ -1,144 +1,591 @@
-import { useState } from "react";
-import { MessageSquare, Heart, Share2, Music, User } from "lucide-react";
-import ChordViewer from "../../../components/common/ChordViewer";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    Users,
+    UserPlus,
+    Loader2,
+    Search,
+    X,
+    User as UserIcon,
+    Music
+} from "lucide-react";
+import instance from "../../../config/axios";
+import { SidebarLeft } from "../../home/components/SidebarLeft";
+import { getUserInfo } from "../../../utils/auth";
+import { FollowingCard } from "./FollowingCard";
+import { CreatePostModal } from "./CreatePostModal";
+import Post from "../../../components/common/post/Post";
 
-interface Post {
-    id: string;
-    author: {
-        name: string;
-        avatar?: string;
-        role: string;
-    };
-    createdAt: string;
-    songTitle: string;
-    description: string;
-    chordContent: string;
-    audioUrl?: string;
-    likes: number;
-    comments: number;
-    isLiked?: boolean;
-}
+import { type User } from "../../../types/user";
+import { type Chord } from "../../../types/chord";
+import { type AudioItem as Audio } from "../../../types/audio";
+import { type PostData } from "../../../types/post";
+import { type CommentData } from "../../../types/comment";
 
 export default function CommunityPage() {
-    // Dữ liệu mẫu mock data hiển thị danh sách bài chia sẻ
-    const [posts, setPosts] = useState<Post[]>([
-        {
-            id: "post-1",
-            author: { name: "Ngọc Trần", role: "Sáng tác tự do" },
-            createdAt: "2 giờ trước",
-            songTitle: "Chiều Mưa Ngang Qua",
-            description: "Mới dùng Sonauto sinh ra đoạn beat Acoustic này, ghép vào lời kèm hợp âm chuẩn Am nghe khá hợp mọi người ạ!",
-            chordContent: "[Am]Chiều mưa rơi [F]buốt giá căn phòng [C]trống\n[Dm]Mùi hương xưa [G]nay chỉ còn là hư [C]không [E7]",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            likes: 24,
-            comments: 5,
-            isLiked: false
-        },
-        {
-            id: "post-2",
-            author: { name: "Minh Vũ", role: "Guitarist" },
-            createdAt: "5 giờ trước",
-            songTitle: "Nắng Sớm",
-            description: "Tone G major tươi vui cho ngày mới năng động.",
-            chordContent: "[G]Sáng thức giấc thấy [C]ông mặt trời\n[D]Chiếu ánh sáng xuống [G]muôn cuộc đời",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            likes: 42,
-            comments: 12,
-            isLiked: true
-        }
-    ]);
+    const navigate = useNavigate();
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [posts, setPosts] = useState<PostData[]>([]);
+    const [following, setFollowing] = useState<User[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [isFollowingLoading, setIsFollowingLoading] = useState<string | null>(null);
+    const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
+    const [pageSize] = useState<number>(5);
+    const [isPostModalOpen, setIsPostModalOpen] = useState<boolean>(false);
 
-    const handleLike = (id: string) => {
-        setPosts(prev => prev.map(post => {
-            if (post.id === id) {
-                return {
-                    ...post,
-                    likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-                    isLiked: !post.isLiked
-                };
+    // Post states
+    const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+    const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+    const [isLiked, setIsLiked] = useState<Record<string, boolean>>({});
+    const [isLikeLoading, setIsLikeLoading] = useState<Record<string, boolean>>({});
+
+    // Comment states
+    const [comments, setComments] = useState<Record<string, CommentData[]>>({});
+    const [showComments, setShowComments] = useState<Record<string, boolean>>({});
+    const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const userData = await getUserInfo();
+                setCurrentUser(userData);
+
+                const postsRes = await instance.get(`/posts`);
+                const postsData = postsRes.data.result || [];
+
+                console.log('Raw posts data:', postsData);
+
+                const postsWithChord = await Promise.all(
+                    postsData.map(async (post: PostData) => {
+                        // Kiểm tra post có audio không
+                        if (post.audio && post.audio.chordId) {
+                            try {
+                                const chordRes = await instance.get(`/chords/${post.audio.chordId}`);
+                                console.log(`Chord for post ${post.id}:`, chordRes.data.result);
+                                return {
+                                    ...post,
+                                    chord: chordRes.data.result,
+                                    audio: post.audio // Giữ nguyên audio
+                                };
+                            } catch (error) {
+                                console.error(`Error fetching chord for post ${post.id}:`, error);
+                                return {
+                                    ...post,
+                                    audio: post.audio // Vẫn giữ audio dù không fetch được chord
+                                };
+                            }
+                        }
+                        // Nếu không có audio, trả về post nguyên bản
+                        return post;
+                    })
+                );
+
+                console.log('Posts with chord:', postsWithChord);
+                setPosts(postsWithChord);
+
+                // Fetch counts for each post
+                for (const post of postsWithChord) {
+                    try {
+                        const [likeCountRes, commentCountRes] = await Promise.all([
+                            instance.get(`/likes/post/${post.id}/count`),
+                            instance.get(`/comments/post/${post.id}/count`)
+                        ]);
+
+                        setLikeCounts(prev => ({ ...prev, [post.id]: likeCountRes.data.result || 0 }));
+                        setCommentCounts(prev => ({ ...prev, [post.id]: commentCountRes.data.result || 0 }));
+
+                        if (userData) {
+                            const checkLikeRes = await instance.get(`/likes/post/${post.id}/user/${userData.id}/check`);
+                            setIsLiked(prev => ({ ...prev, [post.id]: checkLikeRes.data.result || false }));
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching counts for post ${post.id}:`, error);
+                    }
+                }
+
+                setFollowing([]);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false);
             }
-            return post;
-        }));
+        };
+
+        fetchData();
+    }, [currentPage, pageSize]);
+
+    const loadComments = async (postId: string) => {
+        if (loadingComments[postId]) return;
+
+        setLoadingComments(prev => ({ ...prev, [postId]: true }));
+        try {
+            const res = await instance.get(`/comments/post/${postId}`);
+            const commentsData = res.data.result || [];
+
+            const transformedComments = commentsData.map((c: any) => ({
+                id: c.id,
+                content: c.content,
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt,
+                postId: c.postId,
+                userId: c.userId,
+                username: c.username,
+                userFullName: c.userFullName || c.username,
+                userImageUrl: c.userImageUrl
+            }));
+
+            setComments(prev => ({ ...prev, [postId]: transformedComments }));
+        } catch (error) {
+            console.error('Error loading comments:', error);
+        } finally {
+            setLoadingComments(prev => ({ ...prev, [postId]: false }));
+        }
     };
 
+    const toggleComments = (postId: string) => {
+        const isShowing = showComments[postId];
+        setShowComments(prev => ({ ...prev, [postId]: !isShowing }));
+        if (!isShowing && !comments[postId]) {
+            loadComments(postId);
+        }
+    };
+
+    const handleCommentCreated = async (postId: string) => {
+        await loadComments(postId);
+        try {
+            const countRes = await instance.get(`/comments/post/${postId}/count`);
+            setCommentCounts(prev => ({ ...prev, [postId]: countRes.data.result || 0 }));
+        } catch (error) {
+            console.error('Error updating comment count:', error);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string, postId: string) => {
+        try {
+            await instance.delete(`/comments/${commentId}`);
+            setComments(prev => ({
+                ...prev,
+                [postId]: prev[postId]?.filter(c => c.id !== commentId) || []
+            }));
+            const countRes = await instance.get(`/comments/post/${postId}/count`);
+            setCommentCounts(prev => ({ ...prev, [postId]: countRes.data.result || 0 }));
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+        }
+    };
+
+    const handleEditComment = async (commentId: string, content: string, postId: string) => {
+        try {
+            await instance.put(`/comments/${commentId}`, {
+                content,
+                postId,
+                userId: currentUser?.id
+            });
+            setComments(prev => ({
+                ...prev,
+                [postId]: prev[postId]?.map(c =>
+                    c.id === commentId ? { ...c, content, updatedAt: new Date().toISOString() } : c
+                ) || []
+            }));
+        } catch (error) {
+            console.error('Error editing comment:', error);
+        }
+    };
+
+    const handleLikePost = async (postId: string) => {
+        if (isLikeLoading[postId]) return;
+
+        setIsLikeLoading(prev => ({ ...prev, [postId]: true }));
+
+        const currentIsLiked = isLiked[postId];
+        const currentCount = likeCounts[postId] || 0;
+
+        setIsLiked(prev => ({ ...prev, [postId]: !currentIsLiked }));
+        setLikeCounts(prev => ({ ...prev, [postId]: currentIsLiked ? currentCount - 1 : currentCount + 1 }));
+
+        try {
+            if (currentIsLiked) {
+                await instance.delete(`/likes/post/${postId}/user/${currentUser?.id}`);
+            } else {
+                await instance.post('/likes', {
+                    postId,
+                    userId: currentUser?.id
+                });
+            }
+        } catch (error) {
+            setIsLiked(prev => ({ ...prev, [postId]: currentIsLiked }));
+            setLikeCounts(prev => ({ ...prev, [postId]: currentCount }));
+            console.error('Error toggling like:', error);
+        } finally {
+            setIsLikeLoading(prev => ({ ...prev, [postId]: false }));
+        }
+    };
+
+    const handleSearchUsers = async (keyword: string) => {
+        setSearchTerm(keyword);
+        if (!keyword.trim()) {
+            setSuggestedUsers([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        try {
+            const res = await instance.get(`/users/search?keyword=${encodeURIComponent(keyword)}`);
+            const users = res.data.result || [];
+
+            const followingIds = new Set(following.map(u => u.id));
+            const filteredUsers = users.filter((u: User) => u.id !== currentUser?.id && !followingIds.has(u.id));
+
+            setSuggestedUsers(filteredUsers);
+            setShowSuggestions(true);
+        } catch (error) {
+            console.error("Error searching users:", error);
+        }
+    };
+
+    const handleFollow = async (targetUserId: string) => {
+        try {
+            setIsFollowingLoading(targetUserId);
+            await instance.post(`/follows/${targetUserId}`);
+
+            const userToFollow = suggestedUsers.find(u => u.id === targetUserId);
+            if (userToFollow) {
+                setFollowing(prev => [...prev, { ...userToFollow, isFollowing: true }]);
+                setSuggestedUsers(prev => prev.filter(u => u.id !== targetUserId));
+            }
+            setShowSuggestions(false);
+        } catch (error) {
+            console.error("Error following user:", error);
+        } finally {
+            setIsFollowingLoading(null);
+        }
+    };
+
+    const handleUnfollow = async (targetUserId: string) => {
+        try {
+            setIsFollowingLoading(targetUserId);
+            await instance.delete(`/follows/${targetUserId}`);
+            setFollowing(prev => prev.filter(u => u.id !== targetUserId));
+        } catch (error) {
+            console.error("Error unfollowing user:", error);
+        } finally {
+            setIsFollowingLoading(null);
+        }
+    };
+
+    const handlePageChange = (pageIndex: number) => {
+        if (pageIndex >= 0 && pageIndex < totalPages) {
+            setCurrentPage(pageIndex);
+        }
+    };
+
+    const handlePostSuccess = async () => {
+        try {
+            const postsRes = await instance.get(`/posts`);
+            const postsData = postsRes.data.result || [];
+
+            const postsWithChord = await Promise.all(
+                postsData.map(async (post: PostData) => {
+                    if (post.audio && post.audio.chordId) {
+                        try {
+                            const chordRes = await instance.get(`/chords/${post.audio.chordId}`);
+                            return {
+                                ...post,
+                                chord: chordRes.data.result,
+                                audio: post.audio
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching chord for post ${post.id}:`, error);
+                            return {
+                                ...post,
+                                audio: post.audio
+                            };
+                        }
+                    }
+                    return post;
+                })
+            );
+
+            setPosts(postsWithChord);
+            setTotalPages(postsRes.data.result?.totalPages || 0);
+        } catch (error) {
+            console.error("Error refreshing posts:", error);
+        }
+    };
+
+    const formatTimeAgo = (dateString: string) => {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return "Vừa xong";
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        if (diffDays < 7) return `${diffDays} ngày trước`;
+        return date.toLocaleDateString('vi-VN');
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        );
+    }
+
     return (
-        <div className="w-full ">
+        <div className="flex bg-gray-50 dark:bg-background min-h-screen text-gray-800 dark:text-slate-100">
+            <div className="w-64 shrink-0 border-r border-gray-200 dark:border-slate-800/60 bg-white dark:bg-slate-900 hidden md:block fixed h-full">
+                <SidebarLeft />
+            </div>
 
-
-            {/* Feed Danh sách bài viết */}
-            <div className="space-y-6">
-                {posts.map((post) => (
-                    <div key={post.id} className="bg-white border border-gray-100 rounded-xl shadow-sm p-5 flex flex-col gap-4">
-
-                        {/* 1. Header bài viết: Thông tin người đăng */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0 border border-gray-200">
-                                <User size={20} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-bold text-gray-900 truncate">{post.author.name}</div>
-                                <div className="text-xs text-gray-400 flex items-center gap-1.5 mt-0.5">
-                                    <span>{post.author.role}</span>
-                                    <span>•</span>
-                                    <span>{post.createdAt}</span>
+            <div className="flex-1 md:ml-64 flex">
+                <div className="flex-1 p-6 md:p-8 max-w-3xl mx-auto">
+                    {/* Create Post Box */}
+                    <div className="mb-6">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800/80 rounded-lg p-4 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                                    {currentUser?.imageUrl && currentUser.imageUrl.trim() !== '' ? (
+                                        <img
+                                            src={currentUser.imageUrl}
+                                            alt={currentUser.fullName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600">
+                                            <UserIcon className="w-5 h-5" />
+                                        </div>
+                                    )}
                                 </div>
+                                <button
+                                    onClick={() => setIsPostModalOpen(true)}
+                                    className="flex-1 text-left px-4 py-2.5 bg-gray-100 dark:bg-slate-850 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-full text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    Chọn bài hát bạn thích...
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-around mt-3 pt-3 border-t border-gray-100 dark:border-slate-800/60">
+                                <button
+                                    onClick={() => setIsPostModalOpen(true)}
+                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    Ảnh/Video
+                                </button>
+                                <button
+                                    onClick={() => setIsPostModalOpen(true)}
+                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Livestream
+                                </button>
+                                <button
+                                    onClick={() => setIsPostModalOpen(true)}
+                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Ghi nhận
+                                </button>
                             </div>
                         </div>
 
-                        {/* Tiêu đề bài hát & Mô tả tâm sự */}
-                        <div>
-                            <h2 className="text-base font-bold text-gray-800 mb-1">🎯 Tác phẩm: {post.songTitle}</h2>
-                            <p className="text-sm text-gray-600 leading-relaxed">{post.description}</p>
-                        </div>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-3">
+                            {posts.length} bài đăng
+                        </p>
+                    </div>
 
-                        {/* 2. Khung hiển thị Hợp âm bài hát */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">
-                            <ChordViewer
-                                chord={{
-                                    id: post.id,
-                                    title: post.songTitle,
-                                    content: post.chordContent
-                                }}
-                                onOpenPlaylist={() => { }}
-                            />
+                    {/* Suggestions */}
+                    {showSuggestions && suggestedUsers.length > 0 && (
+                        <div className="mb-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800/80 rounded-lg p-4 shadow-sm">
+                            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                <UserPlus className="w-4 h-4 text-indigo-500" />
+                                Gợi ý theo dõi
+                            </h3>
+                            <div className="space-y-2">
+                                {suggestedUsers.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-slate-800/30 rounded-lg transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                                                {user.imageUrl && user.imageUrl.trim() !== '' ? (
+                                                    <img
+                                                        src={user.imageUrl}
+                                                        alt={user.fullName}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).style.display = 'none';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600">
+                                                        <UserIcon className="w-5 h-5" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-slate-200">{user.fullName}</p>
+                                                <p className="text-xs text-gray-400 dark:text-slate-500">@{user.username}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleFollow(user.id)}
+                                            disabled={isFollowingLoading === user.id}
+                                            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                                        >
+                                            {isFollowingLoading === user.id ? (
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <UserPlus className="w-3 h-3" />
+                                                    Theo dõi
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
+                    )}
 
-                        {/* 3. Trình phát đoạn nhạc đi kèm (Audio) */}
-                        {post.audioUrl && (
-                            <div className="bg-purple-50/50 border border-purple-100/70 rounded-xl p-3 flex flex-col gap-2">
-                                <div className="text-xs font-semibold text-purple-700 flex items-center gap-1.5">
-                                    <Music size={12} className="animate-pulse" /> Đứt đoạn / Bản thu đi kèm:
-                                </div>
-                                <audio
-                                    src={post.audioUrl}
-                                    controls
-                                    className="w-full h-10 focus:outline-none bg-white rounded-lg shadow-inner text-sm"
+                    {/* Posts List */}
+                    {posts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                <Music className="w-8 h-8 text-gray-400 dark:text-slate-500" />
+                            </div>
+                            <p className="text-gray-500 dark:text-slate-400 text-sm font-medium">Chưa có bài đăng nào</p>
+                            <p className="text-gray-400 dark:text-slate-500 text-xs mt-1">
+                                Hãy là người đầu tiên tạo bài đăng
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {posts.map((post) => (
+                                <Post
+                                    key={post.id}
+                                    post={post}
+                                    currentUserId={currentUser?.id}
+                                    likeCount={likeCounts[post.id] || 0}
+                                    commentCount={commentCounts[post.id] || 0}
+                                    isLiked={isLiked[post.id] || false}
+                                    isLikeLoading={isLikeLoading[post.id] || false}
+                                    comments={comments[post.id] || []}
+                                    showComments={showComments[post.id] || false}
+                                    loadingComments={loadingComments[post.id] || false}
+                                    onLike={handleLikePost}
+                                    onToggleComments={toggleComments}
+                                    onCommentCreated={handleCommentCreated}
+                                    onDeleteComment={handleDeleteComment}
+                                    onEditComment={handleEditComment}
+                                    formatTimeAgo={formatTimeAgo}
                                 />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="mt-6 flex items-center justify-center gap-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 0}
+                                className="px-3 py-1 text-sm border border-gray-200 dark:border-slate-800 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-750 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                                Trước
+                            </button>
+                            {[...Array(totalPages)].map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handlePageChange(idx)}
+                                    className={`px-3 py-1 text-sm rounded-lg transition-colors cursor-pointer ${currentPage === idx
+                                        ? 'bg-indigo-600 text-white border border-indigo-605'
+                                        : 'border border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-750 dark:text-slate-300'
+                                        }`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages - 1}
+                                className="px-3 py-1 text-sm border border-gray-200 dark:border-slate-800 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-750 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Sidebar Right - Following */}
+                <div className="w-80 shrink-0 border-l border-gray-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/10 hidden lg:block p-6">
+                    <div className="sticky top-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Đang theo dõi ({following.length})
+                            </h3>
+                            <button
+                                onClick={() => navigate('/following')}
+                                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
+                            >
+                                Xem tất cả
+                            </button>
+                        </div>
+
+                        {following.length === 0 ? (
+                            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-4 text-center">
+                                <Users className="w-8 h-8 text-gray-300 dark:text-slate-650 mx-auto mb-2" />
+                                <p className="text-xs text-gray-400 dark:text-slate-500">Bạn chưa theo dõi ai</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {following.slice(0, 5).map((user) => (
+                                    <FollowingCard
+                                        key={user.id}
+                                        user={user}
+                                        onUnfollow={handleUnfollow}
+                                        isLoading={isFollowingLoading === user.id}
+                                    />
+                                ))}
+                                {following.length > 5 && (
+                                    <button
+                                        onClick={() => navigate('/following')}
+                                        className="w-full text-center text-xs text-indigo-600 hover:text-indigo-700 font-medium py-2"
+                                    >
+                                        Xem thêm {following.length - 5} người
+                                    </button>
+                                )}
                             </div>
                         )}
-
-                        {/* Thanh tương tác dưới cùng (Like, Comment, Share) */}
-                        <div className="flex items-center gap-6 border-t border-gray-50 pt-3 text-gray-500 text-sm font-medium">
-                            <button
-                                onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 transition cursor-pointer select-none ${post.isLiked ? 'text-red-500 font-bold' : 'hover:text-red-500'}`}
-                            >
-                                <Heart size={18} fill={post.isLiked ? "currentColor" : "none"} />
-                                <span>{post.likes}</span>
-                            </button>
-                            <button className="flex items-center gap-1.5 hover:text-purple-600 transition cursor-pointer select-none">
-                                <MessageSquare size={18} />
-                                <span>{post.comments}</span>
-                            </button>
-                            <button className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer select-none ml-auto">
-                                <Share2 size={18} />
-                                <span>Chia sẻ</span>
-                            </button>
-                        </div>
-
                     </div>
-                ))}
+                </div>
             </div>
+
+            <CreatePostModal
+                isOpen={isPostModalOpen}
+                onClose={() => setIsPostModalOpen(false)}
+                userId={currentUser?.id || ""}
+                onSuccess={handlePostSuccess}
+            />
         </div>
     );
 }

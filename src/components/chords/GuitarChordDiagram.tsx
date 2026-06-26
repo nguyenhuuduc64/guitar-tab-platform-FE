@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { transposeChord } from "../../helper/transpose";
 import { getChordData } from "../../constants/chords";
+import { useChordContext } from "../../context/ChordContext";
 
 const GuitarChordDiagram = ({ initialChordName = "C" }) => {
-    const [transpose, setTranspose] = useState(0);
+    const { transposeValue, setTransposeValue, transposeChordName } = useChordContext();
     const [currentIdx, setCurrentIdx] = useState(0);
 
-    const displayedName = transposeChord(initialChordName, transpose);
+    // Sử dụng transpose từ context để hiển thị hợp âm đã được transpose
+    const displayedName = transposeChordName(initialChordName);
     const chordData = getChordData(displayedName) || [];
 
     useEffect(() => {
@@ -33,30 +35,30 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
         );
 
     return (
-        <div className="w-[200px] text-center font-sans select-none bg-white p-5">
-            {/* Phần tăng hạ tone mới thêm */}
+        <div className="w-[200px] text-center font-sans select-none bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 p-5">
+            {/* Phần tăng hạ tone */}
             <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-1 border rounded px-1 text-[12px]">
+                <div className="flex items-center gap-1 border border-gray-200 dark:border-slate-800 rounded px-1 text-[12px]">
                     <button
-                        onClick={() => setTranspose((t) => t - 1)}
-                        className="px-1 hover:bg-gray-100"
+                        onClick={() => setTransposeValue(transposeValue - 1)}
+                        className="px-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-350"
                     >
                         -
                     </button>
-                    <span className="min-w-[45px] font-bold">
-                        Tone {transpose > 0 ? `+${transpose}` : transpose}
+                    <span className="min-w-[45px] font-bold text-gray-800 dark:text-slate-200">
+                        Tone {transposeValue > 0 ? `+${transposeValue}` : transposeValue}
                     </span>
                     <button
-                        onClick={() => setTranspose((t) => t + 1)}
-                        className="px-1 hover:bg-gray-100"
+                        onClick={() => setTransposeValue(transposeValue + 1)}
+                        className="px-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-350"
                     >
                         +
                     </button>
                 </div>
-                <div className="text-[#3366cc] text-[14px]">guitar</div>
+                <div className="text-[#3366cc] dark:text-blue-400 text-[14px]">guitar</div>
             </div>
 
-            <div className="text-[24px] font-bold my-[5px]">
+            <div className="text-[24px] font-bold my-[5px] text-gray-900 dark:text-white">
                 {name} <span className="cursor-pointer">🔊</span>
             </div>
 
@@ -67,28 +69,28 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
                             {mutedStrings.includes(s)
                                 ? "x"
                                 : openStrings.includes(s)
-                                  ? "o"
-                                  : ""}
+                                    ? "o"
+                                    : ""}
                         </span>
                     ))}
                 </div>
 
-                <div className="border-t-2 border-black relative mt-[5px]">
+                <div className="border-t-2 border-black dark:border-slate-300 relative mt-[5px]">
                     <div className="flex justify-between h-[100px]">
                         {[...Array(6)].map((_, i) => (
-                            <div key={i} className="w-[1px] bg-black h-full" />
+                            <div key={i} className="w-[1px] bg-black dark:bg-slate-450 h-full" />
                         ))}
                     </div>
 
                     {[...Array(4)].map((_, i) => (
                         <div
                             key={i}
-                            className="absolute w-full h-[1px] bg-black"
+                            className="absolute w-full h-[1px] bg-black dark:bg-slate-450"
                             style={{ top: `${(i + 1) * 25}%` }}
                         />
                     ))}
 
-                    <div className="absolute -right-[30px] top-0 h-full flex flex-col justify-around text-[12px]">
+                    <div className="absolute -right-[30px] top-0 h-full flex flex-col justify-around text-[12px] text-gray-500 dark:text-slate-400">
                         {[...Array(4)].map((_, i) => (
                             <span key={i}>{startingFret + i}fr</span>
                         ))}
@@ -100,7 +102,7 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
                         return (
                             <div
                                 key={i}
-                                className="absolute w-[18px] h-[18px] bg-black text-white rounded-full flex items-center justify-center text-[11px] -translate-x-1/2 -translate-y-1/2 z-[2]"
+                                className="absolute w-[18px] h-[18px] bg-black dark:bg-slate-200 text-white dark:text-slate-900 rounded-full flex items-center justify-center text-[11px] font-bold -translate-x-1/2 -translate-y-1/2 z-[2]"
                                 style={{
                                     top: `${(relFret + 0.5) * 25}%`,
                                     left: `${(6 - string) * 20}%`,
@@ -115,11 +117,11 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
 
             <div className="mt-[15px] text-[14px]">
                 <div className="flex items-center justify-center gap-[10px]">
-                    <span onClick={prevVariation} className="cursor-pointer">
+                    <span onClick={prevVariation} className="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                         ◁
                     </span>
                     Thế tay {currentIdx + 1}
-                    <span onClick={nextVariation} className="cursor-pointer">
+                    <span onClick={nextVariation} className="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                         ▷
                     </span>
                 </div>
@@ -127,14 +129,14 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
                 <div className="flex items-center justify-center gap-[5px] mt-[5px]">
                     <button
                         onClick={prevVariation}
-                        className="border-none bg-[#4a90e2] text-white py-[2px] px-[8px] rounded-[3px] cursor-pointer"
+                        className="border-none bg-[#4a90e2] hover:bg-[#357abd] text-white py-[2px] px-[8px] rounded-[3px] cursor-pointer transition"
                     >
                         ◀
                     </button>
                     Đổi thế bấm
                     <button
                         onClick={nextVariation}
-                        className="border-none bg-[#4a90e2] text-white py-[2px] px-[8px] rounded-[3px] cursor-pointer"
+                        className="border-none bg-[#4a90e2] hover:bg-[#357abd] text-white py-[2px] px-[8px] rounded-[3px] cursor-pointer transition"
                     >
                         ▶
                     </button>

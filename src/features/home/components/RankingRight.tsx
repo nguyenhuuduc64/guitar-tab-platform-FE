@@ -65,19 +65,13 @@ export const RankingRight = () => {
             case 0: return "text-orange-600 font-extrabold";
             case 1: return "text-amber-600 font-bold";
             case 2: return "text-yellow-600 font-bold";
-            default: return "text-gray-800 font-semibold";
+            default: return "text-gray-800 dark:text-slate-350 font-semibold";
         }
     };
 
     return (
-        <div className="flex flex-col bg-white border border-gray-100 overflow-hidden h-full">
-            <div className="px-5 py-5 border-b border-gray-100 flex items-center bg-white">
-                <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
-                    Xem nhiều nhất
-                </h3>
-            </div>
-
-            <div className="flex flex-col divide-y divide-gray-50 bg-white">
+        <div className="rounded-xl flex flex-col bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 overflow-hidden h-full w-full">
+            <div className="flex flex-col divide-y divide-gray-50 dark:divide-slate-800/50 bg-white dark:bg-slate-900 flex-1">
                 {loading ? (
                     <div className="py-8 text-center text-xs text-gray-400">
                         Đang tải...
@@ -87,7 +81,7 @@ export const RankingRight = () => {
                         Chưa có dữ liệu
                     </div>
                 ) : (
-                    songs.map((song, index) => {
+                    songs.slice(0, 8).map((song, index) => {
                         const artistInfo = song.artistId ? artistsMap[song.artistId] : null;
                         const displayArtistName = artistInfo?.name || song.artistName || "Chưa cập nhật";
                         const displayAvatar = artistInfo?.imageUrl || DEFAULT_AVATAR;
@@ -95,17 +89,17 @@ export const RankingRight = () => {
                         return (
                             <div
                                 key={song.id}
-                                className="py-3 px-5 flex items-center gap-4 group cursor-pointer hover:bg-gray-50/50 transition-all bg-white"
+                                className="py-3 px-5 flex items-center gap-4 group cursor-pointer hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-all bg-white dark:bg-slate-900"
                                 onClick={() => navigate(`/song/${song.id}`)}
                             >
-                                <span className="text-[13px] font-bold text-gray-500 w-6 h-6 flex items-center justify-center border border-gray-200 rounded-full shrink-0">
+                                <span className="text-[13px] font-bold text-gray-500 w-6 h-6 flex items-center justify-center ">
                                     {index + 1}
                                 </span>
 
                                 <img
                                     src={displayAvatar}
                                     alt={displayArtistName}
-                                    className="w-12 h-12 rounded-sm object-cover border border-gray-100 shrink-0"
+                                    className="w-14 h-14 object-cover border border-gray-100 dark:border-slate-800 shrink-0 rounded-sm"
                                     onError={(e) => {
                                         (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
                                     }}
@@ -120,22 +114,13 @@ export const RankingRight = () => {
                                     </p>
                                 </div>
 
-                                <div className="text-[12px] text-gray-500 font-medium shrink-0 text-right">
+                                <div className="text-[12px] text-gray-500 dark:text-slate-400 font-medium shrink-0 text-right">
                                     {song.views?.toLocaleString() || 0}
                                 </div>
                             </div>
                         );
                     })
                 )}
-            </div>
-
-            <div className="p-3 bg-white border-t border-gray-100 text-center mt-auto">
-                <button
-                    onClick={() => navigate("/discover")}
-                    className="w-full py-2 text-[11px] font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest cursor-pointer"
-                >
-                    Xem tất cả
-                </button>
             </div>
         </div>
     );

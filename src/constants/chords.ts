@@ -560,3 +560,209 @@ export const getChordData = (name) => {
     }
     return data;
 };
+// Thêm vào cuối file constants của bạn
+
+// Định nghĩa type ChordInfo
+export interface ChordInfo {
+    name: string;
+    fullName?: string;
+    description?: string;
+    relatedChords?: string[];
+    songs?: string[];
+    positions?: any[]; // Dữ liệu từ các CHORD_DATA
+    difficulty?: 'beginner' | 'intermediate' | 'advanced';
+}
+
+// Hàm lấy tất cả hợp âm
+export const getAllChords = (): ChordInfo[] => {
+    const allChords: ChordInfo[] = [];
+
+    // Danh sách tất cả các key từ CHORD_DATA_MAP
+    const chordKeys = Object.keys(CHORD_DATA_MAP);
+
+    // Map để tránh trùng lặp
+    const chordMap = new Map<string, ChordInfo>();
+
+    chordKeys.forEach(key => {
+        const chordData = CHORD_DATA_MAP[key];
+        if (chordData && chordData.length > 0) {
+            // Lấy thông tin từ vị trí đầu tiên
+            const firstPosition = chordData[0];
+
+            // Xác định độ khó dựa trên tên hợp âm
+            let difficulty: 'beginner' | 'intermediate' | 'advanced' = 'beginner';
+            const nameLower = key.toLowerCase();
+
+            if (nameLower.includes('7') || nameLower.includes('sus') || nameLower.includes('add')) {
+                difficulty = 'advanced';
+            } else if (nameLower.includes('#') || nameLower.includes('b') ||
+                nameLower.length > 2 || (nameLower.length === 2 && nameLower[1] === 'm')) {
+                // Các hợp âm có dấu #, b, hoặc hợp âm thứ (có 'm') thường ở trình độ trung cấp
+                difficulty = 'intermediate';
+            } else {
+                difficulty = 'beginner';
+            }
+
+            // Tạo description
+            let description = '';
+            if (key.endsWith('m')) {
+                description = `${key} - Hợp âm thứ, mang cảm giác buồn, sâu lắng`;
+            } else if (key.endsWith('7')) {
+                description = `${key} - Hợp âm 7, tạo màu sắc jazz và blues`;
+            } else if (key.includes('#')) {
+                description = `${key} - Hợp âm thăng, thường sử dụng trong các tông nhạc phức tạp hơn`;
+            } else if (key.includes('b')) {
+                description = `${key} - Hợp âm giáng, thường sử dụng trong các tông nhạc phức tạp hơn`;
+            } else {
+                description = `${key} - Hợp âm trưởng cơ bản`;
+            }
+
+            // Tạo danh sách hợp âm liên quan
+            const relatedChords: string[] = [];
+            if (key.endsWith('m')) {
+                const majorKey = key.slice(0, -1);
+                relatedChords.push(majorKey);
+                relatedChords.push(`${majorKey}7`);
+            } else if (key.endsWith('7')) {
+                const baseKey = key.slice(0, -1);
+                relatedChords.push(baseKey);
+                if (baseKey !== 'F#' && baseKey !== 'G#' && baseKey !== 'C#') {
+                    relatedChords.push(`${baseKey}m`);
+                }
+            } else {
+                // Hợp âm trưởng
+                if (CHORD_DATA_MAP[`${key}m`]) {
+                    relatedChords.push(`${key}m`);
+                }
+                if (CHORD_DATA_MAP[`${key}7`]) {
+                    relatedChords.push(`${key}7`);
+                }
+                // Thêm các hợp âm liên quan khác
+                if (key === 'C') {
+                    relatedChords.push('G', 'Am', 'F');
+                } else if (key === 'G') {
+                    relatedChords.push('C', 'D', 'Em');
+                } else if (key === 'D') {
+                    relatedChords.push('G', 'A', 'Bm');
+                } else if (key === 'A') {
+                    relatedChords.push('D', 'E', 'F#m');
+                } else if (key === 'E') {
+                    relatedChords.push('A', 'B', 'C#m');
+                }
+            }
+
+            // Tạo bài hát gợi ý
+            const songs: string[] = [];
+            if (key === 'C') {
+                songs.push('Chuyện tình không dĩ vãng', 'Anh ơi', 'Vầng trăng khóc');
+            } else if (key === 'G') {
+                songs.push('Tình thôi xót xa', 'Giấc mơ trưa', 'Nơi tình yêu bắt đầu');
+            } else if (key === 'D') {
+                songs.push('Yêu em từ ngày đó', 'Hẹn ước từ hư vô');
+            } else if (key === 'A') {
+                songs.push('Mùa xuân đó có em', 'Hạ trắng');
+            } else if (key === 'E') {
+                songs.push('Như chưa bắt đầu', 'Đừng yêu nữa');
+            } else if (key === 'Am') {
+                songs.push('Em ơi', 'Mùa đông không em', 'Từ nơi tận cùng nỗi nhớ');
+            } else if (key === 'Em') {
+                songs.push('Bức thư tình', 'Lời tỏ tình mùa xuân');
+            } else if (key === 'Dm') {
+                songs.push('Khúc tình ca hàng cây', 'Mưa trên phố');
+            }
+
+            // Tạo fullName
+            let fullName = key;
+            if (key === 'C') fullName = 'Đô trưởng (C Major)';
+            else if (key === 'D') fullName = 'Rê trưởng (D Major)';
+            else if (key === 'E') fullName = 'Mi trưởng (E Major)';
+            else if (key === 'F') fullName = 'Fa trưởng (F Major)';
+            else if (key === 'G') fullName = 'Sol trưởng (G Major)';
+            else if (key === 'A') fullName = 'La trưởng (A Major)';
+            else if (key === 'B') fullName = 'Si trưởng (B Major)';
+            else if (key === 'Cm') fullName = 'Đô thứ (C Minor)';
+            else if (key === 'Dm') fullName = 'Rê thứ (D Minor)';
+            else if (key === 'Em') fullName = 'Mi thứ (E Minor)';
+            else if (key === 'Fm') fullName = 'Fa thứ (F Minor)';
+            else if (key === 'Gm') fullName = 'Sol thứ (G Minor)';
+            else if (key === 'Am') fullName = 'La thứ (A Minor)';
+            else if (key === 'Bm') fullName = 'Si thứ (B Minor)';
+            else if (key === 'C7') fullName = 'Đô 7 (C Dominant 7)';
+            else if (key === 'D7') fullName = 'Rê 7 (D Dominant 7)';
+            else if (key === 'E7') fullName = 'Mi 7 (E Dominant 7)';
+            else if (key === 'F7') fullName = 'Fa 7 (F Dominant 7)';
+            else if (key === 'G7') fullName = 'Sol 7 (G Dominant 7)';
+            else if (key === 'A7') fullName = 'La 7 (A Dominant 7)';
+            else if (key === 'B7') fullName = 'Si 7 (B Dominant 7)';
+            else if (key === 'F#') fullName = 'Fa thăng trưởng (F# Major)';
+            else if (key === 'G#') fullName = 'Sol thăng trưởng (G# Major)';
+            else if (key === 'A#') fullName = 'La thăng trưởng (A# Major)';
+            else if (key === 'C#') fullName = 'Đô thăng trưởng (C# Major)';
+            else if (key === 'D#') fullName = 'Rê thăng trưởng (D# Major)';
+            else if (key === 'F#m') fullName = 'Fa thăng thứ (F# Minor)';
+            else if (key === 'G#m') fullName = 'Sol thăng thứ (G# Minor)';
+            else if (key === 'A#m') fullName = 'La thăng thứ (A# Minor)';
+            else if (key === 'C#m') fullName = 'Đô thăng thứ (C# Minor)';
+            else if (key === 'D#m') fullName = 'Rê thăng thứ (D# Minor)';
+            else if (key === 'Am7') fullName = 'La thứ 7 (A Minor 7)';
+            else if (key === 'Dm7') fullName = 'Rê thứ 7 (D Minor 7)';
+            else if (key === 'Em7') fullName = 'Mi thứ 7 (E Minor 7)';
+            else if (key === 'C#m7') fullName = 'Đô thăng thứ 7 (C# Minor 7)';
+            else if (key === 'F#7') fullName = 'Fa thăng 7 (F# Dominant 7)';
+            else if (key === 'G#7') fullName = 'Sol thăng 7 (G# Dominant 7)';
+            else {
+                fullName = `${key} - Hợp âm guitar`;
+            }
+
+            chordMap.set(key, {
+                name: key,
+                fullName,
+                description,
+                relatedChords: [...new Set(relatedChords)], // Loại bỏ duplicate
+                songs: songs.length > 0 ? songs : undefined,
+                positions: chordData,
+                difficulty
+            });
+        }
+    });
+
+    // Chuyển Map thành array
+    return Array.from(chordMap.values());
+};
+
+
+
+// Hàm lấy hợp âm theo tên với đầy đủ thông tin
+export const getChordInfo = (name: string): ChordInfo | null => {
+    const allChords = getAllChords();
+    const chord = allChords.find(c => c.name === name);
+    return chord || null;
+};
+
+// Hàm lấy hợp âm theo độ khó
+export const getChordsByDifficulty = (difficulty: 'beginner' | 'intermediate' | 'advanced'): ChordInfo[] => {
+    const allChords = getAllChords();
+    return allChords.filter(chord => chord.difficulty === difficulty);
+};
+
+// Hàm tìm kiếm hợp âm
+export const searchChords = (query: string): ChordInfo[] => {
+    const allChords = getAllChords();
+    const lowerQuery = query.toLowerCase();
+    return allChords.filter(chord =>
+        chord.name.toLowerCase().includes(lowerQuery) ||
+        chord.fullName?.toLowerCase().includes(lowerQuery) ||
+        chord.description?.toLowerCase().includes(lowerQuery)
+    );
+};
+
+// Hàm lấy hợp âm gợi ý (hợp âm liên quan)
+export const getRelatedChords = (chordName: string): ChordInfo[] => {
+    const allChords = getAllChords();
+    const chord = allChords.find(c => c.name === chordName);
+    if (!chord || !chord.relatedChords) return [];
+
+    return allChords.filter(c =>
+        chord.relatedChords?.includes(c.name)
+    );
+};

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Search, Menu, Sun, Moon, X } from "lucide-react";
-import ButtonCustom from "../../components/ui/ButtonCustom";
+import ButtonCustom from "../../components/common/ButtonCustom";
 import { Input } from "../../components/ui/Input";
 import { useDebounce } from "../../hooks/useDebounce";
 import {
@@ -10,10 +10,11 @@ import {
 } from "../../components/ui/Avatar";
 import { useTheme } from "../../context/ThemeContext";
 import instance from "../../config/axios";
-import Dropdown from "../../components/ui/Dropdown";
+import Dropdown from "../../components/common/Dropdown";
 import { faUser, faSignOutAlt, faCog } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import NotificationDropdown from "../../components/common/NotificationDropdown";
 
 export const Navigation = () => {
     const { theme, toggleTheme } = useTheme();
@@ -88,7 +89,7 @@ export const Navigation = () => {
                 const res = await instance.get(`/chords`, {
                     params: { search: debouncedSearchQuery },
                 });
-                setSearchResults(res.data.result || []);
+                setSearchResults(res.data?.result?.data || res.data?.result || []);
             } catch (err) {
                 console.error("Lỗi tìm kiếm:", err);
                 setSearchResults([]);
@@ -124,7 +125,7 @@ export const Navigation = () => {
 
     return (
         <>
-            <nav className="h-[var(--header-height)] lg:px-20 sticky top-0 z-50 w-full border-b border-border-subtle bg-[var(--primary-color)] backdrop-blur-md">
+            <nav className="h-[var(--header-height)] lg:px-20 fixed top-0 z-50 w-full border-b border-border-subtle dark:border-slate-800/60 bg-[var(--primary-color)] dark:bg-slate-950/95 backdrop-blur-md">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
                     <div
                         className="flex items-center gap-2 cursor-pointer"
@@ -160,11 +161,19 @@ export const Navigation = () => {
                                 value={searchQuery || ""}
                                 onFocus={() => setShowSuggestions(true)}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-64 pl-10 bg-white border-none text-black placeholder:text-black/50"
+                                className="w-64 pl-10 pr-8 bg-white dark:bg-slate-900 border-none text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-white/20 [&::-webkit-search-cancel-button]:hidden"
                             />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-3 p-0.5 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 transition-colors cursor-pointer border-none outline-none bg-transparent"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
 
                             {showSuggestions && searchQuery.trim() !== "" && (
-                                <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-800  shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 py-2">
+                                <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-900 shadow-xl border border-gray-100 dark:border-slate-800/80 max-h-60 overflow-y-auto z-50 py-2 rounded-lg">
                                     {isSearching ? (
                                         <div className="px-4 py-2 text-sm text-gray-500 text-center">
                                             Đang tìm kiếm...
@@ -208,15 +217,24 @@ export const Navigation = () => {
                             )}
                         </div>
 
-                        <ButtonCustom
+                        <button
                             onClick={toggleTheme}
+                            className="p-2 hover:bg-white/10 dark:hover:bg-slate-800/40 rounded-full transition-all text-white cursor-pointer border-none outline-none"
                         >
                             {theme === "dark" ? (
                                 <Sun className="h-5 w-5 text-white" />
                             ) : (
                                 <Moon className="h-5 w-5 text-white" />
                             )}
-                        </ButtonCustom>
+                        </button>
+
+                        {user && (
+                            <NotificationDropdown
+                                textColor="text-white"
+                                hoverBg="hover:bg-white/10"
+                                badgeRingColor="ring-[var(--primary-color)]"
+                            />
+                        )}
 
                         {!loading && (
                             <div className="hidden md:block">
@@ -248,13 +266,12 @@ export const Navigation = () => {
                             </div>
                         )}
 
-                        <ButtonCustom
-                            variant="ghost"
-                            className="md:hidden p-2"
+                        <button
+                            className="md:hidden p-2 hover:bg-white/10 dark:hover:bg-slate-800/40 rounded-full transition-all text-white cursor-pointer border-none outline-none"
                             onClick={() => setIsMenuOpen(true)}
                         >
                             <Menu className="h-6 w-6 text-white" />
-                        </ButtonCustom>
+                        </button>
                     </div>
                 </div>
             </nav>

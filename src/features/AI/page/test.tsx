@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
-import ButtonCustom from "../../../components/ui/ButtonCustom";
+import ButtonCustom from "../../../components/common/ButtonCustom";
 import GuitarChordDiagram from "../../../components/chords/GuitarChordDiagram";
 import { getChordData } from "../../../constants/chords";
 import {
@@ -144,7 +144,7 @@ Quy tắc ép buộc đầu ra:
                     ref={popupRef}
                     className="fixed z-50 transition-all duration-200"
                     style={{
-                        top: popupPos.y - 145, 
+                        top: popupPos.y - 145,
                         left: popupPos.x,
                         transform: "translateX(-50%)",
                     }}

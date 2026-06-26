@@ -107,12 +107,12 @@ export default function ManagementRequestPage() {
     });
 
     return (
-        <div className="p-8 bg-white h-full">
+        <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                     Request Management
                 </h1>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                     Review and approve user contributions
                 </p>
             </div>
@@ -126,7 +126,7 @@ export default function ManagementRequestPage() {
                             ${
                                 activeTab === tab.id
                                     ? "border-[var(--primary-color)] text-[var(--primary-color)]"
-                                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
                             }`}
                     >
                         {tab.icon} {tab.label}
@@ -149,14 +149,14 @@ export default function ManagementRequestPage() {
                 </div>
             </div>
 
-            <div className="border rounded-md overflow-hidden">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-slate-50">
-                        <TableRow>
-                            <TableHead className="w-[100px]">Type</TableHead>
-                            <TableHead>Content Preview</TableHead>
-                            <TableHead>Requested At</TableHead>
-                            <TableHead className="text-right">
+                    <TableHeader className="bg-slate-50 dark:bg-slate-800/60">
+                        <TableRow className="border-b border-slate-200 dark:border-slate-800">
+                            <TableHead className="w-[100px] dark:text-slate-300">Type</TableHead>
+                            <TableHead className="dark:text-slate-300">Content Preview</TableHead>
+                            <TableHead className="dark:text-slate-300">Requested At</TableHead>
+                            <TableHead className="text-right dark:text-slate-300">
                                 Actions
                             </TableHead>
                         </TableRow>
@@ -188,16 +188,16 @@ export default function ManagementRequestPage() {
                                     req.type === "CHORD" && !req.data?.artistId;
 
                                 return (
-                                    <TableRow key={req.id}>
+                                    <TableRow key={req.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
                                         <TableCell>
                                             <span
                                                 className={`px-2 py-1 rounded text-[10px] font-bold uppercase 
                                                 ${
                                                     req.type === "CHORD"
-                                                        ? "bg-blue-100 text-blue-700"
+                                                        ? "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
                                                         : req.type === "ARTIST"
-                                                          ? "bg-purple-100 text-purple-700"
-                                                          : "bg-amber-100 text-amber-700"
+                                                          ? "bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"
+                                                          : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
                                                 }`}
                                             >
                                                 {req.type}
@@ -206,10 +206,10 @@ export default function ManagementRequestPage() {
 
                                         <TableCell>
                                             <div className="max-w-[500px] flex flex-col gap-1">
-                                                <div className="flex items-center gap-2 font-semibold text-sm text-slate-800">
+                                                <div className="flex items-center gap-2 font-semibold text-sm text-slate-800 dark:text-slate-200">
                                                     {getRequestTitle(req)}
                                                     {isNewArtist && (
-                                                        <span className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100 animate-pulse">
+                                                        <span className="flex items-center gap-1 text-[10px] bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full border border-red-100 dark:border-red-900/35 animate-pulse">
                                                             <AlertCircle
                                                                 size={12}
                                                             />{" "}
@@ -221,7 +221,7 @@ export default function ManagementRequestPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-slate-500 line-clamp-2">
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                                                     {getRequestDescription(req)}
                                                 </div>
 
@@ -258,7 +258,7 @@ export default function ManagementRequestPage() {
                                             </div>
                                         </TableCell>
 
-                                        <TableCell className="text-slate-500 text-sm">
+                                        <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
                                             {new Date(
                                                 req.createdAt,
                                             ).toLocaleString()}
@@ -278,7 +278,7 @@ export default function ManagementRequestPage() {
                                                             ? "Must create artist first"
                                                             : "Approve"
                                                     }
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 disabled:opacity-30"
+                                                    className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/25 disabled:opacity-30"
                                                     onClick={() =>
                                                         handleAction(
                                                             req.id,
@@ -300,7 +300,7 @@ export default function ManagementRequestPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     disabled={isProcessing}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/25"
                                                     onClick={() =>
                                                         handleAction(
                                                             req.id,

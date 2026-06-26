@@ -7,6 +7,7 @@ import {
     LayoutGrid,
     History,
     Settings,
+    User,
 } from "lucide-react";
 
 export const sidebarItems = [
@@ -20,14 +21,9 @@ export const sidebarItems = [
         path: "/admin/yeu-cau-duyet",
         icon: CheckCheckIcon,
     },
-    {
-        name: "Bảng tính",
-        path: "/admin/bang-tinh",
-        icon: FileSpreadsheet,
-    },
-    { name: "Mã giảm giá", path: "/admin/ma-giam-gia", icon: Ticket },
+
+    { name: "Người dùng", path: "/admin/nguoi-dung", icon: User },
     { name: "Nghệ sĩ", path: "/admin/nghe-si", icon: Wallet },
     { name: "Bộ sưu tập", path: "/admin/bo-suu-tap", icon: LayoutGrid },
-    { name: "Lịch sử", path: "/admin/lich-su", icon: History },
     { name: "Cài đặt", path: "/admin/cai-dat", icon: Settings },
 ];
