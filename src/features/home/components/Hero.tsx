@@ -25,11 +25,11 @@ export const Hero = () => {
 
             <div className="relative z-10 max-w-lg flex flex-col items-start text-left">
                 <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-1">
-                    DISCOVER
+                    KHÁM PHÁ
                 </span>
 
                 <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2 leading-tight">
-                    Hot new tracks <br /> this week
+                    Bài hát mới nổi bật <br /> tuần này
                 </h1>
 
                 <p className="text-xs text-white/80 mb-6 font-medium">

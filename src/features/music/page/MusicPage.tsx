@@ -11,6 +11,7 @@ import {
     User as UserIcon,
     Calendar,
     ChevronRight,
+    ChevronLeft,
     Zap,
     Filter,
     X,
@@ -310,34 +311,6 @@ export default function MusicPage() {
                                 <Zap className="w-4 h-4" />
                                 Thịnh hành
                             </button>
-                            <button
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all ${activeTab === 'topWeek'
-                                    ? 'bg-[--primary-color]/10 text-[--primary-color] font-medium'
-                                    : 'hover:bg-gray-50 dark:hover:bg-slate-800/40 text-gray-600 dark:text-slate-350'
-                                    }`}
-                                onClick={() => handleTabChange('topWeek')}
-                            >
-                                <TrendingUp className="w-4 h-4" />
-                                Top tuần
-                            </button>
-                            <button
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all ${activeTab === 'newest'
-                                    ? 'bg-[--primary-color]/10 text-[--primary-color] font-medium'
-                                    : 'hover:bg-gray-50 dark:hover:bg-slate-800/40 text-gray-600 dark:text-slate-350'
-                                    }`}
-                                onClick={() => handleTabChange('newest')}
-                            >
-                                <Clock className="w-4 h-4" />
-                                Mới cập nhật
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-sm hover:bg-gray-50 dark:hover:bg-slate-800/40 text-gray-600 dark:text-slate-350 text-sm transition-all">
-                                <Radio className="w-4 h-4" />
-                                Radio
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-sm hover:bg-gray-50 dark:hover:bg-slate-800/40 text-gray-600 dark:text-slate-350 text-sm transition-all">
-                                <Library className="w-4 h-4" />
-                                Thư viện
-                            </button>
                         </div>
                     </div>
 
@@ -408,7 +381,7 @@ export default function MusicPage() {
                         <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-550" />
                         <Input
                             type="text"
-                            placeholder="Search movies, hit albums..."
+                            placeholder="Tìm kiếm hợp âm, bài hát..."
                             value={searchTerm}
                             onChange={handleSearch}
                             className="w-full pl-6 pr-8 bg-transparent border-0 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:border-slate-950 dark:focus-visible:border-slate-100 transition-all rounded-none text-sm shadow-none focus:outline-none h-9"
@@ -423,9 +396,7 @@ export default function MusicPage() {
                         )}
                     </div>
 
-                    <button className="bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:from-[#5053de] hover:to-[#7c4ce6] text-white font-semibold text-[10px] tracking-wider py-2.5 px-5 rounded-md shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0 uppercase cursor-pointer">
-                        MAKE A SPONSOR
-                    </button>
+
                 </div>
 
                 {featuredSong && (
@@ -487,15 +458,7 @@ export default function MusicPage() {
                                     {artistsMap[featuredSong.artistId]?.description || featuredSong.content || "Bùi Nguyễn Trung Quân, thường được biết đến với nghệ danh Trung Quân..."}
                                 </p>
 
-                                {/* 3. Phần Buttons: Mobile căn giữa (`justify-center`), PC căn trái (`sm:justify-start`) */}
-                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2 w-full">
-                                    <span className="bg-[#00E5BE] hover:bg-[#00D0AD] text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer">
-                                        Electronic
-                                    </span>
-                                    <span className="bg-[#51C4E9] hover:bg-[#46B3D6] text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer">
-                                        Classical
-                                    </span>
-                                </div>
+
 
                             </div>
                         </div>
@@ -507,7 +470,7 @@ export default function MusicPage() {
                 <div className="mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            Top Songs
+                            Bài Hát Nổi Bật
                         </h2>
 
                         <div className="flex items-center gap-3 w-full sm:w-auto">

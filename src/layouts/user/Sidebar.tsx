@@ -43,18 +43,18 @@ export const Sidebar = () => {
       <div className="flex-1 px-2">
         <div className="px-3 mb-2">
           <p className="text-[10px] font-bold text-[#404040] uppercase tracking-[0.15em]">
-            Workspace
+            Không gian làm việc
           </p>
         </div>
         <nav className="space-y-0.5">
           <SidebarItem
             icon={<Activity size={16} />}
-            label="Guitar Tuner"
+            label="Chỉnh dây Guitar"
             active
           />
-          <SidebarItem icon={<Metronome size={16} />} label="Metronome" />
-          <SidebarItem icon={<Sparkles size={16} />} label="AI Suggestion" />
-          <SidebarItem icon={<Library size={16} />} label="Library" />
+          <SidebarItem icon={<Metronome size={16} />} label="Máy đếm nhịp" />
+          <SidebarItem icon={<Sparkles size={16} />} label="Gợi ý AI" />
+          <SidebarItem icon={<Library size={16} />} label="Thư viện" />
         </nav>
       </div>
 

@@ -114,19 +114,11 @@ export const Album = ({ album, onPlaySong, currentSong, isPlaying }: AlbumProps)
                         </span>
                         <span>{album.songs.length} bài hát</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-4">
-                        <Button
-                            className="bg-[--primary-color] hover:bg-[--primary-color]/90 rounded-sm"
-                            onClick={handlePlayAll}
-                        >
-                            <Play className="w-4 h-4 mr-2" />
-                            Phát tất cả
-                        </Button>
-                    </div>
+
                 </div>
             </div>
 
-            <div className="border-t border-gray-100 dark:border-slate-800">
+            <div className="border-t border-gray-100 dark:border-slate-800 mt-5">
 
                 <div className="divide-y divide-gray-50 dark:divide-slate-800/40">
                     {album.songs

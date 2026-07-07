@@ -1,11 +1,26 @@
 import { Search, Sun, Moon } from "lucide-react";
 import { Input } from "../ui/Input";
-import { Avatar } from "../ui/Avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/Avatar";
 import NotificationDropdown from "./NotificationDropdown";
 import { useTheme } from "../../context/ThemeContext";
+import { useState, useEffect } from "react";
+import { getUserInfo } from "../../utils/auth";
 
 export default function TopHeader() {
     const { theme, toggleTheme } = useTheme();
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const data = await getUserInfo();
+                setUser(data);
+            } catch (err) {
+                console.error("Lỗi khi lấy thông tin admin ở TopHeader:", err);
+            }
+        };
+        fetchUser();
+    }, []);
 
     return (
         <header className="flex h-16 items-center justify-between px-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-850 text-slate-800 dark:text-slate-150">
@@ -41,11 +56,10 @@ export default function TopHeader() {
                     badgeRingColor="ring-white dark:ring-slate-900"
                 />
 
-                <Avatar
-                    className="h-9 w-9 cursor-pointer border dark:border-slate-800"
-                    src="https://github.com/shadcn.png"
-                    fallback="JD"
-                />
+                <Avatar className="h-9 w-9 cursor-pointer border dark:border-slate-800">
+                    <AvatarImage src={user?.imageUrl || "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"} alt={user?.username || "Admin"} />
+                    <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase() || "AD"}</AvatarFallback>
+                </Avatar>
             </div>
         </header>
     );

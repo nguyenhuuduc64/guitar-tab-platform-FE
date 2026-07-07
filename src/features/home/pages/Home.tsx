@@ -87,7 +87,7 @@ export default function Home() {
                     </div>
 
                     <div className="overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                        <div className="p-2 md:p-5">
+                        <div className="p-2 ">
                             <SongTable
                                 songs={trendingSongs}
                                 loading={loading}

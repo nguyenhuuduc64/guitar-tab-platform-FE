@@ -1,8 +1,8 @@
 import { useState } from "react";
-import instance from "../../../config/axios";
 import ButtonCustom from "../../../components/common/ButtonCustom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import loginBanner from "../../../assets/login_banner.png";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -26,113 +26,104 @@ export default function LoginPage() {
             }
             window.location.href = "/";
         } catch (err) {
-            setError("Sai tài khoản hoặc mật khẩu");
+            setError("Tài khoản hoặc mật khẩu không chính xác");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="h-[calc(100vh-var(--header-height)-var(--subnav-height)-32px)] bg-white dark:bg-zinc-950 flex p-4 font-sans text-neutral-800 dark:text-zinc-200 lg:overflow-hidden overflow-y-auto">
-            {/* Left Side: Art Banner Component */}
-            <div className="hidden lg:flex w-1/2 relative bg-neutral-900 rounded-[2.5rem] overflow-hidden flex-col justify-between p-10 bg-[url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000')] bg-cover bg-center">
-                <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 via-transparent to-black/80 z-0" />
-
-                <div className="relative z-10 flex items-center justify-between">
-                    <span className="text-white font-bold text-lg tracking-wide">Sound Library</span>
-                    <div className="flex gap-4 text-sm font-medium">
-                        <button className="text-white/80 hover:text-white" onClick={() => navigate("/dang-ky")}>Sign Up</button>
-                        <button className="bg-white/10 text-white px-4 py-1.5 rounded-full border border-white/20 backdrop-blur-sm hover:bg-white/20">Join Us</button>
-                    </div>
-                </div>
-
-                <div className="relative z-10 flex items-center justify-between bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-fit max-w-xs">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500 overflow-hidden shrink-0">
-                            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=100" alt="Track avatar" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-white text-xs font-semibold truncate">Track of the day</p>
-                            <p className="text-white/60 text-[10px] truncate">The Weeknd, Playboi Carti</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Side: Main Login Form */}
-            <div className="flex-1 flex flex-col justify-center items-center px-6 lg:px-16 relative bg-white dark:bg-zinc-950">
-                <div className="absolute top-8 right-8 flex items-center gap-2 border border-neutral-200 dark:border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-neutral-600 dark:text-zinc-400 cursor-pointer hover:bg-neutral-50 dark:hover:bg-zinc-900">
-                    <span>🌐 EN</span>
-                </div>
-
+        <div className="min-h-screen bg-white dark:bg-zinc-950 flex font-sans text-neutral-800 dark:text-zinc-200">
+            {/* Cột Trái: Form đăng nhập chuẩn thiết kế */}
+            <div className="flex-1 flex flex-col justify-center items-center px-8 lg:px-20 py-12">
                 <div className="w-full max-w-md space-y-8">
-                    <div className="space-y-2">
-                        <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white animate-pulse">RHYTHMIC</h1>
-                        <h2 className="text-3xl font-bold tracking-tight pt-4 text-neutral-800 dark:text-zinc-100">Hi Music Lover</h2>
-                        <p className="text-neutral-400 dark:text-zinc-500 text-sm">Welcome to RHYTHMIC</p>
+                    {/* Header: Logo và Tên thương hiệu */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-white text-xl shadow-md border border-neutral-800">
+                            R
+                        </div>
+                        <span className="text-[#1A5FB4] dark:text-[#3584E4] text-lg tracking-wider uppercase">
+                            HATCUNGTOI
+                        </span>
+                    </div>
+
+                    {/* Tiêu đề Chào mừng */}
+                    <div className="text-center pt-4">
+                        <h2 className="text-2xl font-bold tracking-widest text-neutral-800 dark:text-zinc-100 uppercase">
+                            CHÀO MỪNG QUAY TRỞ LẠI
+                        </h2>
                     </div>
 
                     {error && (
-                        <div className="text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/35 text-red-500 dark:text-red-400 p-3 rounded-xl">{error}</div>
+                        <div className="text-xs bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/35 text-rose-500 dark:text-rose-400 px-4 py-3 rounded-lg">
+                            {error}
+                        </div>
                     )}
 
-                    <div className="space-y-4">
-                        <div className="space-y-1.5">
+                    <div className="space-y-6">
+                        {/* Nút Đăng nhập Google */}
+                        <button className="w-full flex items-center justify-center gap-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-lg py-4 shadow-sm hover:shadow-md hover:bg-neutral-50 dark:hover:bg-zinc-800/80 transition-all font-semibold text-sm text-neutral-700 dark:text-zinc-300">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google logo" />
+                            Đăng nhập bằng Google
+                        </button>
+
+                        {/* Đường chia cách */}
+                        <div className="relative flex py-2 items-center text-[10px] font-bold text-neutral-400 dark:text-zinc-550 uppercase tracking-widest">
+                            <div className="flex-grow border-t border-neutral-200 dark:border-zinc-800"></div>
+                            <span className="flex-shrink mx-4">Hoặc đăng nhập với Email</span>
+                            <div className="flex-grow border-t border-neutral-200 dark:border-zinc-800"></div>
+                        </div>
+
+                        {/* Các trường nhập liệu */}
+                        <div className="space-y-4">
                             <input
                                 type="text"
-                                placeholder="Email"
-                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-xl p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200 dark:focus:ring-zinc-850 transition-all bg-neutral-50/50 dark:bg-zinc-900/50 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                                placeholder="Email của bạn"
+                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-[#1a73e8] transition-all bg-white dark:bg-zinc-900 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-650"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                        </div>
 
-                        <div className="space-y-1.5">
                             <input
                                 type="password"
-                                placeholder="Password"
-                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-xl p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200 dark:focus:ring-zinc-850 transition-all bg-neutral-50/50 dark:bg-zinc-900/50 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                                placeholder="Mật khẩu của bạn"
+                                className="w-full border border-neutral-200 dark:border-zinc-800 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-[#1a73e8] transition-all bg-white dark:bg-zinc-900 text-neutral-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-650"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-zinc-450 pt-1">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
-                                <input type="checkbox" className="rounded border-neutral-300 dark:border-zinc-800 text-blue-600 focus:ring-0 bg-transparent" />
-                                <span>Keep me logged in</span>
+                        {/* Ghi nhớ & Quên mật khẩu */}
+                        <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-zinc-450">
+                            <label className="flex items-center gap-2 cursor-pointer select-none font-medium">
+                                <input type="checkbox" className="rounded border-neutral-300 dark:border-zinc-800 text-[#1a73e8] focus:ring-0 bg-transparent w-4 h-4 cursor-pointer" />
+                                <span>Ghi nhớ đăng nhập</span>
                             </label>
-                            <span className="hover:underline cursor-pointer">Forgot Password?</span>
+                            <span className="hover:underline hover:text-[#1a73e8] cursor-pointer font-semibold transition-colors">Quên mật khẩu?</span>
+                        </div>
+
+                        {/* Nút hành động */}
+                        <div className="pt-2">
+                            <ButtonCustom
+                                name={loading ? "Đang xử lý..." : "Đăng nhập"}
+                                onClick={handleLogin}
+                                className="w-full bg-[#0b57d0] hover:bg-[#004ecb] text-white py-4 rounded-lg transition-all font-semibold text-sm shadow-md"
+                            />
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="relative flex py-2 items-center text-xs text-neutral-400 dark:text-zinc-550 uppercase">
-                            <div className="flex-grow border-t border-neutral-100 dark:border-zinc-800"></div>
-                            <span className="flex-shrink mx-4">or</span>
-                            <div className="flex-grow border-t border-neutral-100 dark:border-zinc-800"></div>
-                        </div>
-
-                        <button className="w-full flex items-center justify-center gap-3 border border-neutral-200 dark:border-zinc-800 rounded-full py-3 hover:bg-neutral-50 dark:hover:bg-zinc-900 transition-all font-medium text-sm text-neutral-700 dark:text-zinc-300">
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google logo" />
-                            Login with Google
-                        </button>
-
-                        <ButtonCustom
-                            name={loading ? "Processing..." : "Login"}
-                            onClick={handleLogin}
-                            className="w-full bg-[#4fa6f1] text-white py-3.5 rounded-full hover:opacity-90 transition-all font-semibold text-sm shadow-sm"
-                        />
-                    </div>
-
-                    <p className="text-center text-sm text-neutral-400 dark:text-zinc-500">
-                        Don't have an account?{" "}
-                        <span className="text-blue-500 font-semibold cursor-pointer hover:underline" onClick={() => navigate("/dang-ky")}>
-                            Sign up
+                    {/* Footer liên kết đăng ký */}
+                    <p className="text-center text-sm text-neutral-500 dark:text-zinc-550 pt-2 font-medium">
+                        Bạn chưa có tài khoản?{" "}
+                        <span className="text-[#1a73e8] font-bold cursor-pointer hover:underline" onClick={() => navigate("/dang-ky")}>
+                            Đăng ký
                         </span>
                     </p>
                 </div>
             </div>
+
+            {/* Cột Phải: Visual Banner trọn vẹn từ ảnh gốc */}
+            <div className="hidden lg:block w-[55%] relative overflow-hidden bg-cover bg-center border-l border-neutral-100 dark:border-zinc-900" style={{ backgroundImage: `url(${loginBanner})` }} />
         </div>
     );
 }

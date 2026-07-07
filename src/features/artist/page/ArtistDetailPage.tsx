@@ -86,6 +86,10 @@ function ArtistDetailPage() {
 
     const totalViews = songs.reduce((sum, song) => sum + (song.views || 0), 0);
 
+    const bannerBgStyle = artist?.backgroundImage
+        ? { backgroundImage: `url(${artist.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        : {};
+    console.log("banner", bannerBgStyle);
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
@@ -105,48 +109,49 @@ function ArtistDetailPage() {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1  flex flex-col gap-8 min-w-0 overflow-y-auto max-h-[calc(100vh-var(--header-height)-32px)]">
+            <main className="flex-1 flex flex-col gap-8 min-w-0 overflow-y-auto max-h-[calc(100vh-var(--header-height)-32px)]">
                 {/* Banner Section */}
-                <div className="relative overflow-hidden bg-artist-banner-bg p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 border border-slate-200/50 dark:border-slate-800/50 shadow-sm shrink-0">
-                    {/* Circular Avatar (No Border) */}
-                    <div className="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden shadow-md shrink-0 bg-slate-100 dark:bg-slate-800 relative">
-                        {artist?.imageUrl ? (
-                            <img
-                                src={artist.imageUrl}
-                                alt={artist.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-violet-100 dark:from-slate-800 dark:to-slate-900">
-                                <Music className="w-12 h-12 text-indigo-300 dark:text-slate-600" />
-                            </div>
-                        )}
-                    </div>
+                <div
+                    className="relative overflow-hidden w-full h-auto min-h-[340px] md:h-[360px] flex items-stretch border-b border-slate-200/40 dark:border-slate-800/40 shadow-md shrink-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-955"
+                    style={bannerBgStyle}
+                >
+                    {/* Dark gradient overlay */}
+                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[0.5px] z-0" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/75 z-0" />
 
-                    <div className="flex-1 text-center md:text-left space-y-4">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4 justify-center md:justify-start">
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-850 dark:text-white tracking-tight">
+                    {/* Inner content */}
+                    <div className="relative z-10 w-full flex flex-col md:flex-row md:items-end justify-between gap-6 p-6 md:p-10">
+                        {/* Identity (Left side) */}
+                        <div className="flex-1 flex flex-col items-start justify-end h-full gap-2 text-left">
+                            <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm border border-white/5">
+                                Nghệ sĩ
+                            </span>
+                            <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-md select-none">
                                 {artist?.name}
                             </h1>
-                            <button
-                                className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md mx-auto md:mx-0 shrink-0 cursor-pointer border-none"
-                                onClick={() => {
-                                    if (songs.length > 0) {
-                                        navigate(`/song/${songs[0].id}`);
-                                    }
-                                }}
-                            >
-                                <Play size={16} fill="currentColor" className="ml-0.5" />
-                            </button>
+                            <div className="flex items-center gap-4 mt-2">
+                                <button
+                                    className="w-12 h-12 rounded-full bg-[var(--primary-color)] hover:opacity-95 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer border-none shrink-0"
+                                    onClick={() => {
+                                        if (songs.length > 0) {
+                                            navigate(`/song/${songs[0].id}`);
+                                        }
+                                    }}
+                                >
+                                    <Play size={20} fill="currentColor" className="ml-0.5" />
+                                </button>
+                                <div className="text-sm font-bold text-white/90 drop-shadow-sm">
+                                    {totalViews.toLocaleString("vi-VN")} người quan tâm
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-bold text-slate-600 dark:text-slate-350">
-                            <span>{totalViews.toLocaleString("vi-VN")} người quan tâm</span>
+                        {/* Bio box (Right side - transparent, scrollable, larger font) */}
+                        <div className="w-full md:w-[450px] h-48 flex flex-col shrink-0 text-left">
+                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin text-sm text-white/95 leading-relaxed text-justify">
+                                {artist?.description || "Nghệ sĩ này hiện chưa cập nhật tiểu sử chi tiết. Hãy tiếp tục theo dõi để cập nhật các tác phẩm mới nhất của họ."}
+                            </div>
                         </div>
-
-                        <p className="text-xs sm:text-sm text-slate-550 dark:text-slate-400 max-w-3xl leading-relaxed text-justify line-clamp-3 hover:line-clamp-none transition-all duration-300 cursor-pointer">
-                            {artist?.description || "Nghệ sĩ này hiện chưa cập nhật tiểu sử chi tiết. Hãy tiếp tục theo dõi để cập nhật các tác phẩm mới nhất của họ."}
-                        </p>
                     </div>
                 </div>
 

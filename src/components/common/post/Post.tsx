@@ -319,7 +319,7 @@ export function Post({
 
                     {/* Hiển thị hợp âm trực tiếp nếu có */}
                     {post.chord && (
-                        <div className="mt-3">
+                        <div className="mt-3 overflow-x-auto max-w-full custom-scrollbar">
                             <ChordViewer
                                 chord={{
                                     id: post.chord.id,

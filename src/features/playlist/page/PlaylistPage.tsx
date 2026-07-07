@@ -164,7 +164,7 @@ export const PlaylistPage = () => {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 p-4 md:p-6 flex gap-6 overflow-x-hidden">
+            <main className="flex-1 p-4 md:p-6 flex flex-col xl:flex-row gap-6 overflow-x-hidden">
                 <div className="flex-1 flex flex-col gap-8 min-w-0">
 
                     {/* SECTION 1: POPULAR ARTISTS (IMAGE 1 STYLE) */}
@@ -258,7 +258,7 @@ export const PlaylistPage = () => {
                     </div>
                 </div>
 
-                <aside className="w-[350px] shrink-0 hidden xl:flex flex-col h-fit sticky top-0 bg-white dark:bg-transparent">
+                <aside className="w-full xl:w-[350px] shrink-0 flex flex-col h-fit xl:sticky xl:top-0 bg-transparent mt-8 xl:mt-0">
                     <h3 className="font-bold text-slate-800 dark:text-white mb-4 text-sm md:text-base flex-shrink-0 uppercase tracking-wider">
                         Hot trong tuần
                     </h3>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Loader2,
@@ -6,6 +6,7 @@ import {
     Edit2,
     ChevronRight,
     Play,
+    Pause,
     MoreHorizontal,
     Shuffle,
     SkipBack,
@@ -18,7 +19,8 @@ import {
     Disc3,
     Library,
     MessageCircle,
-    Flame, Heart
+    Flame, Heart,
+    LayoutGrid, List
 } from "lucide-react";
 import instance from "../../../config/axios";
 import { useFormStore } from "../../../store/useFormStore";
@@ -106,6 +108,121 @@ function Profile({ userId }: ProfileProps) {
     const [likedPage, setLikedPage] = useState<number>(0);
     const likedPageSize = 5;
 
+    // Audio Playback states and ref
+    const [currentPlayingSong, setCurrentPlayingSong] = useState<Chord | null>(null);
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
+    const [currentTime, setCurrentTime] = useState<number>(0);
+    const [duration, setDuration] = useState<number>(0);
+    const [volume, setVolume] = useState<number>(0.8);
+    const [isMuted, setIsMuted] = useState<boolean>(false);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [isFollowing, setIsFollowing] = useState<boolean>(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Control Playback
+    const handlePlayChord = (chord: Chord) => {
+        if (!chord.hasAudio && !chord.audio?.url) {
+            alert("Bài hát này chưa có file audio để phát.");
+            return;
+        }
+
+        // Find audio url
+        const audioUrl = chord.audio?.url || (chords.find(c => c.id === chord.id)?.audio?.url);
+        if (!audioUrl) {
+            alert("Không tìm thấy đường dẫn audio.");
+            return;
+        }
+
+        const chordToPlay = {
+            ...chord,
+            audio: chord.audio || chords.find(c => c.id === chord.id)?.audio
+        };
+
+        if (currentPlayingSong?.id === chordToPlay.id) {
+            if (isPlaying) {
+                audioRef.current?.pause();
+                setIsPlaying(false);
+            } else {
+                audioRef.current?.play().catch(err => console.error("Error playing audio:", err));
+                setIsPlaying(true);
+            }
+        } else {
+            setCurrentPlayingSong(chordToPlay);
+            setIsPlaying(true);
+            setTimeout(() => {
+                if (audioRef.current) {
+                    audioRef.current.volume = volume;
+                    audioRef.current.muted = isMuted;
+                    audioRef.current.play().catch(err => console.error("Error playing audio:", err));
+                }
+            }, 50);
+        }
+    };
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            audioRef.current.play().catch(err => console.error("Error playing audio:", err));
+            setIsPlaying(true);
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseFloat(e.target.value);
+        setVolume(val);
+        if (audioRef.current) {
+            audioRef.current.volume = val;
+        }
+        if (val > 0 && isMuted) {
+            setIsMuted(false);
+            if (audioRef.current) audioRef.current.muted = false;
+        }
+    };
+
+    const toggleMute = () => {
+        const nextMuted = !isMuted;
+        setIsMuted(nextMuted);
+        if (audioRef.current) {
+            audioRef.current.muted = nextMuted;
+        }
+    };
+
+    const handleProgressChange = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!audioRef.current || duration === 0) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        const newTime = (clickX / width) * duration;
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+    };
+
+    const formatTime = (secs: number) => {
+        if (isNaN(secs)) return "0:00";
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60);
+        return `${m}:${s < 10 ? "0" : ""}${s}`;
+    };
+
+    const handleFollowToggle = () => {
+        setIsFollowing(!isFollowing);
+    };
+
     useEffect(() => {
         setCurrentPage(0);
         setSelectedPlaylist(null);
@@ -180,36 +297,53 @@ function Profile({ userId }: ProfileProps) {
                         setPlaylists(playlistRes.value.data.result || []);
                     }
                     if (likedRes.status === "fulfilled") {
-                        const likedPostsData: LikedPost[] = likedRes.value.data.result || [];
-                        setLikedPosts(likedPostsData);
+                        const likedLikesData = likedRes.value.data.result || [];
 
-                        if (likedPostsData.length > 0) {
+                        if (likedLikesData.length > 0) {
                             setLikedPostsLoading(true);
-                            const countsPromises = likedPostsData.map(async (post) => {
+
+                            const postsPromises = likedLikesData.map(async (like: any) => {
                                 try {
+                                    const postRes = await instance.get(`/posts/${like.postId}`);
+                                    const postData = postRes.data.result;
+
                                     const [likeCountRes, commentCountRes] = await Promise.allSettled([
-                                        instance.get(`/likes/post/${post.id}/count`),
-                                        instance.get(`/comments/post/${post.id}/count`)
+                                        instance.get(`/likes/post/${like.postId}/count`),
+                                        instance.get(`/comments/post/${like.postId}/count`)
                                     ]);
+
+                                    const likeCount = likeCountRes.status === 'fulfilled' ? likeCountRes.value.data.result || 0 : 0;
+                                    const commentCount = commentCountRes.status === 'fulfilled' ? commentCountRes.value.data.result || 0 : 0;
+
                                     return {
-                                        postId: post.id,
-                                        likeCount: likeCountRes.status === 'fulfilled' ? likeCountRes.value.data.result || 0 : 0,
-                                        commentCount: commentCountRes.status === 'fulfilled' ? commentCountRes.value.data.result || 0 : 0,
+                                        post: postData,
+                                        likeCount,
+                                        commentCount
                                     };
-                                } catch {
-                                    return { postId: post.id, likeCount: 0, commentCount: 0 };
+                                } catch (err) {
+                                    console.error(`Error loading liked post details for postId ${like.postId}:`, err);
+                                    return null;
                                 }
                             });
-                            const countsResults = await Promise.all(countsPromises);
+
+                            const postsResults = await Promise.all(postsPromises);
+                            const validResults = postsResults.filter((r): r is { post: LikedPost; likeCount: number; commentCount: number } => r !== null);
+
+                            const fullLikedPosts = validResults.map(r => r.post);
+                            setLikedPosts(fullLikedPosts);
+
                             const newLikeCounts: Record<string, number> = {};
                             const newCommentCounts: Record<string, number> = {};
-                            countsResults.forEach(({ postId, likeCount, commentCount }) => {
-                                newLikeCounts[postId] = likeCount;
-                                newCommentCounts[postId] = commentCount;
+                            validResults.forEach(({ post, likeCount, commentCount }) => {
+                                newLikeCounts[post.id] = likeCount;
+                                newCommentCounts[post.id] = commentCount;
                             });
+
                             setLikedPostLikeCounts(newLikeCounts);
                             setLikedPostCommentCounts(newCommentCounts);
                             setLikedPostsLoading(false);
+                        } else {
+                            setLikedPosts([]);
                         }
                     }
                 }
@@ -360,7 +494,76 @@ function Profile({ userId }: ProfileProps) {
             </div>
 
             <div className="flex-1 md:pl-[var(--sidebar-user-width)] flex flex-col">
-                <main className="p-4 sm:p-6 md:p-8 flex-1">
+                {/* Mobile User Profile Card */}
+                <main>
+                    <div className="md:hidden bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 mb-8 flex flex-col items-center text-center shadow-xs">
+                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-slate-800 shadow-sm mb-3">
+                            <img
+                                src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=cover"}
+                                alt={user?.fullName || "User Avatar"}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-0.5">
+                            {user?.fullName || "Người dùng"}
+                        </h3>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
+                            {user?.username ? `@${user.username}` : ""}
+                        </p>
+
+                        <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed max-w-sm mb-4">
+                            Sản xuất âm nhạc và chia sẻ đam mê guitar.
+                        </p>
+
+                        <div className="w-full max-w-xs flex gap-3 mb-5 justify-center">
+                            {!isOwnProfile ? (
+                                <>
+                                    <button
+                                        onClick={handleFollowToggle}
+                                        className={`flex-1 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all border ${isFollowing
+                                            ? "bg-transparent border-gray-300 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-55 dark:hover:bg-slate-800/40"
+                                            : "bg-gray-900 dark:bg-slate-200 border-gray-900 text-white dark:text-slate-900 hover:bg-gray-800 dark:hover:bg-slate-100"
+                                            }`}
+                                    >
+                                        {isFollowing ? "Following" : "Follow"}
+                                    </button>
+                                    <button className="flex-1 py-1.5 bg-transparent border border-gray-300 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800/30 text-gray-700 dark:text-slate-300 rounded-full text-xs font-semibold tracking-wider transition-colors">
+                                        Nhắn tin
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => openForm(FORM_NAME)}
+                                    className="w-full py-1.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900/50 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/50 rounded-full text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-1.5"
+                                >r justify-center gap-1.5"
+                                    <Edit2 size={12} /> Chỉnh sửa hồ sơ
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-4 grid grid-cols-3 gap-2 text-center">
+                            <div>
+                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                    {chords.length}
+                                </span>
+                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bài hát</span>
+                            </div>
+                            <div>
+                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                    {playlists.length}
+                                </span>
+                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bộ sưu tập</span>
+                            </div>
+                            <div>
+                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                    {likedPosts.length}
+                                </span>
+                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Đã thích</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Album</h2>
                         {isOwnProfile && (
@@ -375,7 +578,7 @@ function Profile({ userId }: ProfileProps) {
 
                     <div className="space-y-12">
                         <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
-                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-850 shadow-sm relative group mx-auto sm:mx-0">
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm relative group mx-auto sm:mx-0">
                                 <img
                                     src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=cover"
                                     alt="Ảnh bìa"
@@ -395,46 +598,280 @@ function Profile({ userId }: ProfileProps) {
                                     <div className="space-y-8">
                                         {chordsWithAudio.length > 0 && (
                                             <div>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <Music className="w-5 h-5 text-indigo-600" />
-                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
-                                                        Có audio ({chordsWithAudio.length})
-                                                    </h4>
-                                                </div>
-                                                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-                                                    {chordsWithAudio.map((chord) => (
-                                                        <div
-                                                            key={chord.id}
-                                                            onClick={() => navigate(`/song/${chord.id}`)}
-                                                            className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
+                                                {/* Header with Title and Toggle */}
+                                                <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-slate-800/80 pb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Music className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
+                                                            Có audio ({chordsWithAudio.length})
+                                                        </h4>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg border border-gray-200/20">
+                                                        <button
+                                                            onClick={() => setViewMode('list')}
+                                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'list'
+                                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
+                                                                : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                                                }`}
+                                                            title="Danh sách"
                                                         >
-                                                            <div className="aspect-square w-full bg-gray-100 dark:bg-slate-800 overflow-hidden relative">
-                                                                <img
-                                                                    src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
-                                                                    alt={chord.title}
-                                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                                />
-                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white flex items-center justify-center shadow-md">
-                                                                        <Play className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-black fill-current translate-x-0.5" />
+                                                            <List size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setViewMode('grid')}
+                                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'grid'
+                                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
+                                                                : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                                                }`}
+                                                            title="Lưới đĩa than"
+                                                        >
+                                                            <LayoutGrid size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {viewMode === 'list' ? (
+                                                    /* Split Layout: Left is Featured Player Deck, Right is Tracklist */
+                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                                        {/* Featured Player Deck (5 cols) */}
+                                                        <div className="lg:col-span-5 bg-white/60 dark:bg-[#11131c]/60 backdrop-blur-md border border-gray-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs flex flex-col items-center text-center relative overflow-hidden group">
+                                                            {/* Album art cover and record sleeve representation */}
+                                                            <div className="relative w-40 h-40 mb-5 flex items-center justify-center">
+                                                                {/* Vinyl record spinning behind */}
+                                                                <div
+                                                                    className={`absolute w-36 h-36 rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-transform duration-1000 ${isPlaying && currentPlayingSong ? 'animate-spin' : ''
+                                                                        }`}
+                                                                    style={{ animationDuration: '6s' }}
+                                                                >
+                                                                    <div className="w-14 h-14 rounded-full border border-slate-700 bg-indigo-600 flex items-center justify-center">
+                                                                        <div className="w-3 h-3 rounded-full bg-black"></div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-indigo-600 text-white text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                    <Music className="w-2 h-2 sm:w-3 sm:h-3" />
-                                                                    <span className="hidden xs:inline">Audio</span>
+                                                                {/* Cover artwork block sleeve */}
+                                                                <div className="absolute w-32 h-32 rounded-2xl overflow-hidden shadow-xl border border-white/20 dark:border-slate-800 z-10 bg-slate-100 dark:bg-slate-900">
+                                                                    <img
+                                                                        src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
+                                                                        alt={currentPlayingSong?.title || "No song"}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
                                                                 </div>
                                                             </div>
-                                                            <div className="p-1.5 sm:p-2 md:p-3">
-                                                                <h4 className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-600 truncate mb-0.5 sm:mb-1 hover:underline">
-                                                                    {chord.title || "Chưa có tiêu đề"}
+
+                                                            {/* Active Song Metadata */}
+                                                            <div className="w-full min-w-0 mb-4 z-10">
+                                                                <h4 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                                    {currentPlayingSong?.title || "Chọn bài hát để phát"}
                                                                 </h4>
-                                                                <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-400 dark:text-slate-400 truncate">
-                                                                    {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
+                                                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate">
+                                                                    {currentPlayingSong?.artistName || currentPlayingSong?.author || user?.fullName || "Chưa rõ nghệ sĩ"}
                                                                 </p>
                                                             </div>
+
+                                                            {/* Animated Sound Equalizer Visualizer (CSS only) */}
+                                                            <div className="h-6 flex items-end justify-center gap-1 mb-5 w-full z-10">
+                                                                {isPlaying && currentPlayingSong ? (
+                                                                    <>
+                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.8s_infinite] h-4" style={{ animationDelay: '0.1s' }} />
+                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.6s_infinite] h-6" style={{ animationDelay: '0.3s' }} />
+                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.9s_infinite] h-3" style={{ animationDelay: '0.5s' }} />
+                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.7s_infinite] h-5" style={{ animationDelay: '0.2s' }} />
+                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.5s_infinite] h-2" style={{ animationDelay: '0.4s' }} />
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">Trình phát nhạc</div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Mini Controls on Deck */}
+                                                            {currentPlayingSong ? (
+                                                                <div className="w-full flex items-center justify-center gap-4 z-10">
+                                                                    <button
+                                                                        onClick={toggleMute}
+                                                                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-650 transition cursor-pointer"
+                                                                    >
+                                                                        <Volume2 className={`w-4 h-4 ${isMuted ? "text-red-500" : ""}`} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handlePlayChord(currentPlayingSong)}
+                                                                        className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer"
+                                                                    >
+                                                                        {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => navigate(`/song/${currentPlayingSong.id}`)}
+                                                                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-650 transition cursor-pointer"
+                                                                        title="Xem hợp âm"
+                                                                    >
+                                                                        <ChevronRight className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-[11px] text-gray-400 py-3">Chọn bài hát bên phải để bắt đầu phát nhạc thực tế</p>
+                                                            )}
                                                         </div>
-                                                    ))}
-                                                </div>
+
+                                                        {/* Track List (7 cols) */}
+                                                        <div className="lg:col-span-7 space-y-1.5">
+                                                            {chordsWithAudio.map((chord, idx) => {
+                                                                const isCurrent = currentPlayingSong?.id === chord.id;
+                                                                return (
+                                                                    <div
+                                                                        key={chord.id}
+                                                                        onClick={() => navigate(`/song/${chord.id}`)}
+                                                                        className={`flex items-center gap-3 p-3 bg-white dark:bg-[#11131c] border ${isCurrent
+                                                                            ? 'border-indigo-500/50 dark:border-indigo-500/40 bg-indigo-50/5 dark:bg-indigo-950/5 shadow-xs'
+                                                                            : 'border-gray-100 dark:border-slate-800/80 hover:bg-gray-50/50 dark:hover:bg-slate-800/30'
+                                                                            } rounded-2xl transition-all duration-200 cursor-pointer group relative`}
+                                                                    >
+                                                                        {/* Index or Play icon */}
+                                                                        <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                                                                            {isCurrent && isPlaying ? (
+                                                                                <div className="flex gap-0.5 items-end h-3">
+                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-2" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }} />
+                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-3" style={{ animationDelay: '0.3s', animationDuration: '0.4s' }} />
+                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s', animationDuration: '0.7s' }} />
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-xs font-semibold text-gray-400 group-hover:hidden">{idx + 1}</span>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handlePlayChord(chord);
+                                                                                }}
+                                                                                className="hidden group-hover:flex p-1.5 rounded-full bg-indigo-100/80 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition"
+                                                                            >
+                                                                                {isCurrent && isPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
+                                                                            </button>
+                                                                        </div>
+
+                                                                        {/* Cover Small Art */}
+                                                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-900 shrink-0">
+                                                                            <img
+                                                                                src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=100&auto=format&fit=cover"
+                                                                                alt={chord.title}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Title & Artist */}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h5 className={`text-xs sm:text-sm font-bold truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${isCurrent ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-gray-900 dark:text-slate-100'
+                                                                                }`}>
+                                                                                {chord.title}
+                                                                            </h5>
+                                                                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
+                                                                                {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Stats & Actions */}
+                                                                        <div className="flex items-center gap-3 shrink-0">
+                                                                            <div className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
+                                                                                <Eye className="w-3 h-3" />
+                                                                                <span>{chord.views?.toLocaleString() || 0}</span>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    navigate(`/song/${chord.id}`);
+                                                                                }}
+                                                                                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 transition rounded-lg"
+                                                                            >
+                                                                                <MoreHorizontal size={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    /* Grid View: Vinyl Slide-out animation */
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                                        {chordsWithAudio.map((chord) => {
+                                                            const isCurrent = currentPlayingSong?.id === chord.id;
+                                                            return (
+                                                                <div
+                                                                    key={chord.id}
+                                                                    onClick={() => navigate(`/song/${chord.id}`)}
+                                                                    className={`bg-white dark:bg-[#11131c] border ${isCurrent
+                                                                        ? 'border-indigo-500/50 dark:border-indigo-500/40 shadow-md ring-1 ring-indigo-500/10'
+                                                                        : 'border-gray-100 dark:border-slate-800/80 shadow-2xs'
+                                                                        } rounded-2xl p-2.5 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden`}
+                                                                >
+                                                                    {/* Album Artwork Sleeve and Sliding Record */}
+                                                                    <div className="aspect-square w-full relative rounded-xl bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+                                                                        {/* Sliding Vinyl Record */}
+                                                                        <div
+                                                                            className={`absolute w-[80%] h-[80%] rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-all duration-500 ease-out z-0
+                                                                                group-hover:translate-x-[40%] group-hover:rotate-180
+                                                                                ${isCurrent && isPlaying ? 'animate-spin' : ''}`}
+                                                                            style={{ animationDuration: '6s' }}
+                                                                        >
+                                                                            <div className="w-[35%] h-[35%] rounded-full bg-indigo-600 flex items-center justify-center">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Cover image sleeve */}
+                                                                        <div className="absolute inset-0 z-10 w-full h-full bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+                                                                            <img
+                                                                                src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
+                                                                                alt={chord.title}
+                                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Hover Play Button Overlay */}
+                                                                        <div
+                                                                            className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handlePlayChord(chord);
+                                                                            }}
+                                                                        >
+                                                                            <div className="w-11 h-11 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform duration-200 transform translate-y-2 group-hover:translate-y-0">
+                                                                                {isCurrent && isPlaying ? (
+                                                                                    <Pause className="w-4.5 h-4.5 text-white fill-current" />
+                                                                                ) : (
+                                                                                    <Play className="w-4.5 h-4.5 text-white fill-current translate-x-0.5" />
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Audio Badge */}
+                                                                        <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 z-30">
+                                                                            <Music className="w-2.5 h-2.5" />
+                                                                            <span>Audio</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Metadata */}
+                                                                    <div className="p-2 flex-1 flex flex-col justify-between z-10 bg-white dark:bg-[#11131c]">
+                                                                        <div className="min-w-0 mb-1">
+                                                                            <div className="flex items-center justify-between gap-1.5">
+                                                                                <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                                                    {chord.title || "Chưa có tiêu đề"}
+                                                                                </h4>
+                                                                                {isCurrent && isPlaying && (
+                                                                                    <Disc3 className="w-3.5 h-3.5 text-indigo-500 animate-spin shrink-0 [animation-duration:3s]" />
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
+                                                                                {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-[9px] text-gray-400 flex items-center gap-1 font-medium mt-1">
+                                                                            <Eye className="w-3 h-3" />
+                                                                            <span>{chord.views?.toLocaleString() || 0} lượt xem</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -446,62 +883,31 @@ function Profile({ userId }: ProfileProps) {
                                                         Lời bài hát ({chordsWithoutAudio.length})
                                                     </h4>
                                                 </div>
-                                                <div className="w-full space-y-0.5 overflow-x-auto">
+                                                <div className="w-full space-y-0.5">
                                                     {chordsWithoutAudio.map((chord, index) => {
-                                                        const isChordSelected = selectedChordId === chord.id;
                                                         return (
-                                                            <div key={chord.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40 min-w-[600px] sm:min-w-0">
+                                                            <div key={chord.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40">
                                                                 <div
-                                                                    onClick={() => handleToggleChordAudio(chord.id)}
-                                                                    className={`grid grid-cols-[30px_2fr_1fr_1fr_80px] items-center py-3 px-2 hover:bg-gray-100/40 dark:hover:bg-slate-800/30 group transition-colors text-sm cursor-pointer ${isChordSelected ? "bg-indigo-50/30 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400" : ""}`}
+                                                                    onClick={() => navigate(`/song/${chord.id}`)}
+                                                                    className="grid grid-cols-[1fr_80px] sm:grid-cols-[2fr_1fr_1fr_80px] items-center py-3 px-2 hover:bg-gray-100/40 dark:hover:bg-slate-800/30 group transition-colors text-sm cursor-pointer"
                                                                 >
-                                                                    <div className="flex items-center justify-start text-gray-400">
-                                                                        <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isChordSelected ? "rotate-90 text-indigo-600 dark:text-indigo-400" : ""}`} />
-                                                                    </div>
-                                                                    <div
-                                                                        onClick={(e) => { e.stopPropagation(); navigate(`/song/${chord.id}`); }}
-                                                                        className="font-medium text-gray-800 dark:text-slate-200 pr-4 truncate hover:text-indigo-600 hover:underline cursor-pointer"
-                                                                    >
+                                                                    <div className="font-medium text-gray-800 dark:text-slate-200 pr-4 truncate hover:text-indigo-600 hover:underline">
                                                                         {chord.title}
+                                                                        <span className="block sm:hidden text-[10px] text-gray-400 mt-0.5 font-normal">
+                                                                            {chord.artistName || chord.author || "Unknown"} • {chord.views?.toLocaleString() || 0} lượt xem
+                                                                        </span>
                                                                     </div>
-                                                                    <div className="text-xs text-gray-500 dark:text-slate-450 flex items-center gap-1 truncate">
+                                                                    <div className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 truncate hidden sm:flex">
                                                                         <UserIcon className="w-3 h-3 shrink-0 text-gray-400 dark:text-slate-500" />
                                                                         {chord.artistName || chord.author || "Unknown"}
                                                                     </div>
-                                                                    <div className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                                                                    <div className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1 hidden sm:flex">
                                                                         <Eye className="w-3.5 h-3.5" />
                                                                         {chord.views?.toLocaleString() || 0}
                                                                     </div>
-                                                                    <div className="flex items-center justify-end gap-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                                    <div className="flex items-center justify-end gap-3 sm:gap-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                                                         <Heart className="w-4 h-4 cursor-pointer hover:text-red-500 hover:fill-red-500 transition-colors" />
                                                                         <MoreHorizontal className="w-4 h-4 cursor-pointer hover:text-gray-700" />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div
-                                                                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isChordSelected ? "max-h-[300px] opacity-100 py-2 bg-gray-50/50 dark:bg-slate-900/50 pl-8 pr-2" : "max-h-0 opacity-0"}`}
-                                                                >
-                                                                    <div className="border-l-2 border-dashed border-indigo-200 dark:border-indigo-900/40 pl-4 space-y-1">
-                                                                        <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-500/80 dark:text-indigo-400/80 mb-1">Audio đã tạo</p>
-                                                                        {loadingAudio ? (
-                                                                            <div className="flex items-center gap-1 py-1 text-xs text-gray-400 dark:text-slate-500">
-                                                                                <Loader2 className="w-3 h-3 animate-spin" /> Đang tải audio...
-                                                                            </div>
-                                                                        ) : chordAudios.length === 0 ? (
-                                                                            <p className="text-xs text-gray-400 py-1">Chưa có file audio nào cho bài hát này.</p>
-                                                                        ) : (
-                                                                            chordAudios.map((audio, aIdx) => (
-                                                                                <div key={audio.id || aIdx} className="flex items-center justify-between py-1.5 px-2 bg-white dark:bg-slate-850 rounded border border-gray-100 dark:border-slate-800 shadow-2xs hover:border-indigo-100 dark:hover:border-indigo-900 group/audio transition-colors text-xs">
-                                                                                    <div className="flex items-center gap-2 truncate">
-                                                                                        <Music className="w-3 h-3 text-indigo-400" />
-                                                                                        <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{audio.title || `Audio #${aIdx + 1}`}</span>
-                                                                                    </div>
-                                                                                    <button className="p-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors">
-                                                                                        <Play className="w-2.5 h-2.5 fill-current" />
-                                                                                    </button>
-                                                                                </div>
-                                                                            ))
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -571,34 +977,34 @@ function Profile({ userId }: ProfileProps) {
                                     <p className="text-xs text-gray-400 mt-0.5">{playlists.length} bộ sưu tập</p>
                                 </div>
 
-                                <div className="w-full space-y-0.5 overflow-x-auto">
+                                <div className="w-full space-y-2">
                                     {playlists.length === 0 ? (
                                         <p className="text-sm text-gray-400 py-2">Chưa có bộ sưu tập nào.</p>
                                     ) : (
                                         playlists.map((playlist, index) => {
                                             const isSelected = selectedPlaylist?.id === playlist.id;
                                             return (
-                                                <div key={playlist.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40 min-w-[300px] sm:min-w-0">
+                                                <div key={playlist.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40">
                                                     <div
                                                         onClick={() => setSelectedPlaylist(isSelected ? null : playlist)}
-                                                        className={`grid grid-cols-[30px_1fr_100px] items-center py-3 px-2 hover:bg-gray-100/40 dark:hover:bg-slate-800/30 group transition-colors text-sm cursor-pointer ${isSelected ? "bg-indigo-50/40 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400" : "text-gray-800 dark:text-slate-200"}`}
+                                                        className={`grid grid-cols-[30px_1fr_100px] items-center py-3 px-3 hover:bg-slate-50 dark:hover:bg-slate-900/40 rounded-lg group transition-colors text-sm cursor-pointer ${isSelected ? "bg-indigo-50/20 dark:bg-indigo-950/10 text-indigo-600 dark:text-indigo-400 font-medium" : "text-gray-800 dark:text-slate-200"}`}
                                                     >
                                                         <div className="flex items-center text-gray-400">
-                                                            <ListMusic className={`w-4 h-4 ${isSelected ? "text-indigo-600" : ""}`} />
+                                                            <ListMusic className={`w-4 h-4 ${isSelected ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
                                                         </div>
-                                                        <div className="font-medium truncate">
+                                                        <div className="truncate">
                                                             {playlist.name}
-                                                            <span className="text-xs text-gray-400 font-normal ml-2">({playlist.chords?.length || 0} bài hát)</span>
+                                                            <span className="text-xs text-gray-400 dark:text-slate-500 font-normal ml-2">({playlist.chords?.length || 0} bài hát)</span>
                                                         </div>
                                                         <div className="flex items-center justify-end text-gray-400">
-                                                            <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isSelected ? "rotate-90 text-indigo-600" : ""}`} />
+                                                            <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isSelected ? "rotate-90 text-indigo-600 dark:text-indigo-400" : ""}`} />
                                                         </div>
                                                     </div>
 
                                                     <div
-                                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${isSelected ? "max-h-[500px] opacity-100 py-2 bg-gray-50/50 dark:bg-slate-900/50 pl-6 pr-2" : "max-h-0 opacity-0"}`}
+                                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${isSelected ? "max-h-[500px] opacity-100 py-2 bg-slate-50/40 dark:bg-slate-900/20 pl-4 sm:pl-6 pr-2" : "max-h-0 opacity-0"}`}
                                                     >
-                                                        <div className="space-y-0.5 border-l-2 border-indigo-100 dark:border-indigo-900/40 pl-4 my-1">
+                                                        <div className="space-y-1 border-l-2 border-indigo-500 dark:border-indigo-400 pl-4 my-1">
                                                             {!playlist.chords || playlist.chords.length === 0 ? (
                                                                 <p className="text-xs text-gray-400 dark:text-slate-500 py-1">Chưa có bài hát trong bộ sưu tập này.</p>
                                                             ) : (
@@ -606,16 +1012,27 @@ function Profile({ userId }: ProfileProps) {
                                                                     <div
                                                                         key={chord.id || idx}
                                                                         onClick={() => navigate(`/song/${chord.id}`)}
-                                                                        className="grid grid-cols-[20px_2fr_1fr_1fr_30px] items-center py-2 px-2 hover:bg-white dark:hover:bg-slate-850 rounded transition-colors text-xs cursor-pointer group/track"
+                                                                        className="grid grid-cols-[20px_1fr_30px] sm:grid-cols-[20px_2fr_1fr_1fr_30px] items-center py-2 px-2 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/15 hover:text-indigo-600 dark:hover:text-indigo-400 rounded transition-colors text-xs cursor-pointer group/track"
                                                                     >
                                                                         <span className="text-gray-400 font-medium group-hover/track:hidden">{idx + 1}</span>
-                                                                        <Play className="w-2.5 h-2.5 text-indigo-600 hidden group-hover/track:block" />
-                                                                        <div className="font-medium text-gray-700 dark:text-slate-200 truncate pl-1 group-hover/track:text-indigo-600 dark:group-hover/track:text-indigo-400">{chord.title}</div>
-                                                                        <div className="text-[11px] text-gray-400 dark:text-slate-500 truncate pr-2 flex items-center gap-0.5">
+                                                                        <Play
+                                                                            className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400 hidden group-hover/track:block"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handlePlayChord(chord);
+                                                                            }}
+                                                                        />
+                                                                        <div className="font-medium text-gray-700 dark:text-slate-200 truncate pl-1 group-hover/track:text-indigo-600 dark:group-hover/track:text-indigo-400">
+                                                                            {chord.title}
+                                                                            <span className="block sm:hidden text-[10px] text-gray-400 mt-0.5 font-normal">
+                                                                                {chord.artistName || chord.author || "Unknown"} • {chord.views || 0} views
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-gray-400 dark:text-slate-500 truncate pr-2 hidden sm:flex items-center gap-0.5">
                                                                             <UserIcon className="w-2.5 h-2.5 shrink-0" />
                                                                             {chord.artistName || chord.author || "Unknown"}
                                                                         </div>
-                                                                        <div className="text-[11px] text-gray-400 dark:text-slate-500 flex items-center gap-0.5">
+                                                                        <div className="text-[11px] text-gray-400 dark:text-slate-500 hidden sm:flex items-center gap-0.5">
                                                                             <Eye className="w-3 h-3" />
                                                                             {chord.views || 0}
                                                                         </div>
@@ -791,55 +1208,90 @@ function Profile({ userId }: ProfileProps) {
                 </main>
             </div>
 
-            <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-gray-100 dark:border-slate-900 px-3 sm:px-6 py-3 z-50">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2 sm:gap-3 w-1/4 min-w-0">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded shrink-0 overflow-hidden">
-                            <img
-                                src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=100&auto=format&fit=cover"
-                                alt="Album cover"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="min-w-0 hidden xs:block">
-                            <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                {chords[0]?.title || "Chưa chọn bài hát"}
-                            </h4>
-                            <p className="text-[10px] sm:text-xs text-gray-400 truncate">
-                                {user?.fullName || "Nghệ sĩ"}
-                            </p>
-                        </div>
-                        <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 cursor-pointer hover:text-red-500 shrink-0" />
-                    </div>
-
-                    <div className="flex flex-col items-center gap-1 w-2/4 max-w-xl">
-                        <div className="flex items-center gap-3 sm:gap-5 text-gray-500 dark:text-slate-400">
-                            <Shuffle className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
-                            <SkipBack className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
-                            <button className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-900 dark:bg-slate-200 text-white dark:text-slate-950 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-none outline-none">
-                                <Play className="w-3 h-3 sm:w-4 sm:h-4 fill-white dark:fill-slate-950 translate-x-0.5" />
-                            </button>
-                            <SkipForward className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
-                            <Repeat className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
-                        </div>
-                        <div className="w-full flex items-center gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-gray-400 dark:text-slate-500 font-medium">
-                            <span className="whitespace-nowrap">0:11</span>
-                            <div className="flex-1 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden relative cursor-pointer group">
-                                <div className="absolute inset-y-0 left-0 w-1/4 bg-gray-800 dark:bg-slate-350 group-hover:bg-indigo-600" />
+            {currentPlayingSong && (
+                <>
+                    <audio
+                        ref={audioRef}
+                        src={currentPlayingSong.audio?.url}
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
+                        onEnded={() => setIsPlaying(false)}
+                    />
+                    <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-gray-100 dark:border-slate-900 px-3 sm:px-6 py-3 z-50">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-3 w-1/4 min-w-0">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded shrink-0 overflow-hidden">
+                                    <img
+                                        src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=100&auto=format&fit=cover"
+                                        alt="Album cover"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="min-w-0 hidden xs:block">
+                                    <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">
+                                        {currentPlayingSong.title || "Chưa chọn bài hát"}
+                                    </h4>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 truncate">
+                                        {currentPlayingSong.artistName || currentPlayingSong.author || user?.fullName || "Nghệ sĩ"}
+                                    </p>
+                                </div>
+                                <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 cursor-pointer hover:text-red-500 shrink-0" />
                             </div>
-                            <span className="whitespace-nowrap">3:45</span>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center justify-end gap-2 sm:gap-4 w-1/4 text-gray-400">
-                        <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 dark:text-slate-450" />
-                        <div className="w-12 sm:w-20 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden relative cursor-pointer hidden sm:block">
-                            <div className="absolute inset-y-0 left-0 w-3/4 bg-gray-700 dark:bg-slate-400" />
+                            <div className="flex flex-col items-center gap-1 w-2/4 max-w-xl">
+                                <div className="flex items-center gap-3 sm:gap-5 text-gray-500 dark:text-slate-400">
+                                    <Shuffle className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
+                                    <SkipBack className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
+                                    <button
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-900 dark:bg-slate-200 text-white dark:text-slate-950 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-none outline-none"
+                                        onClick={togglePlay}
+                                    >
+                                        {isPlaying ? (
+                                            <Pause className="w-3 h-3 sm:w-4 sm:h-4 fill-current text-white dark:text-slate-950" />
+                                        ) : (
+                                            <Play className="w-3 h-3 sm:w-4 sm:h-4 fill-current text-white dark:text-slate-950 translate-x-0.5" />
+                                        )}
+                                    </button>
+                                    <SkipForward className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
+                                    <Repeat className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
+                                </div>
+                                <div className="w-full flex items-center gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-gray-400 dark:text-slate-500 font-medium">
+                                    <span className="whitespace-nowrap">{formatTime(currentTime)}</span>
+                                    <div
+                                        className="flex-1 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden relative cursor-pointer group"
+                                        onClick={handleProgressChange}
+                                    >
+                                        <div
+                                            className="absolute inset-y-0 left-0 bg-gray-800 dark:bg-slate-300 group-hover:bg-indigo-600"
+                                            style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                                        />
+                                    </div>
+                                    <span className="whitespace-nowrap">{formatTime(duration)}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 sm:gap-4 w-1/4 text-gray-400">
+                                <Volume2
+                                    className={`w-3 h-3 sm:w-4 sm:h-4 cursor-pointer transition-colors ${isMuted ? "text-red-500" : "text-gray-500 dark:text-slate-400"}`}
+                                    onClick={toggleMute}
+                                />
+                                <div className="flex items-center sm:block">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.05"
+                                        value={isMuted ? 0 : volume}
+                                        onChange={handleVolumeChange}
+                                        className="w-12 sm:w-20 h-1 bg-gray-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600 hidden sm:block"
+                                    />
+                                </div>
+                                <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-700" />
+                            </div>
                         </div>
-                        <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-gray-700" />
-                    </div>
-                </div>
-            </footer>
+                    </footer>
+                </>
+            )}
 
             {isOwnProfile && (
                 <DynamicForm

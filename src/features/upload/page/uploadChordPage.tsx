@@ -204,14 +204,14 @@ const UpLoadChordPage = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 dark:text-slate-350 uppercase tracking-wider mb-2">
-                                    Danh mục <span className="text-red-500">*</span>
+                                    Thể loại <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={categoryId}
                                     onChange={(e) => setCategoryId(e.target.value)}
                                     className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-700 dark:text-slate-200 rounded px-3 py-2.5 text-sm outline-none focus:border-indigo-500 transition-all"
                                 >
-                                    <option value="" className="bg-white dark:bg-slate-950">-- Chọn danh mục --</option>
+                                    <option value="" className="bg-white dark:bg-slate-950">-- Chọn thể loại --</option>
                                     {categories.map((cat) => (
                                         <option key={cat.id} value={cat.id} className="bg-white dark:bg-slate-950">
                                             {cat.name}

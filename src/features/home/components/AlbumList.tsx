@@ -26,7 +26,7 @@ export const AlbumList = ({ onPlaySong, currentSong, isPlaying }: AlbumListProps
 
                     const albumData: AlbumType = {
                         id: `album-${topArtist.artistId}`,
-                        title: `Best of ${topArtist.artistName}`,
+                        title: `Tuyển tập hay nhất của ${topArtist.artistName}`,
                         artistId: topArtist.artistId,
                         artistName: topArtist.artistName,
                         artistImage: topArtist.imageUrl,

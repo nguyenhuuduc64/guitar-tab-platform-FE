@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Search, Menu, Sun, Moon, X } from "lucide-react";
+import { Search, Menu, Sun, Moon, X, User as UserIcon, Settings, LogOut, Compass, PlusCircle, Library, Users } from "lucide-react";
 import ButtonCustom from "../../components/common/ButtonCustom";
 import { Input } from "../../components/ui/Input";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -33,17 +33,17 @@ export const Navigation = () => {
 
     const menuItems = [
         {
-            name: "Profile",
+            name: "Trang cá nhân",
             icon: faUser,
             onClick: () => navigate("/trang-ca-nhan"),
         },
         {
-            name: "Settings",
+            name: "Cài đặt",
             icon: faCog,
             onClick: () => console.log("Settings"),
         },
         {
-            name: "Logout",
+            name: "Đăng xuất",
             icon: faSignOutAlt,
             onClick: () => {
                 localStorage.removeItem("accessToken");
@@ -242,15 +242,15 @@ export const Navigation = () => {
                                     <Dropdown
                                         items={menuItems}
                                         trigger={
-                                            <Avatar className="h-8 w-8 cursor-pointer ring-offset-2 ring-offset-primary hover:ring-2 hover:ring-white transition-all">
+                                            <Avatar className="h-8 w-8 cursor-pointer ring-offset-2 ring-offset-[var(--primary-color)] hover:ring-2 hover:ring-white transition-all">
                                                 <AvatarImage
                                                     src={
-                                                        user.avatar ||
+                                                        user.imageUrl ||
                                                         "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
                                                     }
                                                 />
                                                 <AvatarFallback>
-                                                    {user.name?.charAt(0)}
+                                                    {user.fullName?.charAt(0) || user.username?.charAt(0) || "U"}
                                                 </AvatarFallback>
                                             </Avatar>
                                         }
@@ -284,72 +284,104 @@ export const Navigation = () => {
             )}
 
             <div
-                className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-slate-900 z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
+                className={`fixed top-0 right-0 h-full w-[280px] bg-white/97 dark:bg-slate-900/97 backdrop-blur-md z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
             >
                 <div className="flex flex-col h-full">
-                    <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
-                        <span className="font-bold text-lg dark:text-white">
-                            Menu
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100/80 dark:border-slate-800/80">
+                        <span className="font-bold text-lg text-slate-800 dark:text-white">
+                            Hatcungtoi
                         </span>
-                        <ButtonCustom
-                            variant="ghost"
+                        <button
                             onClick={() => setIsMenuOpen(false)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer border-none outline-none bg-transparent"
                         >
                             <X className="h-6 w-6 dark:text-white" />
-                        </ButtonCustom>
+                        </button>
                     </div>
 
-                    {user && (
-                        <div className="p-5 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={user.avatar} />
+                    {user ? (
+                        <div className="p-4 mx-4 my-3 flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl shadow-xs">
+                            <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-700 shadow-sm shrink-0">
+                                <AvatarImage src={user.imageUrl || "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"} />
                                 <AvatarFallback>
-                                    {user.name?.charAt(0)}
+                                    {user.fullName?.charAt(0) || user.username?.charAt(0) || "U"}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex flex-col">
-                                <span className="font-semibold text-sm dark:text-white">
-                                    {user.name}
+                            <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">
+                                    {user.fullName || user.username}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full w-fit mt-1">
                                     Thành viên
                                 </span>
                             </div>
                         </div>
-                    )}
-
-                    <div className="flex flex-col p-4 gap-2">
-                        {navLinks.map((link) => (
-                            <a
-                                key={link.name}
-                                href={link.href}
-                                className="p-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                {link.name}
-                            </a>
-                        ))}
-                        <hr className="my-2 border-gray-100 dark:border-gray-800" />
-                        {user ? (
-                            menuItems.map((item) => (
-                                <button
-                                    key={item.name}
-                                    onClick={() => {
-                                        item.onClick();
-                                        setIsMenuOpen(false);
-                                    }}
-                                    className="flex items-center gap-3 p-3 text-red-500 font-medium"
-                                >
-                                    {item.name}
-                                </button>
-                            ))
-                        ) : (
+                    ) : (
+                        <div className="p-4 mx-4 my-3 flex flex-col gap-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Vui lòng đăng nhập để sử dụng đầy đủ tính năng</p>
                             <a
                                 href="/login"
-                                className="p-3 text-primary font-bold"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="w-full text-center py-2 bg-[var(--primary-color)] text-white font-medium text-sm rounded-xl hover:opacity-90 transition-opacity"
                             >
                                 Đăng nhập
-                            </a>
+                              </a>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col px-4 gap-1 overflow-y-auto flex-1">
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mt-2 mb-1">Menu</span>
+                        {navLinks.map((link) => {
+                            let IconComp = Compass;
+                            if (link.name === "Tạo hợp âm") {
+                                IconComp = PlusCircle;
+                            } else if (link.name === "Thư viện") {
+                                IconComp = Library;
+                            } else if (link.name === "Cộng đồng") {
+                                IconComp = Users;
+                            }
+                            return (
+                                <a
+                                    key={link.name}
+                                    href={link.href}
+                                    className="flex items-center gap-3 px-3 py-2.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-all font-medium text-sm"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <IconComp className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0" />
+                                    <span>{link.name}</span>
+                                </a>
+                            );
+                        })}
+                        
+                        {user && (
+                            <>
+                                <hr className="my-2 border-slate-100 dark:border-slate-800" />
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-1">Tài khoản</span>
+                                {menuItems.map((item) => {
+                                    let IconComp = UserIcon;
+                                    let colorClass = "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50";
+                                    if (item.name === "Cài đặt") {
+                                        IconComp = Settings;
+                                    } else if (item.name === "Đăng xuất") {
+                                        IconComp = LogOut;
+                                        colorClass = "text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20";
+                                    }
+                                    
+                                    return (
+                                        <button
+                                            key={item.name}
+                                            onClick={() => {
+                                                item.onClick();
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium text-sm w-full text-left cursor-pointer ${colorClass}`}
+                                        >
+                                            <IconComp className="h-5 w-5 shrink-0" />
+                                            <span>{item.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </>
                         )}
                     </div>
                 </div>

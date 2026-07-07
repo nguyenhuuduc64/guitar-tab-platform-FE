@@ -17,14 +17,15 @@ function App() {
                 <Routes>
                     {publicRoutes.map((route, index) => {
                         const Page = route.component;
+                        const Layout = route.layout === null ? ({ children }: { children: React.ReactNode }) => <>{children}</> : DefaultLayout;
                         return (
                             <Route
                                 key={`public-${index}`}
                                 path={route.path}
                                 element={
-                                    <DefaultLayout>
+                                    <Layout>
                                         <Page />
-                                    </DefaultLayout>
+                                    </Layout>
                                 }
                             />
                         );

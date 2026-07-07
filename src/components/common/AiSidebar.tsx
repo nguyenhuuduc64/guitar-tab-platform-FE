@@ -30,7 +30,7 @@ export function AiSidebar() {
                         <Music size={14} className="shrink-0" />
                         <ArrowRight size={12} className="shrink-0 opacity-60" />
                         <Sparkles size={14} className="shrink-0" />
-                        <span className="truncate ml-0.5">Melody</span>
+                        <span className="truncate ml-0.5">Giai điệu</span>
                     </button>
 
                     <button
@@ -43,7 +43,7 @@ export function AiSidebar() {
                         <Sparkles size={14} className="shrink-0" />
                         <ArrowRight size={12} className="shrink-0 opacity-60" />
                         <GripVertical size={14} className="shrink-0" />
-                        <span className="truncate ml-0.5">Chord</span>
+                        <span className="truncate ml-0.5">Hợp âm</span>
                     </button>
                 </nav>
 
@@ -51,7 +51,7 @@ export function AiSidebar() {
                 <div className="flex-1 overflow-y-auto p-3 bg-[#F5F5F3]/50">
                     <div className="flex items-center gap-1.5 mb-1.5">
                         <Info size={12} className="text-zinc-400 shrink-0" />
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Workspace</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Không gian làm việc</p>
                     </div>
                     <div className="flex items-start gap-1.5">
                         <Zap size={12} className="text-zinc-400 shrink-0 mt-0.5" />

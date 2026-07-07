@@ -17,7 +17,8 @@ import {
     Zap,
     Star,
     Hash,
-    BookOpen
+    BookOpen,
+    Play
 } from "lucide-react";
 import { Doughnut, Bar } from "react-chartjs-2";
 import {
@@ -527,93 +528,42 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {stats.artistStats.length > 0 && (
-                    <div className="bg-white dark:bg-slate-900 p-6 shadow-sm border border-gray-50 dark:border-slate-800">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">Bảng xếp hạng nghệ sĩ</h3>
-                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Top nghệ sĩ theo số lượng và lượt xem</p>
-                            </div>
-                            <Star className="w-4 h-4 text-yellow-400" />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {stats.artistStats.slice(0, 8).map((artist, index) => (
-                                <div
-                                    key={artist.artistId}
-                                    className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/40 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                    onClick={() => navigate(`/artists/${artist.artistId}`)}
-                                >
-                                    <div className="relative flex-shrink-0">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#A155FF]/20 to-[#2D6CFF]/20 flex items-center justify-center overflow-hidden">
-                                            {artist.imageUrl ? (
-                                                <img src={artist.imageUrl} alt={artist.artistName} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <Users className="w-5 h-5 text-[#A155FF]/60" />
-                                            )}
-                                        </div>
-                                        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${index === 0 ? 'bg-yellow-400' :
-                                            index === 1 ? 'bg-gray-400' :
-                                                index === 2 ? 'bg-orange-400' :
-                                                    'bg-gray-300'
-                                            }`}>
-                                            {index + 1}
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-sm text-gray-800 dark:text-slate-200 truncate">{artist.artistName}</p>
-                                        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-450">
-                                            <span>{artist.songCount} bài</span>
-                                            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-slate-700"></span>
-                                            <span className="flex items-center gap-0.5">
-                                                <Eye className="w-3 h-3" />
-                                                {formatNumber(artist.totalViews)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-300 dark:text-slate-600 flex-shrink-0" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {stats.trendingChords.length > 0 && (
-                    <div className="bg-white dark:bg-slate-900 p-6 shadow-sm border border-gray-50 dark:border-slate-800">
-                        <div className="flex items-center justify-between mb-6">
+                    <div className="bg-white dark:bg-[#121212] p-8 rounded-2xl shadow-sm dark:shadow-xl border border-slate-100 dark:border-zinc-850/50 transition-colors duration-200">
+                        <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">Đang thịnh hành</h3>
-                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Hợp âm có xu hướng tăng đột biến</p>
+                                <h3 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">Những bài hát thịnh hành</h3>
+                                <p className="text-xs text-gray-400 dark:text-zinc-400 mt-1">Hợp âm và bài hát được nghe nhiều nhất tuần này</p>
                             </div>
-                            <Zap className="w-4 h-4 text-yellow-500" />
+                            <div className="w-9 h-9 rounded-full bg-[#FF2D6C]/10 flex items-center justify-center">
+                                <Zap className="w-4 h-4 text-[#FF2D6C]" />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                             {stats.trendingChords.slice(0, 5).map((chord) => {
                                 const artistInfo = artistsMap[chord.artistId];
                                 return (
                                     <div
                                         key={chord.id}
-                                        className="group cursor-pointer"
+                                        className="group bg-gray-50 dark:bg-[#181818] hover:bg-gray-100 dark:hover:bg-[#282828] p-4 rounded-xl transition-all duration-300 cursor-pointer flex flex-col relative shadow-sm hover:shadow-md dark:shadow-md dark:hover:shadow-xl"
                                         onClick={() => navigate(`/song/${chord.id}`)}
                                     >
-                                        <div className="aspect-square bg-gray-100 dark:bg-slate-800 overflow-hidden relative">
+                                        <div className="w-full aspect-square rounded-lg overflow-hidden relative">
                                             {artistInfo?.imageUrl ? (
-                                                <img src={artistInfo.imageUrl} alt={chord.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                <img src={artistInfo.imageUrl} alt={chord.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-[#A155FF]/20 to-[#2D6CFF]/20 flex items-center justify-center">
-                                                    <Disc3 className="w-10 h-10 text-[#A155FF]/40" />
+                                                <div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center">
+                                                    <Disc3 className="w-10 h-10 text-zinc-400 dark:text-zinc-650 animate-pulse" />
                                                 </div>
                                             )}
-                                            <div className="absolute top-2 right-2 bg-[#FF2D6C] text-white text-[10px] font-bold px-2 py-1">
-                                                🔥 Hot
+                                            {/* Spotify style hover play button */}
+                                            <div className="absolute bottom-3 right-3 w-10 h-10 bg-[#1db954] hover:bg-[#1ed760] text-black rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 z-10">
+                                                <Play size={18} fill="currentColor" className="ml-0.5" />
                                             </div>
                                         </div>
-                                        <div className="mt-2">
-                                            <p className="font-medium text-sm text-gray-800 dark:text-slate-200 truncate">{chord.title}</p>
-                                            <p className="text-xs text-gray-400 dark:text-slate-400 truncate">{artistInfo?.name || chord.artistName || 'Nghệ sĩ'}</p>
-                                            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-450 mt-1">
-                                                <Eye className="w-3 h-3" />
-                                                {formatNumber(chord.views)}
-                                            </div>
+                                        <div className="mt-4 flex-1 flex flex-col min-w-0">
+                                            <p className="font-bold text-sm text-gray-800 dark:text-white truncate transition-colors duration-200 group-hover:text-[#A155FF] dark:group-hover:text-[#1db954]">{chord.title}</p>
+                                            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 truncate">{artistInfo?.name || chord.artistName || 'Nghệ sĩ'}</p>
                                         </div>
                                     </div>
                                 );

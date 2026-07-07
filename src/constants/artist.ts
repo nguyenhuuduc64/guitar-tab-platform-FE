@@ -13,6 +13,12 @@ export const artistSchema = [
         accept: "image/*",
     },
     {
+        name: "backgroundImageFile",
+        label: "Ảnh nền nghệ sĩ (Banner)",
+        type: "file",
+        accept: "image/*",
+    },
+    {
         name: "description",
         label: "Tiểu sử",
         type: "editor",

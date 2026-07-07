@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PanelLeftClose, PanelLeftOpen, Music2 } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Music2, LogOut } from "lucide-react";
 
 import { cn } from "../../utils/cn";
 import { sidebarItems } from "../../constants/sidebar";
+import { handleLogout } from "../../utils/auth";
 
 type Props = {
     open: boolean;
@@ -162,6 +163,20 @@ export default function AdminSidebar({
                         );
                     })}
                 </nav>
+
+                <div className="absolute bottom-5 left-0 right-0 px-3">
+                    <button
+                        onClick={handleLogout}
+                        className={cn(
+                            "w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200",
+                            "text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20",
+                            collapsed ? "justify-center" : ""
+                        )}
+                    >
+                        <LogOut size={16} />
+                        {!collapsed && <span className="text-[14px] font-medium">Đăng xuất</span>}
+                    </button>
+                </div>
             </aside>
         </>
     );

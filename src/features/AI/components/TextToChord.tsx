@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleGenAI } from "@google/genai";
-import { Send, Loader2, ArrowRight, Music, Sparkles, GripVertical, Type } from "lucide-react";
+import { Send, Loader2, ArrowRight, Music, Sparkles, GripVertical, Type, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function TextToChord() {
     const navigate = useNavigate();
@@ -9,6 +9,7 @@ export function TextToChord() {
     const [loading, setLoading] = useState(false);
     const [generatedResult, setGeneratedResult] = useState<string>("");
     const [historyPrompt, setHistoryPrompt] = useState("");
+    const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
     const handleGenerateChords = async () => {
         const apiKey = import.meta.env.VITE_GEMINI_KEY;
@@ -23,13 +24,13 @@ export function TextToChord() {
             const ai = new GoogleGenAI({ apiKey });
             const response = await ai.models.generateContent({
                 model: "gemini-3.5-flash",
-                contents: `Hãy sáng tác một bài hát kèm hợp âm guitar theo mô tả sau: ${currentPrompt}`,
+                contents: `Hãy sáng tác lời bài hát theo mô tả sau: ${currentPrompt}`,
                 config: {
-                    systemInstruction: `Bạn là một chuyên gia nhạc lý Guitar và sáng tác nhạc.
-Mục tiêu là viết lời bài hát kèm chèn hợp âm Guitar trực quan (Chord sheet) dựa trên mô tả của người dùng.
+                    systemInstruction: `Bạn là một nhà soạn nhạc và viết lời bài hát chuyên nghiệp.
+Mục tiêu là viết lời bài hát chi tiết, truyền cảm hứng dựa trên mô tả của người dùng.
 Quy tắc ép buộc đầu ra:
-1. Sử dụng định dạng Inline Chords: Hợp âm nằm trong cặp ngoặc vuông và đặt ngay TRƯỚC chữ cái bắt đầu của phách mạnh/từ ngữ thay đổi hòa âm (Ví dụ: [C]Ngày nắng [G]xanh ngời).
-2. Phải chia rõ cấu trúc bài hát bằng các thẻ: [Intro], [Verse 1], [Verse 2], [Pre-Chorus], [Chorus], [Outro].
+1. Chỉ trả về lời bài hát thuần túy, tuyệt đối KHÔNG chứa hợp âm guitar, không chèn các thẻ hợp âm trong ngoặc vuông như [C], [G]...
+2. Phải chia rõ cấu trúc bài hát bằng các tiêu đề phần: [Intro], [Verse 1], [Verse 2], [Pre-Chorus], [Chorus], [Outro].
 3. Không giải thích dông dài, không viết mã code Markdown bọc ngoài text (không dùng \`\`\`), trả về chuỗi văn bản trực tiếp.`
                 }
             });
@@ -38,7 +39,7 @@ Quy tắc ép buộc đầu ra:
                 setGeneratedResult(response.text);
             }
         } catch (error) {
-            console.error("Lỗi sinh lời và hợp âm:", error);
+            console.error("Lỗi sinh lời bài hát:", error);
             const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi khi gọi API Gemini";
             alert(errorMessage);
         } finally {
@@ -46,18 +47,13 @@ Quy tắc ép buộc đầu ra:
         }
     };
 
-    // Tách hợp âm và lời bài hát
+    // Tách hợp âm và lời bài hát (Chỉ giữ lại lời, hợp âm để trống)
     const extractChordsAndLyrics = (text: string) => {
-        const chordRegex = /\[([A-Za-z0-9#♭♯]+(\/[A-Za-z0-9#♭♯]+)?)\]/g;
-        const chords = text.match(chordRegex) || [];
-
         let lyricsOnly = text.replace(/\[([A-Za-z0-9#♭♯]+(\/[A-Za-z0-9#♭♯]+)?)\]\s*/g, '');
         lyricsOnly = lyricsOnly.replace(/\n{3,}/g, '\n\n');
 
-        const uniqueChords = [...new Set(chords.map(c => c.replace(/[\[\]]/g, '')))];
-
         return {
-            chords: uniqueChords.join(' - '),
+            chords: "",
             lyrics: lyricsOnly
         };
     };
@@ -68,16 +64,16 @@ Quy tắc ép buộc đầu ra:
             state: {
                 aiChords: chords,
                 aiLyrics: lyrics,
-                aiChordLyrics: generatedResult
+                aiChordLyrics: lyrics
             }
         });
     };
 
     return (
         <div className="w-full h-full bg-[#F5F5F3] dark:bg-zinc-950 text-[#222222] dark:text-zinc-150 font-sans antialiased overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 h-full overflow-hidden divide-x divide-zinc-200 dark:divide-zinc-800 bg-[#EFEFEF] dark:bg-zinc-900">
+            <div className="flex h-full w-full overflow-hidden relative bg-[#EFEFEF] dark:bg-zinc-900">
                 {/* Left Panel - Input (3 cột) */}
-                <div className="lg:col-span-3 p-6 bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300">
+                <div className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out shrink-0 border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0" : "w-80 p-6"}`}>
                     <div className="space-y-4">
                         {/* Navigation buttons - giống sidebar */}
                         <div className="flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800/60 p-1 rounded-lg w-fit border border-zinc-300/50 dark:border-zinc-700/50">
@@ -88,7 +84,7 @@ Quy tắc ép buộc đầu ra:
                                 <Music size={13} />
                                 <ArrowRight size={10} className="opacity-60" />
                                 <Sparkles size={13} />
-                                <span className="ml-0.5">Melody</span>
+                                <span className="ml-0.5">Lời bài hát</span>
                             </button>
                             <button
                                 type="button"
@@ -98,7 +94,7 @@ Quy tắc ép buộc đầu ra:
                                 <Sparkles size={13} />
                                 <ArrowRight size={10} className="opacity-60" />
                                 <GripVertical size={13} />
-                                <span className="ml-0.5">Chord</span>
+                                <span className="ml-0.5">Giai điệu</span>
                             </button>
                         </div>
 
@@ -143,8 +139,23 @@ Quy tắc ép buộc đầu ra:
                     </div>
                 </div>
 
+                {/* Collapse Sidebar Button */}
+                <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-r-md items-center justify-center cursor-pointer shadow-md transition-all duration-300 ${
+                        sidebarCollapsed ? "left-0" : "left-80"
+                    }`}
+                >
+                    {sidebarCollapsed ? (
+                        <ChevronRight size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    ) : (
+                        <ChevronLeft size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    )}
+                </button>
+
                 {/* Right Panel - Result (9 cột) */}
-                <div className="lg:col-span-9 p-6 flex flex-col bg-[#F5F5F3] dark:bg-zinc-950 overflow-hidden">
+                <div className="flex-1 min-w-0 flex flex-col bg-[#F5F5F3] dark:bg-zinc-950 overflow-hidden">
                     {generatedResult ? (
                         <div className="flex-1 flex flex-col bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden animate-fadeIn">
                             <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800">

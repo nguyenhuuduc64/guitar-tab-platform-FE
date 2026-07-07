@@ -1,11 +1,37 @@
 import { useState, useEffect } from "react";
-import { transposeChord } from "../../helper/transpose";
 import { getChordData } from "../../constants/chords";
 import { useChordContext } from "../../context/ChordContext";
+
+// Helper dynamically loading external scripts
+const loadScript = (url: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const existingScript = document.querySelector(`script[src="${url}"]`);
+        if (existingScript) {
+            if ((existingScript as any).ready) {
+                resolve();
+            } else {
+                existingScript.addEventListener("load", () => resolve());
+                existingScript.addEventListener("error", (err) => reject(err));
+            }
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = url;
+        script.async = true;
+        script.addEventListener("load", () => {
+            (script as any).ready = true;
+            resolve();
+        });
+        script.addEventListener("error", (err) => reject(err));
+        document.body.appendChild(script);
+    });
+};
 
 const GuitarChordDiagram = ({ initialChordName = "C" }) => {
     const { transposeValue, setTransposeValue, transposeChordName } = useChordContext();
     const [currentIdx, setCurrentIdx] = useState(0);
+    const [isSoundLoading, setIsSoundLoading] = useState(false);
 
     // Sử dụng transpose từ context để hiển thị hợp âm đã được transpose
     const displayedName = transposeChordName(initialChordName);
@@ -34,6 +60,76 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
             (prev) => (prev - 1 + chordData.length) % chordData.length,
         );
 
+    const handlePlaySound = async () => {
+        if (isSoundLoading) return;
+
+        try {
+            setIsSoundLoading(true);
+
+            // Tải thư viện WebAudioFont và âm sắc Steel Guitar chất lượng cao từ CDN
+            await loadScript("https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js");
+            await loadScript("https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js");
+
+            setIsSoundLoading(false);
+
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContextClass) return;
+            const ctx = new AudioContextClass();
+            const now = ctx.currentTime;
+            const strumDelay = 0.05; // 50ms delay giữa các dây (arpeggiated strum)
+
+            const player = new (window as any).WebAudioFontPlayer();
+            const instrument = (window as any)._tone_0250_SoundBlasterOld_sf2;
+
+            // Nốt MIDI cơ sở của 6 dây đàn Guitar (chuẩn E-Standard)
+            const baseMidiNotes: Record<number, number> = {
+                6: 40, // E2 (thấp nhất)
+                5: 45, // A2
+                4: 50, // D3
+                3: 55, // G3
+                2: 59, // B3
+                1: 64  // E4 (cao nhất)
+            };
+
+            const stringFrets: Record<number, number | null> = {
+                6: null, 5: null, 4: null, 3: null, 2: null, 1: null
+            };
+
+            // Thiết lập trạng thái phím bấm của từng dây
+            openStrings.forEach(s => {
+                stringFrets[s] = 0;
+            });
+
+            fingerings.forEach(([_, string, fret]) => {
+                stringFrets[string] = fret;
+            });
+
+            mutedStrings.forEach(s => {
+                stringFrets[s] = null;
+            });
+
+            let playedStringCount = 0;
+            const duration = 2.0;
+
+            // Strum dây từ trầm đến bổng (từ dây 6 về dây 1)
+            for (let s = 6; s >= 1; s--) {
+                const fret = stringFrets[s];
+                if (fret === null) continue;
+
+                // Nốt nhạc thực tế phát ra = nốt dây buông + số ngăn bấm
+                const midiNote = baseMidiNotes[s] + fret;
+                const playTime = now + (playedStringCount * strumDelay);
+
+                // Phát nốt nhạc guitar thật từ SoundFont wavetable
+                player.queueWaveTable(ctx, ctx.destination, instrument, playTime, midiNote, duration, 0.6);
+                playedStringCount++;
+            }
+        } catch (err) {
+            console.error("Lỗi tải WebAudioFont hoặc phát nhạc:", err);
+            setIsSoundLoading(false);
+        }
+    };
+
     return (
         <div className="w-[200px] text-center font-sans select-none bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 p-5">
             {/* Phần tăng hạ tone */}
@@ -58,8 +154,16 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
                 <div className="text-[#3366cc] dark:text-blue-400 text-[14px]">guitar</div>
             </div>
 
-            <div className="text-[24px] font-bold my-[5px] text-gray-900 dark:text-white">
-                {name} <span className="cursor-pointer">🔊</span>
+            <div className="text-[24px] font-bold my-[5px] text-gray-900 dark:text-white flex items-center justify-center gap-2">
+                {name}
+                <button
+                    onClick={handlePlaySound}
+                    disabled={isSoundLoading}
+                    className={`cursor-pointer text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-all p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center ${isSoundLoading ? "opacity-50 cursor-not-allowed animate-pulse" : ""}`}
+                    title={isSoundLoading ? "Đang tải âm thanh..." : "Nghe thử hợp âm"}
+                >
+                    🔊
+                </button>
             </div>
 
             <div className="relative w-[120px] mx-auto">

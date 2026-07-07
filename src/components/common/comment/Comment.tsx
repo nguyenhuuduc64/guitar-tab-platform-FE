@@ -119,7 +119,7 @@ export function Comment({
                                 {comment.updatedAt && new Date(comment.updatedAt) > new Date(comment.createdAt) && (
                                     <>
                                         <span>•</span>
-                                        <span className="text-zinc-400 dark:text-slate-500">Edited</span>
+                                        <span className="text-zinc-400 dark:text-slate-500">Đã chỉnh sửa</span>
                                     </>
                                 )}
                             </div>

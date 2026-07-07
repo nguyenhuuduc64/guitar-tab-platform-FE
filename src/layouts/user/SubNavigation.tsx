@@ -32,13 +32,13 @@ const SubNavigation = () => {
 
     return (
         <div className="w-full bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[13px] py-1.5 h-[var(--subnav-height)] shadow-xs fixed top-[var(--header-height)] z-20 border-b border-slate-200/50 dark:border-slate-900/50">
-            <div className="mx-auto flex items-center justify-between md:px-[var(--sidebar-user-width)]">
-                <nav className="flex items-center gap-x-5 overflow-x-auto hide-scrollbar">
+            <div className="mx-auto flex items-center justify-between px-2 sm:px-4 md:px-[var(--sidebar-user-width)]">
+                <nav className="hidden sm:flex items-center gap-x-5 overflow-x-auto hide-scrollbar">
                     {menuItems.map((item, index) => (
                         <a
                             key={index}
                             href={`/${convertToSlug(item)}`}
-                            className="hover:underline transition-colors whitespace-nowrap opacity-90 hover:opacity-100 hidden sm:block"
+                            className="hover:underline transition-colors whitespace-nowrap opacity-90 hover:opacity-100"
                         >
                             {item}
                         </a>

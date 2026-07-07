@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
     Play, Pause, Type, Sliders, SlidersHorizontal,
-    Volume2, Share2, ChevronDown, RotateCw, SkipForward, SkipBack, ListMusic, Loader2, Settings,
+    Volume2, Share2, ChevronDown, ChevronLeft, ChevronRight, RotateCw, SkipForward, SkipBack, ListMusic, Loader2, Settings,
     Music, Sparkles, ArrowRight, GripVertical, Trash2
 } from "lucide-react";
-import { ConfigAudioModal } from "../../../components/common/ConfigAudioModal";
 import instance from "../../../config/axios";
 import { getUserInfo } from "../../../utils/auth";
 
@@ -24,6 +23,7 @@ interface Track {
     chordLyrics?: string;
     audioUrl?: string;
     chordId?: string;
+    contentPlusChord?: string;
 }
 
 interface AudioResponse {
@@ -36,6 +36,8 @@ interface ChordResponse {
     id: string;
     title: string;
     artistName?: string;
+    content?: string;
+    contentPlusChord?: string;
 }
 
 const INITIAL_TRACKS: Track[] = [
@@ -44,7 +46,7 @@ const INITIAL_TRACKS: Track[] = [
         title: "Heartbreak Souvenirs",
         subTitle: "Meloflow Demo",
         duration: "3:58",
-        description: "A widescreen pop ballad with a late-night glow and a cinematic chorus.",
+        description: "Một bản ballad nhạc pop sâu lắng với âm hưởng ban đêm và điệp khúc hoành tráng.",
         tags: ["pop", "ballad", "cinematic"],
         coverUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80",
         lyrics: "[Intro]\n(Melancholic Piano)\n\n[Verse 1]\nFound a box of memories today\nFaded photographs of yesterday\nWalking down the streets we used to know\nWhere the neon lights no longer glow...",
@@ -71,20 +73,13 @@ export default function SunoMeloflowLightUI() {
     const [currentTime, setCurrentTime] = useState<number>(0);
     const [durationSec, setDurationSec] = useState<number>(180);
     const [loadingAudios, setLoadingAudios] = useState<boolean>(false);
+    const [isKaraokeMode, setIsKaraokeMode] = useState<boolean>(false);
+    const [isKaraokeLoading, setIsKaraokeLoading] = useState<boolean>(false);
+    const [karaokeData, setKaraokeData] = useState<any[]>([]);
 
-    const [configModal, setConfigModal] = useState<{
-        isOpen: boolean;
-        chordId: string;
-        audioUrl: string;
-        initialLyrics: string;
-        isEdit?: boolean;
-    }>({
-        isOpen: false,
-        chordId: "",
-        audioUrl: "",
-        initialLyrics: "",
-        isEdit: false
-    });
+    const [defaultCategoryId, setDefaultCategoryId] = useState<string>("");
+    const [defaultArtistId, setDefaultArtistId] = useState<string>("");
+    const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -92,6 +87,25 @@ export default function SunoMeloflowLightUI() {
 
     useEffect(() => {
         fetchUserAudios();
+
+        const fetchDefaults = async () => {
+            try {
+                const catRes = await instance.get("/categories");
+                const catData = catRes.data?.result || catRes.data?.data || catRes.data || [];
+                if (catData.length > 0) {
+                    setDefaultCategoryId(catData[0].id);
+                }
+
+                const artistRes = await instance.get("/artists");
+                const artistData = artistRes.data?.result || artistRes.data?.data || artistRes.data || [];
+                if (artistData.length > 0) {
+                    setDefaultArtistId(artistData[0].id);
+                }
+            } catch (err) {
+                console.error("Lỗi khi lấy danh mục/nghệ sĩ mặc định:", err);
+            }
+        };
+        fetchDefaults();
     }, []);
 
     useEffect(() => {
@@ -155,32 +169,41 @@ export default function SunoMeloflowLightUI() {
                         return {
                             ...audio,
                             chordTitle: chord.title || "Không có tiêu đề",
-                            artistName: chord.artistName || ""
+                            artistName: chord.artistName || "",
+                            chordContent: chord.content || "",
+                            contentPlusChord: chord.contentPlusChord || ""
                         };
                     } catch (error) {
                         console.error(`Lỗi khi lấy chord cho audio ${audio.id}:`, error);
                         return {
                             ...audio,
                             chordTitle: "Không tìm thấy bài hát",
-                            artistName: ""
+                            artistName: "",
+                            chordContent: "",
+                            contentPlusChord: ""
                         };
                     }
                 })
             );
 
-            const audioTracks: Track[] = audioWithChord.map((audio: any) => ({
-                id: audio.id,
-                title: audio.chordTitle || "Bài hát không tên",
-                subTitle: audio.artistName || "Không có nghệ sĩ",
-                duration: "0:00",
-                description: audio.chordTitle || "",
-                tags: [],
-                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
-                audioUrl: audio.url,
-                chordId: audio.chordId,
-                lyrics: undefined,
-                chordLyrics: undefined
-            }));
+            const audioTracks: Track[] = audioWithChord.map((audio: any) => {
+                const chordContent = audio.chordContent || "";
+                const cleanLyrics = chordContent.replace(/\[.*?\]/g, "");
+                return {
+                    id: audio.id,
+                    title: audio.chordTitle || "Bài hát không tên",
+                    subTitle: audio.artistName || "Không có nghệ sĩ",
+                    duration: "0:00",
+                    description: audio.chordTitle || "",
+                    tags: [],
+                    coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
+                    audioUrl: audio.url,
+                    chordId: audio.chordId,
+                    lyrics: cleanLyrics || undefined,
+                    chordLyrics: chordContent || undefined,
+                    contentPlusChord: audio.contentPlusChord || undefined
+                };
+            });
 
             setTracks([...audioTracks, ...INITIAL_TRACKS]);
         } catch (error) {
@@ -191,24 +214,80 @@ export default function SunoMeloflowLightUI() {
         }
     };
 
-    const appendAndPlayTrack = (id: string, audioUrl: string) => {
-        const generatedTrack: Track = {
-            id: id,
-            title: chords.trim().substring(0, 24) || "Mock Test Composition",
-            subTitle: DEBUG ? "DEBUG Mock Mode" : "Sonauto AI V3",
-            duration: "6:12",
-            description: styles || "Bản nhạc mô phỏng cấu trúc giao diện sáng.",
-            tags: styles.split(",").map(s => s.trim()).filter(Boolean),
-            coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
-            lyrics: lyrics.trim() ? lyrics : undefined,
-            chordLyrics: chordLyrics.trim() ? chordLyrics : undefined,
-            audioUrl: audioUrl
-        };
+    const appendAndPlayTrack = async (id: string, audioUrl: string) => {
+        const cleanLyrics = (chordLyrics.trim() || lyrics.trim() || "").replace(/\[.*?\]/g, "");
 
-        setTracks((prevTracks) => [generatedTrack, ...prevTracks]);
-        setLoading(false);
-        setStatusMessage("");
-        handleSelectTrack(generatedTrack);
+        if (DEBUG) {
+            const generatedTrack: Track = {
+                id: id,
+                title: chords.trim().substring(0, 24) || "Mock Test Composition",
+                subTitle: "DEBUG Mock Mode",
+                duration: "2:00",
+                description: styles || "Bản nhạc mô phỏng cấu trúc giao diện sáng.",
+                tags: styles.split(",").map(s => s.trim()).filter(Boolean),
+                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
+                lyrics: cleanLyrics || undefined,
+                chordLyrics: (chordLyrics.trim() || lyrics.trim()) || undefined,
+                audioUrl: audioUrl
+            };
+            setTracks((prevTracks) => [generatedTrack, ...prevTracks]);
+            setLoading(false);
+            setStatusMessage("");
+            handleSelectTrack(generatedTrack);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setStatusMessage("Đang tự động lưu bài hát vào cơ sở dữ liệu...");
+
+            // 1. Tạo Chord ở backend
+            const chordResponse = await instance.post("/chords", {
+                title: chords.trim().substring(0, 24) || "AI Music Track",
+                content: chordLyrics.trim() || lyrics.trim() || "Chưa có lời bài hát",
+                isPublic: true,
+                artistName: "Sonauto AI",
+                artistId: defaultArtistId || null,
+                categoryId: defaultCategoryId || null,
+                collectionId: null
+            });
+
+            const newChordId = chordResponse.data?.result?.id;
+
+            // 2. Tạo Audio liên kết
+            await instance.post("/audios", {
+                url: audioUrl,
+                chordId: newChordId
+            });
+
+            // 3. Khởi tạo đối tượng Track để chơi nhạc
+            const generatedTrack: Track = {
+                id: id,
+                title: chords.trim().substring(0, 24) || "AI Music Track",
+                subTitle: "Sonauto AI V3",
+                duration: "2:00",
+                description: styles || "Bản nhạc do AI tạo.",
+                tags: styles.split(",").map(s => s.trim()).filter(Boolean),
+                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
+                lyrics: cleanLyrics || undefined,
+                chordLyrics: (chordLyrics.trim() || lyrics.trim()) || undefined,
+                audioUrl: audioUrl,
+                chordId: newChordId
+            };
+
+            setTracks((prevTracks) => [generatedTrack, ...prevTracks]);
+            setLoading(false);
+            setStatusMessage("");
+            handleSelectTrack(generatedTrack);
+
+            // Tải lại danh sách từ DB để đồng bộ hoàn toàn
+            await fetchUserAudios();
+        } catch (err) {
+            console.error("Lỗi khi tự động lưu bài hát vào thư viện:", err);
+            setError("Lỗi tự động lưu bài hát vào thư viện.");
+            setLoading(false);
+            setStatusMessage("");
+        }
     };
 
     const startPolling = (taskId: string) => {
@@ -273,13 +352,14 @@ export default function SunoMeloflowLightUI() {
 
         try {
             setStatusMessage("Đang gửi yêu cầu tạo bài hát đến Sonauto V3...");
-            const fullPrompt = `Chord Progression: ${chords.trim()}. Style: ${styles}`;
+            const fullPrompt = `Chord Progression: ${chords.trim()}. Style: ${styles}. Max duration: 120 seconds.`;
 
             const response = await fetch("/api-sonauto/v1/generations/v3", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     prompt: fullPrompt,
+                    duration: 120,
                     ...(lyrics.trim() && { lyrics: lyrics.trim() })
                 }),
             });
@@ -314,6 +394,8 @@ export default function SunoMeloflowLightUI() {
         setActiveTrack(track);
         setIsPlaying(true);
         setCurrentTime(0);
+        setIsKaraokeMode(false);
+        setKaraokeData([]);
 
         const parts = track.duration.split(":");
         const totalSecs = parseInt(parts[0]) * 60 + parseInt(parts[1]);
@@ -329,6 +411,129 @@ export default function SunoMeloflowLightUI() {
         }
     };
 
+    const handleToggleKaraoke = async () => {
+        if (!activeTrack) return;
+        if (isKaraokeMode) {
+            setIsKaraokeMode(false);
+            return;
+        }
+
+        if (activeTrack.contentPlusChord) {
+            try {
+                const parsed = JSON.parse(activeTrack.contentPlusChord);
+                setKaraokeData(parsed);
+                setIsKaraokeMode(true);
+                return;
+            } catch (e) {
+                console.error("Lỗi khi parse contentPlusChord từ cache:", e);
+            }
+        }
+
+        if (!activeTrack.audioUrl) {
+            setError("Bài hát hiện tại không có file âm thanh để phân tích.");
+            return;
+        }
+
+        const lyricsText = activeTrack.lyrics || activeTrack.chordLyrics?.replace(/\[.*?\]/g, "") || "";
+        if (!lyricsText.trim()) {
+            setError("Không tìm thấy lời bài hát để chạy Karaoke.");
+            return;
+        }
+
+        try {
+            setIsKaraokeLoading(true);
+            setError(null);
+
+            const audioResponse = await fetch(activeTrack.audioUrl);
+            if (!audioResponse.ok) throw new Error("Không thể tải file âm thanh từ máy chủ.");
+            const audioBlob = await audioResponse.blob();
+            const audioFile = new File([audioBlob], "song.mp3", { type: "audio/mpeg" });
+
+            const chordForm = new FormData();
+            chordForm.append('file', audioFile);
+            chordForm.append('model_type', 'BTC');
+
+            const alignForm = new FormData();
+            alignForm.append('audio', audioFile);
+            alignForm.append('lyric_type', 'text');
+            alignForm.append('lyric', lyricsText);
+
+            const [chordRes, alignRes] = await Promise.all([
+                fetch('http://localhost:8000/api/analyze', { method: 'POST', body: chordForm })
+                    .then(async r => {
+                        if (!r.ok) throw new Error("ChordMini phân tích thất bại.");
+                        return r.json();
+                    }),
+                fetch('http://localhost:5000/api/align', { method: 'POST', body: alignForm })
+                    .then(async r => {
+                        if (!r.ok) throw new Error("Lyric Alignment phân tích thất bại.");
+                        return r.json();
+                    })
+            ]);
+
+            const chordsList = chordRes.chords || [];
+
+            const findChord = (time: number) => {
+                const found = chordsList.find((c: any) => time >= c.start && time < c.end);
+                return (found && found.chord !== 'N') ? found.chord : '';
+            };
+
+            let processedLyrics = null;
+            if (alignRes.success && alignRes.alignment) {
+                processedLyrics = alignRes.alignment.map((line: any) => ({
+                    s: line.s / 1000.0,
+                    e: line.e / 1000.0,
+                    l: line.l.map((word: any) => {
+                        const wordTime = word.s / 1000.0;
+                        return {
+                            d: word.d,
+                            s: wordTime,
+                            e: word.e / 1000.0,
+                            c: findChord(wordTime)
+                        };
+                    })
+                }));
+            }
+
+            if (!processedLyrics) {
+                throw new Error("Không thể trích xuất dữ liệu căn chỉnh lời từ API.");
+            }
+
+            const jsonString = JSON.stringify(processedLyrics);
+            if (activeTrack.chordId) {
+                await instance.put(`/chords/${activeTrack.chordId}/content-plus-chord`, {
+                    contentPlusChord: jsonString
+                });
+            }
+
+            const updatedTrack = { ...activeTrack, contentPlusChord: jsonString };
+            setActiveTrack(updatedTrack);
+            setTracks(prev => prev.map(t => t.id === activeTrack.id ? updatedTrack : t));
+
+            setKaraokeData(processedLyrics);
+            setIsKaraokeMode(true);
+        } catch (err: any) {
+            console.error("Lỗi khi đồng bộ Karaoke hợp âm:", err);
+            setError(err.message || "Có lỗi xảy ra trong quá trình gọi AI phân tích.");
+        } finally {
+            setIsKaraokeLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isKaraokeMode && karaokeData.length > 0) {
+            const activeIndex = karaokeData.findIndex(
+                (line) => currentTime >= line.s && currentTime < line.e
+            );
+            if (activeIndex !== -1) {
+                const el = document.getElementById(`karaoke-line-${activeIndex}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        }
+    }, [currentTime, isKaraokeMode, karaokeData]);
+
     const togglePlayPause = () => {
         if (!audioHtmlRef.current) {
             setIsPlaying(!isPlaying);
@@ -343,16 +548,7 @@ export default function SunoMeloflowLightUI() {
         }
     };
 
-    const handleOpenConfig = (e: React.MouseEvent, track: Track, isEdit: boolean = false) => {
-        e.stopPropagation();
-        setConfigModal({
-            isOpen: true,
-            chordId: isEdit ? (track.chordId || "") : track.id,
-            audioUrl: track.audioUrl || "",
-            initialLyrics: track.lyrics || "",
-            isEdit: isEdit
-        });
-    };
+
 
     const handleDeleteTrack = async (e: React.MouseEvent, track: Track) => {
         e.stopPropagation();
@@ -361,9 +557,6 @@ export default function SunoMeloflowLightUI() {
 
         try {
             await instance.delete(`/audios/${track.id}`);
-            if (track.chordId) {
-                await instance.delete(`/chords/${track.chordId}`);
-            }
             alert("Đã xóa bài hát thành công!");
             fetchUserAudios();
             if (activeTrack && activeTrack.id === track.id) {
@@ -409,8 +602,8 @@ export default function SunoMeloflowLightUI() {
                 className="hidden"
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 h-full overflow-hidden divide-x divide-zinc-200 dark:divide-zinc-800 bg-[#EFEFEF] dark:bg-zinc-900">
-                <form onSubmit={handleGenerateMusic} className="lg:col-span-3 p-6 bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300">
+            <div className="flex h-full w-full overflow-hidden relative bg-[#EFEFEF] dark:bg-zinc-900">
+                <form onSubmit={handleGenerateMusic} className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out shrink-0 border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0" : "w-80 p-6"}`}>
                     <div className="space-y-4">
                         {/* Navigation buttons - giống sidebar */}
                         <div className="flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800/60 p-1 rounded-lg w-fit border border-zinc-300/50 dark:border-zinc-700/50">
@@ -418,27 +611,27 @@ export default function SunoMeloflowLightUI() {
                                 type="button"
                                 onClick={() => handleModeChange("text2melody")}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "text2melody"
-                                        ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
-                                        : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
                                     }`}
                             >
                                 <Music size={13} />
                                 <ArrowRight size={10} className="opacity-60" />
                                 <Sparkles size={13} />
-                                <span className="ml-0.5">Melody</span>
+                                <span className="ml-0.5">Lời bài hát</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleModeChange("melody2chord")}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "melody2chord"
-                                        ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
-                                        : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
                                     }`}
                             >
                                 <Sparkles size={13} />
                                 <ArrowRight size={10} className="opacity-60" />
                                 <GripVertical size={13} />
-                                <span className="ml-0.5">Chord</span>
+                                <span className="ml-0.5">Giai điệu</span>
                             </button>
                         </div>
 
@@ -472,16 +665,30 @@ export default function SunoMeloflowLightUI() {
                     <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
                         <button type="submit" disabled={loading} className={`w-full font-bold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${loading ? "bg-zinc-400 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-500 cursor-not-allowed" : "bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 hover:shadow-lg"}`}>
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <SlidersHorizontal size={14} />}
-                            {loading ? "Đang xử lý luồng AI..." : "Generate Music"}
+                            {loading ? "Đang xử lý luồng AI..." : "Tạo Nhạc AI"}
                         </button>
                     </div>
                 </form>
 
-                <div className="lg:col-span-9 p-6 flex flex-col overflow-y-auto bg-[#F5F5F3] dark:bg-zinc-950">
+                {/* Collapse Sidebar Button */}
+                <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-r-md items-center justify-center cursor-pointer shadow-md transition-all duration-300 ${sidebarCollapsed ? "left-0" : "left-80"
+                        }`}
+                >
+                    {sidebarCollapsed ? (
+                        <ChevronRight size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    ) : (
+                        <ChevronLeft size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    )}
+                </button>
+
+                <div className="flex-1 min-w-0 flex flex-col overflow-y-auto bg-[#F5F5F3] dark:bg-zinc-950">
                     {!activeTrack ? (
-                        <div className="w-full max-w-2xl mx-auto space-y-2.5 animate-fadeIn">
+                        <div className="w-full max-w-2xl mx-auto space-y-2.5 animate-fadeIn mt-5">
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pl-1">Your Generations</h3>
+                                <h3 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pl-1">Bản nhạc đã tạo</h3>
                                 <button
                                     onClick={fetchUserAudios}
                                     className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
@@ -508,46 +715,24 @@ export default function SunoMeloflowLightUI() {
                                         )}
                                     </div>
                                     {!track.id.startsWith("init-") && (
-                                        track.chordId ? (
-                                            <div className="opacity-0 group-hover:opacity-100 absolute right-4 flex gap-2">
-                                                <button
-                                                    onClick={(e) => handleOpenConfig(e, track, true)}
-                                                    className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-all duration-200 flex items-center gap-1 text-xs font-bold cursor-pointer transform hover:scale-105"
-                                                >
-                                                    <Settings size={14} />
-                                                    Sửa
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteTrack(e, track)}
-                                                    className="p-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs font-bold cursor-pointer transform hover:scale-105"
-                                                >
-                                                    <Trash2 size={14} />
-                                                    Xóa
-                                                </button>
-                                            </div>
-                                        ) : (
+                                        <div className="opacity-0 group-hover:opacity-100 absolute right-4 flex gap-2">
                                             <button
-                                                onClick={(e) => handleOpenConfig(e, track, false)}
-                                                className="opacity-0 group-hover:opacity-100 absolute right-4 p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-all duration-200 flex items-center gap-1 text-xs font-bold cursor-pointer transform group-hover:scale-105"
+                                                onClick={(e) => handleDeleteTrack(e, track)}
+                                                className="p-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs font-bold cursor-pointer transform hover:scale-105"
                                             >
-                                                <Settings size={14} />
-                                                Cấu hình
+                                                <Trash2 size={14} />
+                                                Xóa
                                             </button>
-                                        )
+                                        </div>
                                     )}
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="w-full h-full overflow-hidden bg-white dark:bg-zinc-900 shadow-sm animate-fadeIn border dark:border-zinc-800">
+                        <div className="w-full h-full overflow-hidden bg-[#F8F9FC] dark:bg-zinc-950 shadow-sm animate-fadeIn border dark:border-zinc-800 transition-colors duration-500">
                             <div className="w-full h-full relative flex flex-col">
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
-                                    style={{
-                                        backgroundImage: `url(${activeTrack.coverUrl})`,
-                                        animation: 'scaleIn 20s ease-in-out infinite alternate'
-                                    }}
-                                />
+                                {/* Simple light/dark background */}
+                                <div className="absolute inset-0 bg-[#F8F9FC] dark:bg-zinc-950 transition-colors duration-500 z-0" />
 
                                 <button
                                     onClick={() => {
@@ -555,53 +740,131 @@ export default function SunoMeloflowLightUI() {
                                         setIsPlaying(false);
                                         if (audioHtmlRef.current) audioHtmlRef.current.pause();
                                     }}
-                                    className="absolute top-4 right-4 z-20 p-2 text-white hover:text-zinc-200 transition-all duration-300 hover:rotate-180 hover:scale-110 cursor-pointer"
+                                    className="absolute top-4 right-4 z-20 p-2 text-zinc-650 hover:text-zinc-900 dark:text-white/80 dark:hover:text-white transition-all duration-300 hover:rotate-180 hover:scale-110 cursor-pointer"
                                 >
                                     <ChevronDown size={22} />
                                 </button>
 
-                                <div className="relative z-10 flex-1 flex items-center px-8 lg:px-12 py-8">
-                                    <div className="w-full max-w-4xl mx-auto space-y-6">
-                                        <div className="space-y-2 animate-slideDown">
-                                            <h1 className="text-3xl lg:text-5xl font-serif font-bold text-white leading-tight tracking-tight drop-shadow-lg">
-                                                {activeTrack.title}
-                                            </h1>
-                                            <p className="text-sm font-semibold text-white/90 tracking-wider uppercase drop-shadow-md">
-                                                {activeTrack.subTitle}
-                                            </p>
-                                        </div>
-
-                                        <div className="max-h-[50vh] overflow-y-auto pr-4 scrollbar-none select-text animate-slideUp">
-                                            {activeTrack.chordLyrics ? (
-                                                <pre className="text-base lg:text-lg text-white font-sans font-medium leading-relaxed whitespace-pre-wrap drop-shadow-md">
-                                                    {activeTrack.chordLyrics}
-                                                </pre>
-                                            ) : activeTrack.lyrics ? (
-                                                <pre className="text-base lg:text-lg text-white font-sans font-medium leading-relaxed whitespace-pre-wrap drop-shadow-md">
-                                                    {activeTrack.lyrics}
-                                                </pre>
-                                            ) : (
-                                                <p className="text-xl text-white font-serif leading-relaxed italic drop-shadow-md">
-                                                    {activeTrack.description}
+                                <div className="relative z-10 flex-1 flex flex-col min-h-0 px-8 lg:px-12 pt-6 pb-4">
+                                    <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col min-h-0 space-y-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-3 shrink-0">
+                                            <div className="space-y-1">
+                                                <h1 className="text-3xl lg:text-5xl font-serif font-bold text-zinc-800 dark:text-white leading-tight tracking-tight">
+                                                    {activeTrack.title}
+                                                </h1>
+                                                <p className="text-sm font-semibold text-zinc-500 dark:text-white/90 tracking-wider uppercase">
+                                                    {activeTrack.subTitle}
                                                 </p>
+                                            </div>
+                                            {activeTrack.audioUrl && (activeTrack.lyrics || activeTrack.chordLyrics) && (
+                                                <div className="flex items-center gap-3 bg-zinc-200/50 dark:bg-white/5 backdrop-blur-md px-4 py-2 rounded-2xl border border-zinc-300 dark:border-white/10 shadow-lg select-none">
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-white/95 flex items-center gap-2">
+                                                        <Sparkles size={14} className={`${isKaraokeMode ? "text-yellow-500 animate-pulse" : "text-zinc-400"}`} />
+                                                        Hợp âm động (AI)
+                                                    </span>
+                                                    <button
+                                                        onClick={handleToggleKaraoke}
+                                                        disabled={isKaraokeLoading}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${
+                                                            isKaraokeLoading
+                                                                ? "bg-indigo-400/50 cursor-not-allowed"
+                                                                : isKaraokeMode
+                                                                    ? "bg-indigo-600 hover:bg-indigo-700"
+                                                                    : "bg-zinc-300 dark:bg-white/20 hover:bg-zinc-400 dark:hover:bg-white/35"
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+                                                                isKaraokeMode ? "translate-x-6" : "translate-x-1"
+                                                            }`}
+                                                        >
+                                                            {isKaraokeLoading && (
+                                                                <Loader2 size={10} className="animate-spin text-indigo-600" />
+                                                            )}
+                                                        </span>
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
+
+                                        {isKaraokeMode && karaokeData.length > 0 ? (
+                                            <div className="flex-1 min-h-0 overflow-y-auto pr-4 scrollbar-none select-text space-y-4 py-2">
+                                                {karaokeData.map((line, lineIdx) => {
+                                                    const isActiveLine = currentTime >= line.s && currentTime < line.e;
+                                                    let lastChord = "";
+                                                    return (
+                                                        <div
+                                                            key={lineIdx}
+                                                            id={`karaoke-line-${lineIdx}`}
+                                                            className={`flex flex-wrap items-baseline gap-y-1.5 py-2.5 px-4 border-l-4 border-transparent transition-all duration-300 ${isActiveLine
+                                                                ? "bg-indigo-50/50 dark:bg-white/10 border-indigo-500 rounded-r-xl opacity-100"
+                                                                : "opacity-50 hover:opacity-75"
+                                                                }`}
+                                                        >
+                                                            {line.l.map((word: any, wordIdx: number) => {
+                                                                const isActiveWord = currentTime >= word.s && currentTime < word.e;
+                                                                const showChord = word.c && word.c !== lastChord;
+                                                                if (word.c) {
+                                                                    lastChord = word.c;
+                                                                }
+                                                                return (
+                                                                    <span key={wordIdx} className="inline-flex items-baseline select-none">
+                                                                        {showChord && (
+                                                                            <span className="text-red-500 font-bold font-mono text-sm lg:text-base mr-0.5 drop-shadow-[0_0_1px_rgba(239,68,68,0.4)] select-none">
+                                                                                [{word.c}]
+                                                                            </span>
+                                                                        )}
+                                                                        <span
+                                                                            className={`text-base lg:text-lg font-sans font-medium transition-all duration-250 ${isActiveWord
+                                                                                ? "text-indigo-600 dark:text-indigo-300 font-bold scale-105 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]"
+                                                                                : isActiveLine
+                                                                                    ? "text-zinc-800 dark:text-white"
+                                                                                    : "text-zinc-500 dark:text-white/80"
+                                                                                }`}
+                                                                        >
+                                                                            {word.d}
+                                                                        </span>
+                                                                        <span className="w-1 select-none">&nbsp;</span>
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="flex-1 min-h-0 overflow-y-auto pr-4 scrollbar-none select-text">
+                                                {activeTrack.chordLyrics ? (
+                                                    <pre className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
+                                                        {activeTrack.chordLyrics}
+                                                    </pre>
+                                                ) : activeTrack.lyrics ? (
+                                                    <pre className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
+                                                        {activeTrack.lyrics}
+                                                    </pre>
+                                                ) : (
+                                                    <p className="text-xl text-zinc-850 dark:text-white font-serif leading-relaxed italic">
+                                                        {activeTrack.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="relative z-10 bg-black/40 dark:bg-black/60 backdrop-blur-sm border-t border-white/10 dark:border-white/5 pt-4 pb-4 px-6 transition-all duration-500">
+                                <div className="relative z-10 bg-zinc-100/90 dark:bg-zinc-950/80 backdrop-blur-sm border-t border-zinc-200 dark:border-white/5 pt-4 pb-4 px-6 transition-all duration-500 shrink-0">
                                     <div className="w-full max-w-4xl mx-auto flex flex-col gap-3">
                                         <div className="flex items-center justify-between">
                                             <div className="min-w-[120px]">
-                                                <h4 className="text-sm font-bold text-white truncate transition-colors duration-200">{activeTrack.title}</h4>
-                                                <p className="text-xs text-white/70 font-medium mt-0.5 transition-colors duration-200">{activeTrack.subTitle}</p>
+                                                <h4 className="text-sm font-bold text-zinc-800 dark:text-white truncate transition-colors duration-200">{activeTrack.title}</h4>
+                                                <p className="text-xs text-zinc-500 dark:text-white/70 font-medium mt-0.5 transition-colors duration-200">{activeTrack.subTitle}</p>
                                             </div>
 
                                             <div className="flex items-center gap-4">
-                                                <SkipBack size={18} className="text-white/60 hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
+                                                <SkipBack size={18} className="text-zinc-500 hover:text-zinc-800 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                                 <button
                                                     onClick={togglePlayPause}
-                                                    className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                                                    className="w-11 h-11 rounded-full bg-[var(--primary-color)] hover:opacity-90 text-white dark:bg-white/20 dark:hover:bg-white/30 dark:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 cursor-pointer"
                                                 >
                                                     {isPlaying ? (
                                                         <Pause size={18} fill="currentColor" />
@@ -609,27 +872,19 @@ export default function SunoMeloflowLightUI() {
                                                         <Play size={18} fill="currentColor" className="ml-0.5" />
                                                     )}
                                                 </button>
-                                                <SkipForward size={18} className="text-white/60 hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
+                                                <SkipForward size={18} className="text-zinc-500 hover:text-zinc-800 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                             </div>
 
-                                            <div className="flex items-center gap-3 text-white/60 min-w-[120px] justify-end">
-                                                <Volume2 size={17} className="hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
-                                                {!activeTrack.id.startsWith("init-") && (
-                                                    <button
-                                                        onClick={(e) => handleOpenConfig(e, activeTrack, !!activeTrack.chordId)}
-                                                        className="text-white/80 hover:text-white flex items-center gap-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20 transition-all duration-200 hover:scale-105 cursor-pointer"
-                                                    >
-                                                        <Settings size={14} /> {activeTrack.chordId ? "Sửa" : "Cấu hình"}
-                                                    </button>
-                                                )}
-                                                <Share2 size={17} className="hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
+                                            <div className="flex items-center gap-3 text-zinc-500 dark:text-white/60 min-w-[120px] justify-end">
+                                                <Volume2 size={17} className="hover:text-zinc-800 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
+                                                <Share2 size={17} className="hover:text-zinc-800 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                             </div>
                                         </div>
 
-                                        <div className="w-full flex items-center gap-3 text-[11px] font-bold text-white/60">
+                                        <div className="w-full flex items-center gap-3 text-[11px] font-bold text-zinc-500 dark:text-white/60">
                                             <span className="w-8 text-right transition-all duration-200">{formatTime(currentTime)}</span>
                                             <div
-                                                className="flex-1 h-1.5 bg-white/20 rounded-full relative cursor-pointer group transition-all duration-200 hover:h-2"
+                                                className="flex-1 h-1.5 bg-zinc-200 dark:bg-white/20 rounded-full relative cursor-pointer group transition-all duration-200 hover:h-2"
                                                 onClick={(e) => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const clickX = e.clientX - rect.left;
@@ -640,10 +895,10 @@ export default function SunoMeloflowLightUI() {
                                                 }}
                                             >
                                                 <div
-                                                    className="absolute top-0 left-0 bottom-0 bg-white rounded-full transition-all duration-300 ease-out"
+                                                    className="absolute top-0 left-0 bottom-0 bg-[var(--primary-color)] dark:bg-white rounded-full transition-all duration-300 ease-out"
                                                     style={{ width: `${(currentTime / durationSec) * 100}%` }}
                                                 >
-                                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110" />
+                                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[var(--primary-color)] dark:bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110" />
                                                 </div>
                                             </div>
                                             <span className="w-8 text-left transition-all duration-200">{formatTime(durationSec)}</span>
@@ -656,20 +911,7 @@ export default function SunoMeloflowLightUI() {
                 </div>
             </div>
 
-            {configModal.isOpen && (
-                <ConfigAudioModal
-                    isOpen={configModal.isOpen}
-                    chordId={configModal.chordId}
-                    audioUrl={configModal.audioUrl}
-                    initialLyrics={configModal.initialLyrics}
-                    isEdit={configModal.isEdit}
-                    onClose={() => setConfigModal(prev => ({ ...prev, isOpen: false }))}
-                    onSaveSuccess={() => {
-                        alert(configModal.isEdit ? "Đã cập nhật bài hát thành công!" : "Đã cấu hình và lưu thành công bài hát!");
-                        fetchUserAudios();
-                    }}
-                />
-            )}
+
 
             <style>{`
                 @keyframes fadeIn {

@@ -20,14 +20,15 @@ import MusicPage from "../features/music/page/MusicPage";
 interface RouteConfig {
     path: string;
     component: React.ComponentType;
+    layout?: React.ComponentType | null;
 }
 
 export const publicRoutes: RouteConfig[] = [
     { path: "/", component: Home },
-    { path: "/login", component: LoginPage },
+    { path: "/login", component: LoginPage, layout: null },
     { path: "/test", component: TestPage },
     { path: "/song/:id", component: ChordPage },
-    { path: "/dang-ky", component: RegisterPage },
+    { path: "/dang-ky", component: RegisterPage, layout: null },
     { path: "/nghe-sy/:id", component: ArtistDetailPage },
     { path: "/bai-viet/:slug", component: PostDetailPage },
     { path: "/playlist", component: PlaylistPage },

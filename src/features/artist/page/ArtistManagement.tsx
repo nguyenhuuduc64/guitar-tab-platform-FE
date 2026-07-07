@@ -77,6 +77,7 @@ export default function ArtistManagement() {
             console.log("📦 EDITING ARTIST:", editingArtist);
 
             let imageUrl = editingArtist?.imageUrl || null;
+            let backgroundImage = editingArtist?.backgroundImage || null;
 
             console.log("🖼 CURRENT IMAGE URL (before upload):", imageUrl);
 
@@ -87,18 +88,30 @@ export default function ArtistManagement() {
 
             if (file instanceof File) {
                 console.log("🚀 START UPLOAD TO CLOUDINARY...");
-
                 imageUrl = await uploadImageToCloudinary(file);
-
                 console.log("📡 UPLOAD RESULT IMAGE URL:", imageUrl);
             } else {
                 console.log("⚠️ NO NEW FILE UPLOADED → KEEP OLD IMAGE");
+            }
+
+            const bgFile =
+                data.backgroundImageFile instanceof File ? data.backgroundImageFile : data.backgroundImageFile?.[0];
+
+            console.log("📁 EXTRACTED BG FILE:", bgFile);
+
+            if (bgFile instanceof File) {
+                console.log("🚀 START UPLOAD BACKGROUND TO CLOUDINARY...");
+                backgroundImage = await uploadImageToCloudinary(bgFile);
+                console.log("📡 UPLOAD RESULT BG IMAGE URL:", backgroundImage);
+            } else {
+                console.log("⚠️ NO NEW BG FILE UPLOADED → KEEP OLD BACKGROUND IMAGE");
             }
 
             const payload = {
                 name: data.name,
                 description: data.description,
                 imageUrl: imageUrl,
+                backgroundImage: backgroundImage,
             };
 
             console.log("📦 FINAL PAYLOAD BEFORE SEND:", payload);
@@ -279,6 +292,7 @@ export default function ArtistManagement() {
                     name: editingArtist?.name || prefillArtistName || "",
                     description: editingArtist?.description || "",
                     image: editingArtist?.imageUrl || null,
+                    backgroundImageFile: editingArtist?.backgroundImage || null,
                 }}
                 key={editingArtist?.id || "create"}
                 onSubmit={handleSubmit}

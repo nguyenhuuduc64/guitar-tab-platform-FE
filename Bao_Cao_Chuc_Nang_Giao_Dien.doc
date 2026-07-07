@@ -1,0 +1,541 @@
+
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>Danh Sách Chức Năng và Giao Diện Hệ Thống Rhythm Fusion</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333333; margin: 20px; }
+h1 { font-size: 18pt; font-weight: bold; color: #1A5FB4; border-bottom: 2px solid #1A5FB4; padding-bottom: 8px; margin-top: 24px; margin-bottom: 12px; }
+h2 { font-size: 14pt; font-weight: bold; color: #3584E4; margin-top: 18px; margin-bottom: 8px; }
+p { margin-bottom: 12px; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 24px; font-size: 10pt; }
+th, td { border: 1px solid #CCCCCC; padding: 10px 12px; text-align: left; vertical-align: top; }
+th { background-color: #F3F4F6; font-weight: bold; color: #1F2937; border-bottom: 2px solid #D1D5DB; }
+tr:nth-child(even) { background-color: #F9FAFB; }
+.stt { width: 50px; text-align: center; font-weight: bold; }
+.type { width: 150px; }
+.default { width: 120px; }
+.note { font-style: normal; }
+</style>
+</head>
+<body>
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="border: none; color: #1A5FB4; font-size: 24pt; margin-bottom: 5px;">RHYTHM FUSION</h1>
+        <p style="font-size: 14pt; font-weight: bold; color: #555555;">TÀI LIỆU KHẢO SÁT THÀNH PHẦN GIAO DIỆN CHỨC NĂNG</p>
+        <p style="font-size: 10pt; color: #888888;">Tự động sinh bởi Antigravity AI Coding Assistant - Rhythm Fusion Project</p>
+    </div>
+
+    <h1>1. CHỨC NĂNG ĐĂNG NHẬP (LoginPage)</h1>
+    <p>Giao diện cho phép người dùng đăng nhập hệ thống thông qua tài khoản Email cá nhân hoặc tài khoản bên thứ ba (Google).</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Đăng nhập nhanh bằng tài khoản Google (Liên kết bên thứ ba)</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập địa chỉ Email đăng nhập</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Textbox (Mật khẩu)</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập mật khẩu đăng nhập bảo mật</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Checkbox</td>
+                <td>False (Unchecked)</td>
+                <td>Tùy chọn ghi nhớ phiên đăng nhập trên trình duyệt để tự động đăng nhập lần sau</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Link</td>
+                <td>Null</td>
+                <td>Liên kết điều hướng sang trang khôi phục mật khẩu (Quên mật khẩu)</td>
+            </tr>
+            <tr>
+                <td class="stt">6</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Gửi yêu cầu đăng nhập lên máy chủ xác thực</td>
+            </tr>
+            <tr>
+                <td class="stt">7</td>
+                <td>Link</td>
+                <td>Null</td>
+                <td>Liên kết điều hướng người dùng sang trang tạo tài khoản mới (Đăng ký)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>2. CHỨC NĂNG ĐĂNG KÝ (RegisterPage)</h1>
+    <p>Giao diện cho phép người dùng đăng ký tài khoản mới trên hệ thống Rhythm Fusion bằng cách nhập các thông tin cơ bản.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập tên tài khoản (username) mong muốn tạo</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập họ và tên của mình</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Textbox (Email)</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập địa chỉ Email đăng ký</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Textbox (Mật khẩu)</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập mật khẩu bảo mật tài khoản</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Gửi yêu cầu đăng ký tài khoản mới lên hệ thống</td>
+            </tr>
+            <tr>
+                <td class="stt">6</td>
+                <td>Link</td>
+                <td>Null</td>
+                <td>Điều hướng người dùng quay trở về giao diện Đăng nhập</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>3. CHỨC NĂNG ĐĂNG TẢI BÀI HÁT (UpLoadChordPage)</h1>
+    <p>Giao diện cho phép người dùng đóng góp nội dung, tạo các bài hát có chứa lời nhạc và hợp âm guitar để gửi cho quản trị viên duyệt.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Cho phép người dùng nhập tên bài hát cần đăng tải</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox (Gợi ý)</td>
+                <td>Null</td>
+                <td>Tìm kiếm tên nghệ sĩ có sẵn trong hệ thống hoặc tự động nhập nghệ sĩ mới</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Select</td>
+                <td>-- Chọn thể loại --</td>
+                <td>Chọn thể loại/danh mục tương ứng cho bài hát từ danh sách có sẵn</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Select</td>
+                <td>-- Không bắt buộc --</td>
+                <td>Chọn bộ sưu tập bài hát phù hợp (Không bắt buộc)</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Nhập liên kết/đường dẫn video YouTube trình diễn bài hát (Không bắt buộc)</td>
+            </tr>
+            <tr>
+                <td class="stt">6</td>
+                <td>Textbox (Textarea)</td>
+                <td>Null</td>
+                <td>Nhập lời bài hát kèm theo các ký hiệu hợp âm đặt trong ngoặc vuông (Ví dụ: [C]Lời ca [G])</td>
+            </tr>
+            <tr>
+                <td class="stt">7</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Gửi yêu cầu đóng góp bài hát lên Quản trị viên để tiến hành phê duyệt</td>
+            </tr>
+            <tr>
+                <td class="stt">8</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Hủy bỏ các thay đổi và làm sạch biểu mẫu nhập liệu</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>4. CHỨC NĂNG TẠO BÀI ĐĂNG CỘNG ĐỒNG (CreatePostModal)</h1>
+    <p>Giao diện hộp thoại (Modal) cho phép người dùng đăng nội dung chia sẻ, tâm sự hoặc đính kèm bản thu âm (audio) của mình lên dòng thời gian cộng đồng.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox (Textarea)</td>
+                <td>Null</td>
+                <td>Cho phép nhập nội dung bài đăng cộng đồng (Trường bắt buộc)</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Select</td>
+                <td>-- Không chọn audio --</td>
+                <td>Chọn đính kèm một file thu âm từ danh sách audio cá nhân của người dùng</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Hủy chọn file audio đang gán (Nút xuất hiện khi đã chọn audio)</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Gửi yêu cầu đăng bài đăng mới lên bảng tin cộng đồng</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Button (Icon X)</td>
+                <td>Null</td>
+                <td>Đóng hộp thoại tạo bài đăng và hủy bỏ thao tác</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>5. CHỨC NĂNG CẬP NHẬT HỒ SƠ CÁ NHÂN (EditProfileForm)</h1>
+    <p>Giao diện biểu mẫu động cho phép người dùng cập nhật thông tin cá nhân bao gồm Họ tên và Ảnh đại diện.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox</td>
+                <td>Họ tên cũ</td>
+                <td>Cho phép người dùng cập nhật hoặc thay đổi Họ và tên đầy đủ của mình</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox</td>
+                <td>URL ảnh cũ</td>
+                <td>Nhập liên kết URL hoặc cập nhật địa chỉ ảnh đại diện mới</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Lưu các thay đổi và cập nhật thông tin cá nhân vào cơ sở dữ liệu</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Hủy bỏ các chỉnh sửa và đóng hộp thoại</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>6. CHỨC NĂNG SÁNG TÁC NHẠC TỪ VĂN BẢN (TextToChord)</h1>
+    <p>Giao diện tích hợp AI (Gemini) hỗ trợ người dùng nhập ý tưởng sáng tác, hệ thống sẽ tự động soạn lời và đề xuất hợp âm Guitar chi tiết.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Button (Tab)</td>
+                <td>Active</td>
+                <td>Tab hiển thị giao diện Sáng tác Lời bài hát và Hợp âm từ ý tưởng văn bản</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Button (Tab)</td>
+                <td>Inactive</td>
+                <td>Tab điều hướng nhanh sang giao diện Tạo nhạc/Giai điệu từ hợp âm (Melody2Chord)</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Textbox (Textarea)</td>
+                <td>Null</td>
+                <td>Nhập ý tưởng, chủ đề hoặc cảm xúc muốn AI viết lời bài hát</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Kích hoạt AI Gemini phân tích và tạo lời nhạc kèm hợp âm guitar chi tiết</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Link</td>
+                <td>Null</td>
+                <td>Chuyển tiếp kết quả đã tạo sang nền tảng Sonauto để sản xuất giai điệu âm nhạc</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>7. CHỨC NĂNG TẠO GIAI ĐIỆU VÀ QUẢN LÝ THU ÂM (ChordToMelody)</h1>
+    <p>Giao diện cho phép người dùng tinh chỉnh phong cách nhạc, gửi yêu cầu đến dịch vụ Sonauto AI để tạo ra giai điệu thực tế và quản lý danh sách thu âm.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox (Textarea)</td>
+                <td>Lấy từ TextToChord</td>
+                <td>Hiển thị hoặc chỉnh sửa danh sách hợp âm guitar dùng để tạo giai điệu</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox (Textarea)</td>
+                <td>Lấy từ TextToChord</td>
+                <td>Hiển thị hoặc chỉnh sửa lời bài hát gốc</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Textbox (Textarea)</td>
+                <td>Lấy từ TextToChord</td>
+                <td>Hiển thị hoặc chỉnh sửa phiên bản lời bài hát có lồng hợp âm trong ngoặc</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Textbox</td>
+                <td>pop, acoustic guitar, happy</td>
+                <td>Nhập phong cách nhạc mong muốn (ví dụ: ballad, rock, lofi...) để AI định hình giai điệu</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Gửi yêu cầu tới Sonauto AI để khởi tạo giai điệu nhạc thực tế</td>
+            </tr>
+            <tr>
+                <td class="stt">6</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Phát / Tạm dừng tệp âm thanh (audio) đang được chọn</td>
+            </tr>
+            <tr>
+                <td class="stt">7</td>
+                <td>Button (Icon Thùng Rác)</td>
+                <td>Null</td>
+                <td>Xóa bản thu âm (audio) đã tạo khỏi danh sách lưu trữ của người dùng</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>8. CHỨC NĂNG XEM CHI TIẾT BÀI HÁT & HỢP ÂM (ChordPage)</h1>
+    <p>Giao diện xem nội dung hợp âm bài hát, hỗ trợ cuộn tự động, phát video hướng dẫn YouTube và xem hợp âm trực quan.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Button (Icon Sao)</td>
+                <td>Null</td>
+                <td>Đánh dấu yêu thích bài hát (Yêu thích / Bỏ yêu thích)</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Mở hộp thoại thêm bài hát hiện tại vào các Playlist cá nhân</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Button</td>
+                <td>Null (False)</td>
+                <td>Bật/Tắt chế độ tự động cuộn màn hình để vừa đàn vừa đọc hợp âm</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Link</td>
+                <td>Null</td>
+                <td>Liên kết tên ca sĩ, nhấp vào để điều hướng sang trang thông tin chi tiết nghệ sĩ</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Hoverable Span</td>
+                <td>Null</td>
+                <td>Các hợp âm trong lời bài hát (như [C], [G]). Nhấp vào để hiển thị sơ đồ bấm hợp âm guitar trực quan</td>
+            </tr>
+            <tr>
+                <td class="stt">6</td>
+                <td>Video Player (Iframe)</td>
+                <td>Null</td>
+                <td>Trình phát YouTube tải video hướng dẫn hoặc trình diễn bài hát tương ứng</td>
+            </tr>
+            <tr>
+                <td class="stt">7</td>
+                <td>List Cards</td>
+                <td>Null</td>
+                <td>Danh sách bài hát liên quan cùng điệu, nhấp vào thẻ bài hát bất kỳ để chuyển trang xem</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>9. CHỨC NĂNG DUYỆT YÊU CẦU ĐÓNG GÓP - ADMIN (ManagementRequestPage)</h1>
+    <p>Giao diện quản lý của Quản trị viên dùng để kiểm tra, duyệt hoặc từ chối các yêu cầu đóng góp Hợp âm, Nghệ sĩ hoặc Giai điệu từ người dùng.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Button (Tabs)</td>
+                <td>ALL</td>
+                <td>Lọc danh sách yêu cầu hiển thị theo loại đóng góp (Tất cả, Hợp âm, Nghệ sĩ, Giai điệu)</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Bộ lọc tìm kiếm nhanh các yêu cầu theo từ khóa nội dung</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Button (Icon Check)</td>
+                <td>Null</td>
+                <td>Chấp thuận (Approve) yêu cầu đóng góp, lưu dữ liệu chính thức vào hệ thống</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Button (Icon X)</td>
+                <td>Null</td>
+                <td>Từ chối (Reject) yêu cầu đóng góp và xóa khỏi danh sách chờ duyệt</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Hành động khẩn cấp cho Nghệ sĩ mới: Điều hướng nhanh sang trang quản lý Nghệ sĩ để đăng ký trước khi duyệt hợp âm</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>10. CHỨC NĂNG QUẢN LÝ NGƯỜI DÙNG - ADMIN (UserManagement)</h1>
+    <p>Giao diện dành riêng cho admin để thực hiện các thao tác Thêm, Sửa, Xóa và Lọc thông tin của tất cả thành viên trong hệ thống.</p>
+    <table>
+        <thead>
+            <tr>
+                <th class="stt">STT</th>
+                <th class="type">Loại điều khiển</th>
+                <th class="default">Giá trị mặc định</th>
+                <th>Lưu ý / Mô tả tương tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="stt">1</td>
+                <td>Textbox</td>
+                <td>Null</td>
+                <td>Thanh tìm kiếm người dùng theo Họ tên, Tên đăng nhập (username) hoặc Email</td>
+            </tr>
+            <tr>
+                <td class="stt">2</td>
+                <td>Button (Group)</td>
+                <td>Tất cả (all)</td>
+                <td>Lọc nhanh danh sách người dùng theo vai trò thành viên (Tất cả, Admin, User)</td>
+            </tr>
+            <tr>
+                <td class="stt">3</td>
+                <td>Button</td>
+                <td>Null</td>
+                <td>Mở hộp thoại (Modal Form) nhập liệu để thêm tài khoản thành viên mới</td>
+            </tr>
+            <tr>
+                <td class="stt">4</td>
+                <td>Button (Icon Edit)</td>
+                <td>Null</td>
+                <td>Mở hộp thoại chỉnh sửa thông tin cho tài khoản người dùng được chọn</td>
+            </tr>
+            <tr>
+                <td class="stt">5</td>
+                <td>Button (Icon Delete)</td>
+                <td>Null</td>
+                <td>Kích hoạt hộp thoại xác nhận xóa tài khoản người dùng được chọn khỏi hệ thống</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
