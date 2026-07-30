@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getArtistById, fetchArtists } from "../../../services/artistService";
 import instance from "../../../config/axios";
-import { SidebarLeft } from "../../home/components/SidebarLeft";
 import { getYoutubeThumbnailUrl } from "../../../helper/youtube";
 import { Play, Music, ChevronRight } from "lucide-react";
 import { ArtistSlider } from "../../../components/common/ArtistSlider";
@@ -102,31 +101,27 @@ function ArtistDetailPage() {
     }
 
     return (
-        <div className="w-full mx-auto animate-in fade-in duration-500 min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans">
-            {/* LEFT SIDEBAR */}
-            <aside className="w-64 shrink-0 hidden lg:block z-30">
-                <SidebarLeft />
-            </aside>
+        <div className="w-full mx-auto animate-in fade-in duration-500 font-sans">
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 flex flex-col gap-8 min-w-0 overflow-y-auto max-h-[calc(100vh-var(--header-height)-32px)]">
+            <main className="flex-1 flex flex-col gap-8 min-w-0 overflow-y-auto max-h-[calc(100vh-var(--header-height)-var(--subnav-height))]">
                 {/* Banner Section */}
                 <div
                     className="relative overflow-hidden w-full h-auto min-h-[340px] md:h-[360px] flex items-stretch border-b border-slate-200/40 dark:border-slate-800/40 shadow-md shrink-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-955"
                     style={bannerBgStyle}
                 >
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[0.5px] z-0" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/75 z-0" />
+                    {/* Theme-adaptive overlays */}
+                    <div className="absolute inset-0 bg-white/40 dark:bg-black/55 backdrop-blur-[0.5px] z-0 transition-all duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-50/95 via-slate-50/50 to-slate-100/80 dark:from-black/85 dark:via-black/45 dark:to-black/75 z-0 transition-all duration-300" />
 
                     {/* Inner content */}
                     <div className="relative z-10 w-full flex flex-col md:flex-row md:items-end justify-between gap-6 p-6 md:p-10">
                         {/* Identity (Left side) */}
                         <div className="flex-1 flex flex-col items-start justify-end h-full gap-2 text-left">
-                            <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm border border-white/5">
+                            <span className="px-3 py-1 rounded-full bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-white/90 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm border border-slate-900/5 dark:border-white/5 transition-all">
                                 Nghệ sĩ
                             </span>
-                            <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-md select-none">
+                            <h1 className="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white leading-tight tracking-tight drop-shadow-sm select-none transition-colors">
                                 {artist?.name}
                             </h1>
                             <div className="flex items-center gap-4 mt-2">
@@ -140,7 +135,7 @@ function ArtistDetailPage() {
                                 >
                                     <Play size={20} fill="currentColor" className="ml-0.5" />
                                 </button>
-                                <div className="text-sm font-bold text-white/90 drop-shadow-sm">
+                                <div className="text-sm font-bold text-slate-650 dark:text-white/90 drop-shadow-xs transition-colors">
                                     {totalViews.toLocaleString("vi-VN")} người quan tâm
                                 </div>
                             </div>
@@ -148,7 +143,7 @@ function ArtistDetailPage() {
 
                         {/* Bio box (Right side - transparent, scrollable, larger font) */}
                         <div className="w-full md:w-[450px] h-48 flex flex-col shrink-0 text-left">
-                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin text-sm text-white/95 leading-relaxed text-justify">
+                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin text-sm text-slate-700 dark:text-white/95 leading-relaxed text-justify transition-colors">
                                 {artist?.description || "Nghệ sĩ này hiện chưa cập nhật tiểu sử chi tiết. Hãy tiếp tục theo dõi để cập nhật các tác phẩm mới nhất của họ."}
                             </div>
                         </div>

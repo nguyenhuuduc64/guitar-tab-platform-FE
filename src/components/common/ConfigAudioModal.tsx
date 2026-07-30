@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Settings, Save, X, Globe, Lock, Loader2 } from "lucide-react";
 import instance from "../../config/axios";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -18,12 +19,9 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
     const [isPublic, setIsPublic] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // State phục vụ việc tích hợp Danh mục, Bộ sưu tập, Nghệ sĩ
+    // State phục vụ việc tích hợp Danh mục, Nghệ sĩ
     const [categories, setCategories] = useState<any[]>([]);
     const [categoryId, setCategoryId] = useState("");
-
-    const [collections, setCollections] = useState<any[]>([]);
-    const [collectionId, setCollectionId] = useState("");
 
     const [artistId, setArtistId] = useState("");
     const [artistQuery, setArtistQuery] = useState("");
@@ -36,7 +34,6 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
     useEffect(() => {
         if (isOpen) {
             fetchCategories();
-            fetchCollections();
             setLyrics(initialLyrics || "");
 
             if (isEdit && chordId) {
@@ -51,7 +48,6 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                             setArtistQuery(chord.artistName || "");
                             setArtistId(chord.artistId || "");
                             setCategoryId(chord.categoryId || "");
-                            setCollectionId(chord.collectionId || "");
                         }
                     } catch (err) {
                         console.error("Lỗi khi tải chi tiết hợp âm:", err);
@@ -97,17 +93,6 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
         }
     };
 
-    const fetchCollections = async () => {
-        try {
-            const res = await instance.get("/collections");
-            const data = res.data?.data || res.data?.result || res.data;
-            setCollections(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error("Tải bộ sưu tập thất bại:", err);
-            setCollections([]);
-        }
-    };
-
     if (!isOpen) return null;
 
     const handleSaveConfig = async () => {
@@ -121,8 +106,7 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                     isPublic: isPublic,
                     artistName: artistQuery.trim() || "AI",
                     artistId: artistId || null,
-                    categoryId: categoryId || null,
-                    collectionId: collectionId || null
+                    categoryId: categoryId || null
                 });
             } else {
                 // CREATE MODE: Call POST /chords and then POST /audios
@@ -132,8 +116,7 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                     isPublic: isPublic,
                     artistName: artistQuery.trim() || "AI",
                     artistId: artistId || null,
-                    categoryId: categoryId || null,
-                    collectionId: collectionId || null
+                    categoryId: categoryId || null
                 });
 
                 if (chordResponse.data) {
@@ -154,7 +137,7 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
             onSaveSuccess();
             onClose();
         } catch (err) {
-            alert(err instanceof Error ? err.message : "Có lỗi hệ thống xảy ra.");
+            toast.error(err instanceof Error ? err.message : "Có lỗi hệ thống xảy ra.");
         } finally {
             setIsSaving(false);
         }
@@ -224,16 +207,6 @@ export function ConfigAudioModal({ isOpen, onClose, chordId, audioUrl, initialLy
                                     <option value="">-- Chọn danh mục --</option>
                                     {categories.map((cat) => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Bộ sưu tập</label>
-                                <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)} className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium text-zinc-800 transition-all">
-                                    <option value="">-- Không bắt buộc --</option>
-                                    {collections.map((col) => (
-                                        <option key={col.id} value={col.id}>{col.name}</option>
                                     ))}
                                 </select>
                             </div>

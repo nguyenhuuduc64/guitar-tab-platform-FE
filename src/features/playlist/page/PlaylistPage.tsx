@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Play, Pause } from "lucide-react";
 import instance from "../../../config/axios";
 import { fetchArtists } from "../../../services/artistService";
-import { SidebarLeft } from "../../home/components/SidebarLeft";
 import { RankingRight } from "../../home/components/RankingRight";
 import { type Chord } from "../../../types/chord";
 import { type Artist } from "../../../types/artist";
 import { useNavigate } from "react-router-dom";
 import { ArtistSlider } from "../../../components/common/ArtistSlider";
 import { type AudioItem } from "../../../types/audio";
+
+const getThumbnailUrl = (songId: string | number) => {
+    if (!songId) return "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=500";
+    const strId = String(songId);
+    let hash = 0;
+    for (let i = 0; i < strId.length; i++) {
+        hash = strId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % 85) + 1; // 1 to 85
+    return new URL(`../../../assets/thumbnail/anh-thumbnail-${index}.jpg`, import.meta.url).href;
+};
 
 export const PlaylistPage = () => {
     const navigate = useNavigate();
@@ -119,7 +130,7 @@ export const PlaylistPage = () => {
             })
             .catch((err) => {
                 console.error("Audio playback error:", err);
-                alert("Không thể phát file thu âm này!");
+                toast.error("Không thể phát file thu âm này!");
             });
 
         audio.onended = () => {
@@ -157,11 +168,7 @@ export const PlaylistPage = () => {
     }
 
     return (
-        <div className="w-full mx-auto animate-in fade-in duration-500 min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans">
-            {/* LEFT SIDEBAR */}
-            <aside className="w-64 shrink-0 hidden lg:block z-30">
-                <SidebarLeft />
-            </aside>
+        <div className="w-full mx-auto animate-in fade-in duration-500 font-sans">
 
             {/* MAIN CONTENT AREA */}
             <main className="flex-1 p-4 md:p-6 flex flex-col xl:flex-row gap-6 overflow-x-hidden">
@@ -208,7 +215,7 @@ export const PlaylistPage = () => {
                                             {/* Rounded Square Image Container */}
                                             <div className="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shadow-sm border border-slate-200/60 dark:border-slate-700/60 relative">
                                                 <img
-                                                    src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=500"
+                                                    src={getThumbnailUrl(item.id)}
                                                     alt="Audio cover"
                                                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                     draggable={false}

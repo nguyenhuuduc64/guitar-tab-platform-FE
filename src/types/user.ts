@@ -7,6 +7,8 @@ export interface User {
     roles?: Role;
     imageUrl?: string;
     isFollowing?: boolean;
+    followersCount?: number;
+    followingCount?: number;
 }
 
 export interface Role {

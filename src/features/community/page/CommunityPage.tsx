@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
     Users,
     UserPlus,
@@ -10,7 +10,6 @@ import {
     Music
 } from "lucide-react";
 import instance from "../../../config/axios";
-import { SidebarLeft } from "../../home/components/SidebarLeft";
 import { getUserInfo } from "../../../utils/auth";
 import { FollowingCard } from "./FollowingCard";
 import { CreatePostModal } from "./CreatePostModal";
@@ -24,6 +23,7 @@ import { type CommentData } from "../../../types/comment";
 
 export default function CommunityPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [posts, setPosts] = useState<PostData[]>([]);
     const [following, setFollowing] = useState<User[]>([]);
@@ -55,7 +55,8 @@ export default function CommunityPage() {
                 const userData = await getUserInfo();
                 setCurrentUser(userData);
 
-                const postsRes = await instance.get(`/posts`);
+                const isFollowingFeed = location.pathname === "/following-feed";
+                const postsRes = await instance.get(isFollowingFeed ? `/posts/following` : `/posts`);
                 const postsData = postsRes.data.result || [];
 
                 console.log('Raw posts data:', postsData);
@@ -108,7 +109,10 @@ export default function CommunityPage() {
                     }
                 }
 
-                setFollowing([]);
+                if (userData) {
+                    const followingRes = await instance.get(`/users/${userData.id}/following`);
+                    setFollowing(followingRes.data.result || []);
+                }
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
@@ -117,7 +121,7 @@ export default function CommunityPage() {
         };
 
         fetchData();
-    }, [currentPage, pageSize]);
+    }, [currentPage, pageSize, location.pathname]);
 
     const loadComments = async (postId: string) => {
         if (loadingComments[postId]) return;
@@ -251,11 +255,15 @@ export default function CommunityPage() {
     const handleFollow = async (targetUserId: string) => {
         try {
             setIsFollowingLoading(targetUserId);
-            await instance.post(`/follows/${targetUserId}`);
+            await instance.post(`/users/${targetUserId}/follow`);
 
-            const userToFollow = suggestedUsers.find(u => u.id === targetUserId);
+            let userToFollow = suggestedUsers.find(u => u.id === targetUserId);
+            if (!userToFollow) {
+                const res = await instance.get(`/users/${targetUserId}`);
+                userToFollow = res.data.result;
+            }
             if (userToFollow) {
-                setFollowing(prev => [...prev, { ...userToFollow, isFollowing: true }]);
+                setFollowing(prev => [...prev, userToFollow!]);
                 setSuggestedUsers(prev => prev.filter(u => u.id !== targetUserId));
             }
             setShowSuggestions(false);
@@ -269,7 +277,7 @@ export default function CommunityPage() {
     const handleUnfollow = async (targetUserId: string) => {
         try {
             setIsFollowingLoading(targetUserId);
-            await instance.delete(`/follows/${targetUserId}`);
+            await instance.post(`/users/${targetUserId}/unfollow`);
             setFollowing(prev => prev.filter(u => u.id !== targetUserId));
         } catch (error) {
             console.error("Error unfollowing user:", error);
@@ -342,12 +350,8 @@ export default function CommunityPage() {
     }
 
     return (
-        <div className="flex bg-gray-50 dark:bg-background min-h-screen text-gray-800 dark:text-slate-100">
-            <div className="w-64 shrink-0 border-r border-gray-200 dark:border-slate-800/60 bg-white dark:bg-slate-900 hidden md:block fixed h-full">
-                <SidebarLeft />
-            </div>
-
-            <div className="flex-1 md:ml-64 flex">
+        <div className="flex-grow w-full flex bg-gray-50 dark:bg-background text-gray-800 dark:text-slate-100">
+            <div className="flex-1 flex">
                 <div className="flex-1 p-6 md:p-8 max-w-3xl mx-auto">
                     {/* Create Post Box */}
                     <div className="mb-6">
@@ -376,33 +380,12 @@ export default function CommunityPage() {
                                     Chọn bài hát bạn thích...
                                 </button>
                             </div>
-                            <div className="flex items-center justify-around mt-3 pt-3 border-t border-gray-100 dark:border-slate-800/60">
+                            <div className="flex items-center justify-end mt-3 pt-3 border-t border-gray-100 dark:border-slate-800/60">
                                 <button
                                     onClick={() => setIsPostModalOpen(true)}
-                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                    className="px-5 py-2 bg-[var(--primary-color)] text-white hover:opacity-95 text-xs font-bold rounded-full transition-all cursor-pointer shadow-xs active:scale-98 tracking-wider uppercase border-none"
                                 >
-                                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    Ảnh/Video
-                                </button>
-                                <button
-                                    onClick={() => setIsPostModalOpen(true)}
-                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                >
-                                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                    Livestream
-                                </button>
-                                <button
-                                    onClick={() => setIsPostModalOpen(true)}
-                                    className="flex-center gap-2 px-4 py-1.5 text-sm text-gray-650 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                >
-                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Ghi nhận
+                                    Đăng bài hát
                                 </button>
                             </div>
                         </div>
@@ -498,6 +481,10 @@ export default function CommunityPage() {
                                     onDeleteComment={handleDeleteComment}
                                     onEditComment={handleEditComment}
                                     formatTimeAgo={formatTimeAgo}
+                                    isFollowing={following.some(u => u.id === post.userId)}
+                                    isFollowLoading={isFollowingLoading === post.userId}
+                                    onFollowUser={handleFollow}
+                                    onUnfollowUser={handleUnfollow}
                                 />
                             ))}
                         </div>
@@ -561,7 +548,7 @@ export default function CommunityPage() {
                                 {following.slice(0, 5).map((user) => (
                                     <FollowingCard
                                         key={user.id}
-                                        user={user}
+                                        user={{ ...user, isFollowing: true }}
                                         onUnfollow={handleUnfollow}
                                         isLoading={isFollowingLoading === user.id}
                                     />

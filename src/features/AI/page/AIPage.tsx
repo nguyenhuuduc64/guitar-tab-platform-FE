@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
-import AiSidebar from "../../../components/common/AiSidebar";
 import TextToChord from "../components/TextToChord";
 import ChordToMelody from "../components/ChordToMelody";
+
 export default function AIPage() {
     const location = useLocation();
 
@@ -17,8 +17,7 @@ export default function AIPage() {
     };
 
     return (
-        <div className="relative left-1/2 right-1/2 -ml-[50vw] mr-[50vw] w-screen h-[calc(100vh-var(--header-height)-var(--subnav-height))] bg-gray-50 dark:bg-zinc-950 flex overflow-hidden">
-
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] mr-[50vw] w-screen h-[calc(100vh-var(--header-height))] bg-gray-50 dark:bg-zinc-950 flex overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">
                 {renderChildComponent()}
             </div>

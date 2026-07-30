@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Loader2,
     ListMusic,
@@ -20,7 +21,8 @@ import {
     Library,
     MessageCircle,
     Flame, Heart,
-    LayoutGrid, List
+    LayoutGrid, List,
+    Globe, Lock
 } from "lucide-react";
 import instance from "../../../config/axios";
 import { useFormStore } from "../../../store/useFormStore";
@@ -82,8 +84,11 @@ interface ProfileProps {
 
 const FORM_NAME = "UPDATE_USER_PROFILE";
 
-function Profile({ userId }: ProfileProps) {
+function Profile({ userId: propUserId }: ProfileProps) {
     const navigate = useNavigate();
+    const { userId: routeUserId } = useParams<{ userId: string }>();
+    const userId = propUserId || routeUserId;
+
     const [user, setUser] = useState<UserType | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [chords, setChords] = useState<Chord[]>([]);
@@ -97,13 +102,22 @@ function Profile({ userId }: ProfileProps) {
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [pageSize] = useState<number>(5);
-
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [selectedChordId, setSelectedChordId] = useState<string | number | null>(null);
     const [chordAudios, setChordAudios] = useState<AudioResponse[]>([]);
     const [loadingAudio, setLoadingAudio] = useState<boolean>(false);
 
-    const isOwnProfile = !userId;
+    const [loggedInUser, setLoggedInUser] = useState<UserType | null>(null);
+
+    useEffect(() => {
+        getUserInfo().then(setLoggedInUser);
+    }, []);
+
+    const isOwnProfile = useMemo(() => {
+        if (!userId) return true;
+        if (!loggedInUser) return false;
+        return loggedInUser.id === userId;
+    }, [userId, loggedInUser]);
 
     const [likedPage, setLikedPage] = useState<number>(0);
     const likedPageSize = 5;
@@ -117,19 +131,20 @@ function Profile({ userId }: ProfileProps) {
     const [isMuted, setIsMuted] = useState<boolean>(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [isFollowing, setIsFollowing] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<'audio' | 'lyrics' | 'playlists' | 'likes'>('audio');
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Control Playback
     const handlePlayChord = (chord: Chord) => {
         if (!chord.hasAudio && !chord.audio?.url) {
-            alert("Bài hát này chưa có file audio để phát.");
+            toast.warn("Bài hát này chưa có file audio để phát.");
             return;
         }
 
         // Find audio url
         const audioUrl = chord.audio?.url || (chords.find(c => c.id === chord.id)?.audio?.url);
         if (!audioUrl) {
-            alert("Không tìm thấy đường dẫn audio.");
+            toast.error("Không tìm thấy đường dẫn audio.");
             return;
         }
 
@@ -219,8 +234,21 @@ function Profile({ userId }: ProfileProps) {
         return `${m}:${s < 10 ? "0" : ""}${s}`;
     };
 
-    const handleFollowToggle = () => {
-        setIsFollowing(!isFollowing);
+    const handleFollowToggle = async () => {
+        if (!user?.id) return;
+        try {
+            if (isFollowing) {
+                await instance.post(`/users/${user.id}/unfollow`);
+                setIsFollowing(false);
+                setUser(prev => prev ? { ...prev, followersCount: Math.max(0, (prev.followersCount || 0) - 1) } : null);
+            } else {
+                await instance.post(`/users/${user.id}/follow`);
+                setIsFollowing(true);
+                setUser(prev => prev ? { ...prev, followersCount: (prev.followersCount || 0) + 1 } : null);
+            }
+        } catch (error) {
+            console.error("Lỗi khi thay đổi trạng thái theo dõi:", error);
+        }
     };
 
     useEffect(() => {
@@ -243,6 +271,13 @@ function Profile({ userId }: ProfileProps) {
                 } else {
                     const userRes = await instance.get(`/users/${userId}`, { signal: controller.signal });
                     userData = userRes.data.result;
+
+                    const myInfo = await getUserInfo();
+                    if (myInfo) {
+                        const followingRes = await instance.get(`/users/${myInfo.id}/following`, { signal: controller.signal });
+                        const followingList = followingRes.data.result || [];
+                        setIsFollowing(followingList.some((u: any) => u.id === userId));
+                    }
                 }
 
                 setUser(userData);
@@ -479,6 +514,32 @@ function Profile({ userId }: ProfileProps) {
         }
     };
 
+    const handleToggleSongVisibility = async (chord: Chord) => {
+        try {
+            const updatedIsPublic = chord.isPublic === false ? true : false;
+            
+            await instance.put(`/chords/${chord.id}`, {
+                title: chord.title,
+                artistName: chord.artistName || chord.author || "",
+                categoryId: chord.categoryId || (chord.category && typeof chord.category === 'object' && chord.category.id) || "",
+                content: chord.content || "",
+                youtubeUrl: chord.youtubeUrl || "",
+                isPublic: updatedIsPublic
+            });
+
+            setChords(prev => prev.map(c => c.id === chord.id ? { ...c, isPublic: updatedIsPublic } : c));
+        } catch (err) {
+            console.error("Lỗi cập nhật trạng thái bài hát:", err);
+            toast.error("Không thể cập nhật trạng thái bài hát. Vui lòng thử lại sau.");
+        }
+    };
+    const tabs = useMemo(() => [
+        { id: 'audio' as const, label: 'Bài hát có audio', count: chordsWithAudio.length, icon: <Music className="w-4 h-4" /> },
+        { id: 'lyrics' as const, label: 'Lời bài hát đã đăng', count: chordsWithoutAudio.length, icon: <Disc3 className="w-4 h-4" /> },
+        { id: 'playlists' as const, label: 'Playlist', count: playlists.length, icon: <Library className="w-4 h-4" /> },
+        { id: 'likes' as const, label: 'Bài viết đã thích', count: likedPosts.length, icon: <Heart className="w-4 h-4" /> },
+    ], [chordsWithAudio.length, chordsWithoutAudio.length, playlists.length, likedPosts.length]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -489,438 +550,392 @@ function Profile({ userId }: ProfileProps) {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex text-gray-800 dark:text-slate-100 font-sans pb-24">
-            <div className="w-[var(--sidebar-user-width)] fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800/60 hidden md:block mt-[calc(var(--header-height)_+_36px)]">
+            <div className="w-[var(--sidebar-user-width)] fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800/60 hidden md:block mt-[calc(var(--header-height)_+_var(--subnav-height))]">
                 <SidebarProfileUser userId={userId} />
             </div>
 
-            <div className="flex-1 md:pl-[var(--sidebar-user-width)] flex flex-col">
+            <main className="flex-grow md:pl-[var(--sidebar-user-width)] p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
                 {/* Mobile User Profile Card */}
-                <main>
-                    <div className="md:hidden bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 mb-8 flex flex-col items-center text-center shadow-xs">
-                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-slate-800 shadow-sm mb-3">
-                            <img
-                                src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=cover"}
-                                alt={user?.fullName || "User Avatar"}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-0.5">
-                            {user?.fullName || "Người dùng"}
-                        </h3>
-                        <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
-                            {user?.username ? `@${user.username}` : ""}
-                        </p>
-
-                        <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed max-w-sm mb-4">
-                            Sản xuất âm nhạc và chia sẻ đam mê guitar.
-                        </p>
-
-                        <div className="w-full max-w-xs flex gap-3 mb-5 justify-center">
-                            {!isOwnProfile ? (
-                                <>
-                                    <button
-                                        onClick={handleFollowToggle}
-                                        className={`flex-1 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all border ${isFollowing
-                                            ? "bg-transparent border-gray-300 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-55 dark:hover:bg-slate-800/40"
-                                            : "bg-gray-900 dark:bg-slate-200 border-gray-900 text-white dark:text-slate-900 hover:bg-gray-800 dark:hover:bg-slate-100"
-                                            }`}
-                                    >
-                                        {isFollowing ? "Following" : "Follow"}
-                                    </button>
-                                    <button className="flex-1 py-1.5 bg-transparent border border-gray-300 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800/30 text-gray-700 dark:text-slate-300 rounded-full text-xs font-semibold tracking-wider transition-colors">
-                                        Nhắn tin
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => openForm(FORM_NAME)}
-                                    className="w-full py-1.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900/50 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/50 rounded-full text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                >r justify-center gap-1.5"
-                                    <Edit2 size={12} /> Chỉnh sửa hồ sơ
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-4 grid grid-cols-3 gap-2 text-center">
-                            <div>
-                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
-                                    {chords.length}
-                                </span>
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bài hát</span>
-                            </div>
-                            <div>
-                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
-                                    {playlists.length}
-                                </span>
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bộ sưu tập</span>
-                            </div>
-                            <div>
-                                <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
-                                    {likedPosts.length}
-                                </span>
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Đã thích</span>
-                            </div>
-                        </div>
+                <div className="md:hidden bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 mb-8 flex flex-col items-center text-center shadow-xs">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-slate-800 shadow-sm mb-3">
+                        <img
+                            src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=cover"}
+                            alt={user?.fullName || "User Avatar"}
+                            className="w-full h-full object-cover"
+                        />
                     </div>
 
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Album</h2>
-                        {isOwnProfile && (
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-0.5">
+                        {user?.fullName || "Người dùng"}
+                    </h3>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
+                        {user?.username ? `@${user.username}` : ""}
+                    </p>
+
+                    <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed max-w-sm mb-4">
+                        Sản xuất âm nhạc và chia sẻ đam mê guitar.
+                    </p>
+
+                    <div className="w-full max-w-xs flex gap-3 mb-5 justify-center">
+                        {!isOwnProfile ? (
+                            <>
+                                <button
+                                    onClick={handleFollowToggle}
+                                    className={`flex-1 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all border ${isFollowing
+                                        ? "bg-transparent border-gray-300 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800/40"
+                                        : "bg-gray-900 dark:bg-slate-200 border-gray-900 text-white dark:text-slate-900 hover:bg-gray-800 dark:hover:bg-slate-100"
+                                        }`}
+                                >
+                                    {isFollowing ? "Following" : "Follow"}
+                                </button>
+                                <button className="flex-1 py-1.5 bg-transparent border border-gray-300 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800/30 text-gray-700 dark:text-slate-300 rounded-full text-xs font-semibold tracking-wider transition-colors">
+                                    Nhắn tin
+                                </button>
+                            </>
+                        ) : (
                             <button
                                 onClick={() => openForm(FORM_NAME)}
-                                className="text-xs flex items-center gap-1.5 text-indigo-600 font-medium hover:underline"
+                                className="w-full py-1.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900/50 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/50 rounded-full text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-1.5"
                             >
-                                <Edit2 size={12} /> Chỉnh sửa
+                                <Edit2 size={12} /> Chỉnh sửa hồ sơ
                             </button>
                         )}
                     </div>
 
-                    <div className="space-y-12">
-                        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
-                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm relative group mx-auto sm:mx-0">
+                    <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-4 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                            <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                {chords.length}
+                            </span>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bài hát</span>
+                        </div>
+                        <div>
+                            <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                {playlists.length}
+                            </span>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Bộ sưu tập</span>
+                        </div>
+                        <div>
+                            <span className="block text-base font-bold text-gray-900 dark:text-slate-200">
+                                {likedPosts.length}
+                            </span>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Đã thích</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tab Navigation Switcher */}
+                <div className="flex border-b border-gray-200 dark:border-slate-800 overflow-x-auto scrollbar-none gap-2 pb-px mb-6">
+                    {tabs.map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer text-xs sm:text-sm font-bold whitespace-nowrap transition-all border-b-2 -mb-px
+                                    ${isActive
+                                        ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                                        : "border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
+                                    }`}
+                            >
+                                {tab.icon}
+                                <span>{tab.label}</span>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                    {tab.count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="space-y-12">
+                    {/* Tab 1: Audio Songs */}
+                    {activeTab === 'audio' && (
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fadeIn">
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm relative group mx-auto lg:mx-0 rounded-2xl">
                                 <img
                                     src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=cover"
-                                    alt="Ảnh bìa"
-                                    className="w-full h-full object-cover"
+                                    alt="Bài hát có audio"
+                                    className="w-full h-full object-cover animate-pulse-slow"
                                 />
                             </div>
 
-                            <div className="flex-1 w-full">
-                                <div className="mb-4">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Bài hát đã tải lên</h3>
-                                    <p className="text-xs text-gray-400 mt-0.5">2026</p>
+                            <div className="flex-1 w-full text-left">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Bài hát có audio</h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">Danh sách các bài hát bạn đã đăng có kèm file nhạc</p>
+                                    </div>
+                                    {isOwnProfile && (
+                                        <button
+                                            onClick={() => openForm(FORM_NAME)}
+                                            className="text-xs flex items-center gap-1.5 text-indigo-600 font-medium hover:underline cursor-pointer"
+                                        >
+                                            <Edit2 size={12} /> Chỉnh sửa
+                                        </button>
+                                    )}
                                 </div>
 
-                                {chords.length === 0 ? (
-                                    <p className="text-sm text-gray-400 py-2">Chưa có bài hát nào.</p>
+                                {chordsWithAudio.length === 0 ? (
+                                    <p className="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-205 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/10">Chưa có bài hát nào có audio.</p>
                                 ) : (
                                     <div className="space-y-8">
-                                        {chordsWithAudio.length > 0 && (
-                                            <div>
-                                                {/* Header with Title and Toggle */}
-                                                <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-slate-800/80 pb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <Music className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
-                                                            Có audio ({chordsWithAudio.length})
-                                                        </h4>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg border border-gray-200/20">
-                                                        <button
-                                                            onClick={() => setViewMode('list')}
-                                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'list'
-                                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                                                                : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
-                                                                }`}
-                                                            title="Danh sách"
-                                                        >
-                                                            <List size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setViewMode('grid')}
-                                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'grid'
-                                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                                                                : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
-                                                                }`}
-                                                            title="Lưới đĩa than"
-                                                        >
-                                                            <LayoutGrid size={16} />
-                                                        </button>
-                                                    </div>
+                                        <div>
+                                            {/* Header with Title and Toggle */}
+                                            <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-slate-800/80 pb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Music className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
+                                                        Bài hát ({chordsWithAudio.length})
+                                                    </h4>
                                                 </div>
+                                                <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg border border-gray-200/20">
+                                                    <button
+                                                        onClick={() => setViewMode('list')}
+                                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'list'
+                                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
+                                                            : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                                            }`}
+                                                        title="Danh sách"
+                                                    >
+                                                        <List size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setViewMode('grid')}
+                                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'grid'
+                                                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
+                                                            : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                                            }`}
+                                                        title="Lưới đĩa than"
+                                                    >
+                                                        <LayoutGrid size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                                                {viewMode === 'list' ? (
-                                                    /* Split Layout: Left is Featured Player Deck, Right is Tracklist */
-                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                                                        {/* Featured Player Deck (5 cols) */}
-                                                        <div className="lg:col-span-5 bg-white/60 dark:bg-[#11131c]/60 backdrop-blur-md border border-gray-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs flex flex-col items-center text-center relative overflow-hidden group">
-                                                            {/* Album art cover and record sleeve representation */}
-                                                            <div className="relative w-40 h-40 mb-5 flex items-center justify-center">
-                                                                {/* Vinyl record spinning behind */}
-                                                                <div
-                                                                    className={`absolute w-36 h-36 rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-transform duration-1000 ${isPlaying && currentPlayingSong ? 'animate-spin' : ''
-                                                                        }`}
-                                                                    style={{ animationDuration: '6s' }}
-                                                                >
-                                                                    <div className="w-14 h-14 rounded-full border border-slate-700 bg-indigo-600 flex items-center justify-center">
-                                                                        <div className="w-3 h-3 rounded-full bg-black"></div>
-                                                                    </div>
-                                                                </div>
-                                                                {/* Cover artwork block sleeve */}
-                                                                <div className="absolute w-32 h-32 rounded-2xl overflow-hidden shadow-xl border border-white/20 dark:border-slate-800 z-10 bg-slate-100 dark:bg-slate-900">
-                                                                    <img
-                                                                        src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
-                                                                        alt={currentPlayingSong?.title || "No song"}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
+                                            {viewMode === 'list' ? (
+                                                /* Split Layout: Left is Featured Player Deck, Right is Tracklist */
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                                    {/* Featured Player Deck (5 cols) */}
+                                                    <div className="lg:col-span-5 bg-white/60 dark:bg-[#11131c]/60 backdrop-blur-md border border-gray-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs flex flex-col items-center text-center relative overflow-hidden group">
+                                                        <div className="relative w-40 h-40 mb-5 flex items-center justify-center">
+                                                            <div
+                                                                className={`absolute w-36 h-36 rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-transform duration-1000 ${isPlaying && currentPlayingSong ? 'animate-spin' : ''
+                                                                    }`}
+                                                                style={{ animationDuration: '6s' }}
+                                                            >
+                                                                <div className="w-14 h-14 rounded-full border border-slate-700 bg-indigo-600 flex items-center justify-center">
+                                                                    <div className="w-3 h-3 rounded-full bg-black"></div>
                                                                 </div>
                                                             </div>
-
-                                                            {/* Active Song Metadata */}
-                                                            <div className="w-full min-w-0 mb-4 z-10">
-                                                                <h4 className="text-base font-bold text-gray-900 dark:text-white truncate">
-                                                                    {currentPlayingSong?.title || "Chọn bài hát để phát"}
-                                                                </h4>
-                                                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate">
-                                                                    {currentPlayingSong?.artistName || currentPlayingSong?.author || user?.fullName || "Chưa rõ nghệ sĩ"}
-                                                                </p>
+                                                            <div className="absolute w-32 h-32 rounded-2xl overflow-hidden shadow-xl border border-white/20 dark:border-slate-800 z-10 bg-slate-100 dark:bg-slate-900">
+                                                                <img
+                                                                    src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
+                                                                    alt={currentPlayingSong?.title || "No song"}
+                                                                    className="w-full h-full object-cover"
+                                                                />
                                                             </div>
+                                                        </div>
 
-                                                            {/* Animated Sound Equalizer Visualizer (CSS only) */}
-                                                            <div className="h-6 flex items-end justify-center gap-1 mb-5 w-full z-10">
-                                                                {isPlaying && currentPlayingSong ? (
-                                                                    <>
-                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.8s_infinite] h-4" style={{ animationDelay: '0.1s' }} />
-                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.6s_infinite] h-6" style={{ animationDelay: '0.3s' }} />
-                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.9s_infinite] h-3" style={{ animationDelay: '0.5s' }} />
-                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.7s_infinite] h-5" style={{ animationDelay: '0.2s' }} />
-                                                                        <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.5s_infinite] h-2" style={{ animationDelay: '0.4s' }} />
-                                                                    </>
-                                                                ) : (
-                                                                    <div className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">Trình phát nhạc</div>
-                                                                )}
-                                                            </div>
+                                                        <div className="w-full min-w-0 mb-4 z-10">
+                                                            <h4 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                                {currentPlayingSong?.title || "Chọn bài hát để phát"}
+                                                            </h4>
+                                                            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate">
+                                                                {currentPlayingSong?.artistName || currentPlayingSong?.author || user?.fullName || "Chưa rõ nghệ sĩ"}
+                                                            </p>
+                                                        </div>
 
-                                                            {/* Mini Controls on Deck */}
-                                                            {currentPlayingSong ? (
-                                                                <div className="w-full flex items-center justify-center gap-4 z-10">
-                                                                    <button
-                                                                        onClick={toggleMute}
-                                                                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-650 transition cursor-pointer"
-                                                                    >
-                                                                        <Volume2 className={`w-4 h-4 ${isMuted ? "text-red-500" : ""}`} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handlePlayChord(currentPlayingSong)}
-                                                                        className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer"
-                                                                    >
-                                                                        {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => navigate(`/song/${currentPlayingSong.id}`)}
-                                                                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-650 transition cursor-pointer"
-                                                                        title="Xem hợp âm"
-                                                                    >
-                                                                        <ChevronRight className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
+                                                        <div className="h-6 flex items-end justify-center gap-1 mb-5 w-full z-10">
+                                                            {isPlaying && currentPlayingSong ? (
+                                                                <>
+                                                                    <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.8s_infinite] h-4" style={{ animationDelay: '0.1s' }} />
+                                                                    <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.6s_infinite] h-6" style={{ animationDelay: '0.3s' }} />
+                                                                    <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.9s_infinite] h-3" style={{ animationDelay: '0.5s' }} />
+                                                                    <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.7s_infinite] h-5" style={{ animationDelay: '0.2s' }} />
+                                                                    <span className="w-1 bg-indigo-500 rounded-full animate-[bounce_0.5s_infinite] h-2" style={{ animationDelay: '0.4s' }} />
+                                                                </>
                                                             ) : (
-                                                                <p className="text-[11px] text-gray-400 py-3">Chọn bài hát bên phải để bắt đầu phát nhạc thực tế</p>
+                                                                <div className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">Trình phát nhạc</div>
                                                             )}
                                                         </div>
 
-                                                        {/* Track List (7 cols) */}
-                                                        <div className="lg:col-span-7 space-y-1.5">
-                                                            {chordsWithAudio.map((chord, idx) => {
-                                                                const isCurrent = currentPlayingSong?.id === chord.id;
-                                                                return (
-                                                                    <div
-                                                                        key={chord.id}
-                                                                        onClick={() => navigate(`/song/${chord.id}`)}
-                                                                        className={`flex items-center gap-3 p-3 bg-white dark:bg-[#11131c] border ${isCurrent
-                                                                            ? 'border-indigo-500/50 dark:border-indigo-500/40 bg-indigo-50/5 dark:bg-indigo-950/5 shadow-xs'
-                                                                            : 'border-gray-100 dark:border-slate-800/80 hover:bg-gray-50/50 dark:hover:bg-slate-800/30'
-                                                                            } rounded-2xl transition-all duration-200 cursor-pointer group relative`}
-                                                                    >
-                                                                        {/* Index or Play icon */}
-                                                                        <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                                                                            {isCurrent && isPlaying ? (
-                                                                                <div className="flex gap-0.5 items-end h-3">
-                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-2" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }} />
-                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-3" style={{ animationDelay: '0.3s', animationDuration: '0.4s' }} />
-                                                                                    <span className="w-0.5 bg-indigo-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s', animationDuration: '0.7s' }} />
-                                                                                </div>
-                                                                            ) : (
-                                                                                <span className="text-xs font-semibold text-gray-400 group-hover:hidden">{idx + 1}</span>
-                                                                            )}
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handlePlayChord(chord);
-                                                                                }}
-                                                                                className="hidden group-hover:flex p-1.5 rounded-full bg-indigo-100/80 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition"
-                                                                            >
-                                                                                {isCurrent && isPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
-                                                                            </button>
-                                                                        </div>
-
-                                                                        {/* Cover Small Art */}
-                                                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-900 shrink-0">
-                                                                            <img
-                                                                                src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=100&auto=format&fit=cover"
-                                                                                alt={chord.title}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
-                                                                        </div>
-
-                                                                        {/* Title & Artist */}
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <h5 className={`text-xs sm:text-sm font-bold truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${isCurrent ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-gray-900 dark:text-slate-100'
-                                                                                }`}>
-                                                                                {chord.title}
-                                                                            </h5>
-                                                                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
-                                                                                {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
-                                                                            </p>
-                                                                        </div>
-
-                                                                        {/* Stats & Actions */}
-                                                                        <div className="flex items-center gap-3 shrink-0">
-                                                                            <div className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
-                                                                                <Eye className="w-3 h-3" />
-                                                                                <span>{chord.views?.toLocaleString() || 0}</span>
-                                                                            </div>
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    navigate(`/song/${chord.id}`);
-                                                                                }}
-                                                                                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 transition rounded-lg"
-                                                                            >
-                                                                                <MoreHorizontal size={14} />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
+                                                        {currentPlayingSong ? (
+                                                            <div className="w-full flex items-center justify-center gap-4 z-10">
+                                                                <button
+                                                                    onClick={toggleMute}
+                                                                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                                                                >
+                                                                    <Volume2 className={`w-4 h-4 ${isMuted ? "text-red-500" : ""}`} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handlePlayChord(currentPlayingSong)}
+                                                                    className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer"
+                                                                >
+                                                                    {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => navigate(`/song/${currentPlayingSong.id}`)}
+                                                                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                                                                    title="Xem hợp âm"
+                                                                >
+                                                                    <ChevronRight className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[11px] text-gray-400 py-3">Chọn bài hát bên phải để bắt đầu phát nhạc thực tế</p>
+                                                        )}
                                                     </div>
-                                                ) : (
-                                                    /* Grid View: Vinyl Slide-out animation */
-                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                                                        {chordsWithAudio.map((chord) => {
+
+                                                    {/* Track List (7 cols) */}
+                                                    <div className="lg:col-span-7 space-y-1.5">
+                                                        {chordsWithAudio.map((chord, idx) => {
                                                             const isCurrent = currentPlayingSong?.id === chord.id;
                                                             return (
                                                                 <div
                                                                     key={chord.id}
                                                                     onClick={() => navigate(`/song/${chord.id}`)}
-                                                                    className={`bg-white dark:bg-[#11131c] border ${isCurrent
-                                                                        ? 'border-indigo-500/50 dark:border-indigo-500/40 shadow-md ring-1 ring-indigo-500/10'
-                                                                        : 'border-gray-100 dark:border-slate-800/80 shadow-2xs'
-                                                                        } rounded-2xl p-2.5 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden`}
+                                                                    className={`flex items-center gap-3 p-3 bg-white dark:bg-[#11131c] border ${isCurrent
+                                                                        ? 'border-indigo-500/50 dark:border-indigo-500/40 bg-indigo-50/5 dark:bg-indigo-950/5 shadow-xs'
+                                                                        : 'border-gray-100 dark:border-slate-800/80 hover:bg-gray-50/50 dark:hover:bg-slate-800/30'
+                                                                        } rounded-2xl transition-all duration-200 cursor-pointer group relative`}
                                                                 >
-                                                                    {/* Album Artwork Sleeve and Sliding Record */}
-                                                                    <div className="aspect-square w-full relative rounded-xl bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-                                                                        {/* Sliding Vinyl Record */}
-                                                                        <div
-                                                                            className={`absolute w-[80%] h-[80%] rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-all duration-500 ease-out z-0
-                                                                                group-hover:translate-x-[40%] group-hover:rotate-180
-                                                                                ${isCurrent && isPlaying ? 'animate-spin' : ''}`}
-                                                                            style={{ animationDuration: '6s' }}
-                                                                        >
-                                                                            <div className="w-[35%] h-[35%] rounded-full bg-indigo-600 flex items-center justify-center">
-                                                                                <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                                                                    <div className="w-7 h-7 flex items-center justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                                        {isCurrent && isPlaying ? (
+                                                                            <div className="flex gap-0.5 items-end h-3">
+                                                                                <span className="w-0.5 bg-indigo-500 animate-bounce h-2" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }} />
+                                                                                <span className="w-0.5 bg-indigo-500 animate-bounce h-3" style={{ animationDelay: '0.3s', animationDuration: '0.4s' }} />
+                                                                                <span className="w-0.5 bg-indigo-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s', animationDuration: '0.7s' }} />
                                                                             </div>
-                                                                        </div>
-
-                                                                        {/* Cover image sleeve */}
-                                                                        <div className="absolute inset-0 z-10 w-full h-full bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
-                                                                            <img
-                                                                                src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
-                                                                                alt={chord.title}
-                                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                                            />
-                                                                        </div>
-
-                                                                        {/* Hover Play Button Overlay */}
-                                                                        <div
-                                                                            className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handlePlayChord(chord);
-                                                                            }}
+                                                                        ) : (
+                                                                            <span className="text-xs font-semibold text-gray-400 group-hover:hidden">{idx + 1}</span>
+                                                                        )}
+                                                                        <button
+                                                                            onClick={() => handlePlayChord(chord)}
+                                                                            className="hidden group-hover:flex p-1.5 rounded-full bg-indigo-100/80 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition"
                                                                         >
-                                                                            <div className="w-11 h-11 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform duration-200 transform translate-y-2 group-hover:translate-y-0">
-                                                                                {isCurrent && isPlaying ? (
-                                                                                    <Pause className="w-4.5 h-4.5 text-white fill-current" />
-                                                                                ) : (
-                                                                                    <Play className="w-4.5 h-4.5 text-white fill-current translate-x-0.5" />
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {/* Audio Badge */}
-                                                                        <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 z-30">
-                                                                            <Music className="w-2.5 h-2.5" />
-                                                                            <span>Audio</span>
-                                                                        </div>
+                                                                            {isCurrent && isPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
+                                                                        </button>
                                                                     </div>
 
-                                                                    {/* Metadata */}
-                                                                    <div className="p-2 flex-1 flex flex-col justify-between z-10 bg-white dark:bg-[#11131c]">
-                                                                        <div className="min-w-0 mb-1">
-                                                                            <div className="flex items-center justify-between gap-1.5">
-                                                                                <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                                                    {chord.title || "Chưa có tiêu đề"}
-                                                                                </h4>
-                                                                                {isCurrent && isPlaying && (
-                                                                                    <Disc3 className="w-3.5 h-3.5 text-indigo-500 animate-spin shrink-0 [animation-duration:3s]" />
-                                                                                )}
-                                                                            </div>
-                                                                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
-                                                                                {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
-                                                                            </p>
-                                                                        </div>
-                                                                        <div className="text-[9px] text-gray-400 flex items-center gap-1 font-medium mt-1">
+                                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-900 shrink-0">
+                                                                        <img
+                                                                            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=100&auto=format&fit=cover"
+                                                                            alt={chord.title}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <h5 className={`text-xs sm:text-sm font-bold truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${isCurrent ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-gray-900 dark:text-slate-100'
+                                                                            }`}>
+                                                                            {chord.title}
+                                                                        </h5>
+                                                                        <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
+                                                                            {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                                        <div className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
                                                                             <Eye className="w-3 h-3" />
-                                                                            <span>{chord.views?.toLocaleString() || 0} lượt xem</span>
+                                                                            <span>{chord.views?.toLocaleString() || 0}</span>
                                                                         </div>
+                                                                        <button
+                                                                            onClick={() => navigate(`/song/${chord.id}`)}
+                                                                            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 transition rounded-lg"
+                                                                        >
+                                                                            <MoreHorizontal size={14} />
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             );
                                                         })}
                                                     </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {chordsWithoutAudio.length > 0 && (
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <Disc3 className="w-5 h-5 text-gray-600 dark:text-slate-400" />
-                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
-                                                        Lời bài hát ({chordsWithoutAudio.length})
-                                                    </h4>
                                                 </div>
-                                                <div className="w-full space-y-0.5">
-                                                    {chordsWithoutAudio.map((chord, index) => {
+                                            ) : (
+                                                /* Grid View */
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                                    {chordsWithAudio.map((chord) => {
+                                                        const isCurrent = currentPlayingSong?.id === chord.id;
                                                         return (
-                                                            <div key={chord.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40">
-                                                                <div
-                                                                    onClick={() => navigate(`/song/${chord.id}`)}
-                                                                    className="grid grid-cols-[1fr_80px] sm:grid-cols-[2fr_1fr_1fr_80px] items-center py-3 px-2 hover:bg-gray-100/40 dark:hover:bg-slate-800/30 group transition-colors text-sm cursor-pointer"
-                                                                >
-                                                                    <div className="font-medium text-gray-800 dark:text-slate-200 pr-4 truncate hover:text-indigo-600 hover:underline">
-                                                                        {chord.title}
-                                                                        <span className="block sm:hidden text-[10px] text-gray-400 mt-0.5 font-normal">
-                                                                            {chord.artistName || chord.author || "Unknown"} • {chord.views?.toLocaleString() || 0} lượt xem
-                                                                        </span>
+                                                            <div
+                                                                key={chord.id}
+                                                                onClick={() => navigate(`/song/${chord.id}`)}
+                                                                className={`bg-white dark:bg-[#11131c] border ${isCurrent
+                                                                    ? 'border-indigo-500/50 dark:border-indigo-500/40 shadow-md ring-1 ring-indigo-500/10'
+                                                                    : 'border-gray-100 dark:border-slate-800/80 shadow-2xs'
+                                                                    } rounded-2xl p-2.5 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden`}
+                                                            >
+                                                                <div className="aspect-square w-full relative rounded-xl bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+                                                                    <div
+                                                                        className={`absolute w-[80%] h-[80%] rounded-full bg-slate-950 border-4 border-slate-800 flex items-center justify-center shadow-lg transition-all duration-500 ease-out z-0
+                                                                            group-hover:translate-x-[40%] group-hover:rotate-180
+                                                                            ${isCurrent && isPlaying ? 'animate-spin' : ''}`}
+                                                                        style={{ animationDuration: '6s' }}
+                                                                    >
+                                                                        <div className="w-[35%] h-[35%] rounded-full bg-indigo-600 flex items-center justify-center">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 truncate hidden sm:flex">
-                                                                        <UserIcon className="w-3 h-3 shrink-0 text-gray-400 dark:text-slate-500" />
-                                                                        {chord.artistName || chord.author || "Unknown"}
+                                                                    <div className="absolute inset-0 z-10 w-full h-full bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-white/10">
+                                                                        <img
+                                                                            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=cover"
+                                                                            alt={chord.title}
+                                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                        />
                                                                     </div>
-                                                                    <div className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1 hidden sm:flex">
-                                                                        <Eye className="w-3.5 h-3.5" />
-                                                                        {chord.views?.toLocaleString() || 0}
+                                                                    <div
+                                                                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handlePlayChord(chord);
+                                                                        }}
+                                                                    >
+                                                                        <div className="w-11 h-11 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform duration-200 transform translate-y-2 group-hover:translate-y-0">
+                                                                            {isCurrent && isPlaying ? (
+                                                                                <Pause className="w-4.5 h-4.5 text-white fill-current" />
+                                                                            ) : (
+                                                                                <Play className="w-4.5 h-4.5 text-white fill-current translate-x-0.5" />
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="flex items-center justify-end gap-3 sm:gap-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                                                        <Heart className="w-4 h-4 cursor-pointer hover:text-red-500 hover:fill-red-500 transition-colors" />
-                                                                        <MoreHorizontal className="w-4 h-4 cursor-pointer hover:text-gray-700" />
+                                                                    <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 z-30">
+                                                                        <Music className="w-2.5 h-2.5" />
+                                                                        <span>Audio</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="p-2 flex-1 flex flex-col justify-between z-10 bg-white dark:bg-[#11131c]">
+                                                                    <div className="min-w-0 mb-1">
+                                                                        <div className="flex items-center justify-between gap-1.5">
+                                                                            <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                                                {chord.title || "Chưa có tiêu đề"}
+                                                                            </h4>
+                                                                            {isCurrent && isPlaying && (
+                                                                                <Disc3 className="w-3.5 h-3.5 text-indigo-500 animate-spin shrink-0 [animation-duration:3s]" />
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">
+                                                                            {chord.artistName || chord.author || "Chưa cập nhật nghệ sĩ"}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="text-[9px] text-gray-400 flex items-center gap-1 font-medium mt-1">
+                                                                        <Eye className="w-3 h-3" />
+                                                                        <span>{chord.views?.toLocaleString() || 0} lượt xem</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         );
                                                     })}
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
                                 {totalPages > 1 && (
-                                    <div className="mt-4 flex justify-center sm:justify-end">
+                                    <div className="mt-8 flex justify-center lg:justify-end">
                                         <Pagination>
                                             <PaginationContent className="flex flex-wrap gap-1">
                                                 <PaginationItem>
@@ -958,38 +973,171 @@ function Profile({ userId }: ProfileProps) {
                                 )}
                             </div>
                         </div>
+                    )}
 
-                        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
-                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm mx-auto sm:mx-0">
+                    {/* Tab 2: Lyrics only Songs */}
+                    {activeTab === 'lyrics' && (
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fadeIn">
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm relative group mx-auto lg:mx-0 rounded-2xl">
                                 <img
-                                    src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=300&auto=format&fit=cover"
-                                    alt="Ảnh bìa bộ sưu tập"
+                                    src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?q=80&w=300&auto=format&fit=cover"
+                                    alt="Lời bài hát"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
 
-                            <div className="flex-1 w-full">
+                            <div className="flex-1 w-full text-left">
+                                <div className="mb-4">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Lời bài hát đã đăng</h3>
+                                    <p className="text-xs text-gray-400 mt-0.5">Danh sách các bài viết hợp âm và lời bài hát bạn đã chia sẻ</p>
+                                </div>
+
+                                {chordsWithoutAudio.length === 0 ? (
+                                    <p className="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-205 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/10">Chưa có lời bài hát nào.</p>
+                                ) : (
+                                    <div className="w-full space-y-0.5 border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-[#11131c] p-4 shadow-2xs">
+                                        {chordsWithoutAudio.map((chord, index) => {
+                                            return (
+                                                <div key={chord.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40 last:border-0">
+                                                    <div
+                                                        onClick={() => navigate(`/song/${chord.id}`)}
+                                                        className={`grid grid-cols-[1fr_80px] ${isOwnProfile ? "sm:grid-cols-[2fr_1fr_1fr_120px_80px]" : "sm:grid-cols-[2fr_1fr_1fr_80px]"} items-center py-3.5 px-3 hover:bg-gray-55/70 dark:hover:bg-slate-850/50 group transition-colors text-sm cursor-pointer`}
+                                                    >
+                                                        <div className="font-semibold text-gray-850 dark:text-slate-200 pr-4 truncate hover:text-indigo-650 hover:underline">
+                                                            {chord.title}
+                                                            <span className="block sm:hidden text-[10px] text-gray-450 mt-0.5 font-normal">
+                                                                {chord.artistName || chord.author || "Unknown"} • {chord.views?.toLocaleString() || 0} lượt xem
+                                                                {isOwnProfile && (
+                                                                    <span
+                                                                        onClick={(e) => { e.stopPropagation(); handleToggleSongVisibility(chord); }}
+                                                                        className={`ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold cursor-pointer transition-colors ${
+                                                                            chord.isPublic !== false
+                                                                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 hover:bg-emerald-100"
+                                                                                : "bg-gray-100 text-gray-650 dark:bg-slate-800 dark:text-slate-400 hover:bg-gray-200"
+                                                                        }`}
+                                                                    >
+                                                                        {chord.isPublic !== false ? (
+                                                                            <Globe className="w-2 h-2" />
+                                                                        ) : (
+                                                                            <Lock className="w-2 h-2" />
+                                                                        )}
+                                                                        <span>{chord.isPublic !== false ? "Công khai" : "Riêng tư"}</span>
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1.5 truncate hidden sm:flex font-medium">
+                                                            <UserIcon className="w-3.5 h-3.5 shrink-0 text-gray-400 dark:text-slate-500" />
+                                                            {chord.artistName || chord.author || "Unknown"}
+                                                        </div>
+                                                        <div className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1.5 hidden sm:flex font-medium">
+                                                            <Eye className="w-4 h-4" />
+                                                            {chord.views?.toLocaleString() || 0}
+                                                        </div>
+                                                        {isOwnProfile && (
+                                                            <div className="hidden sm:flex items-center font-medium">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleToggleSongVisibility(chord); }}
+                                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all border ${
+                                                                        chord.isPublic !== false
+                                                                            ? "bg-emerald-50/50 hover:bg-emerald-50 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:bg-emerald-950/10 dark:text-emerald-400"
+                                                                            : "bg-gray-50 hover:bg-gray-100 border-gray-200 dark:border-slate-800 text-gray-600 dark:bg-slate-900/40 dark:text-slate-400"
+                                                                    }`}
+                                                                >
+                                                                    {chord.isPublic !== false ? (
+                                                                        <Globe className="w-3 h-3 text-emerald-500" />
+                                                                    ) : (
+                                                                        <Lock className="w-3 h-3 text-gray-400" />
+                                                                    )}
+                                                                    <span>{chord.isPublic !== false ? "Công khai" : "Riêng tư"}</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-end gap-3 sm:gap-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                            <Heart className="w-4 h-4 cursor-pointer hover:text-red-500 hover:fill-red-500 transition-colors" />
+                                                            <MoreHorizontal className="w-4 h-4 cursor-pointer hover:text-gray-750" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {totalPages > 1 && (
+                                    <div className="mt-8 flex justify-center lg:justify-end">
+                                        <Pagination>
+                                            <PaginationContent className="flex flex-wrap gap-1">
+                                                <PaginationItem>
+                                                    <PaginationPrevious
+                                                        size="default"
+                                                        href="#"
+                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}
+                                                        className={currentPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                    />
+                                                </PaginationItem>
+                                                {[...Array(totalPages)].map((_, idx) => (
+                                                    <PaginationItem key={idx}>
+                                                        <PaginationLink
+                                                            size="default"
+                                                            href="#"
+                                                            isActive={currentPage === idx}
+                                                            onClick={(e) => { e.preventDefault(); handlePageChange(idx); }}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            {idx + 1}
+                                                        </PaginationLink>
+                                                    </PaginationItem>
+                                                ))}
+                                                <PaginationItem>
+                                                    <PaginationNext
+                                                        size="default"
+                                                        href="#"
+                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}
+                                                        className={currentPage === totalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                    />
+                                                </PaginationItem>
+                                            </PaginationContent>
+                                        </Pagination>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab 3: Playlists */}
+                    {activeTab === 'playlists' && (
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fadeIn">
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm mx-auto lg:mx-0 rounded-2xl">
+                                <img
+                                    src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=300&auto=format&fit=cover"
+                                    alt="Ảnh bìa playlist"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            <div className="flex-1 w-full text-left">
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2">
                                         <Library className="w-5 h-5 text-gray-600 dark:text-slate-400" />
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Bộ sưu tập</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Playlist</h3>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-0.5">{playlists.length} bộ sưu tập</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">{playlists.length} playlist</p>
                                 </div>
 
-                                <div className="w-full space-y-2">
+                                <div className="w-full space-y-2 bg-white dark:bg-[#11131c] border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
                                     {playlists.length === 0 ? (
-                                        <p className="text-sm text-gray-400 py-2">Chưa có bộ sưu tập nào.</p>
+                                        <p className="text-sm text-gray-400 py-6 text-center">Chưa có playlist nào.</p>
                                     ) : (
                                         playlists.map((playlist, index) => {
                                             const isSelected = selectedPlaylist?.id === playlist.id;
                                             return (
-                                                <div key={playlist.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40">
+                                                <div key={playlist.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40 last:border-0">
                                                     <div
                                                         onClick={() => setSelectedPlaylist(isSelected ? null : playlist)}
-                                                        className={`grid grid-cols-[30px_1fr_100px] items-center py-3 px-3 hover:bg-slate-50 dark:hover:bg-slate-900/40 rounded-lg group transition-colors text-sm cursor-pointer ${isSelected ? "bg-indigo-50/20 dark:bg-indigo-950/10 text-indigo-600 dark:text-indigo-400 font-medium" : "text-gray-800 dark:text-slate-200"}`}
+                                                        className={`grid grid-cols-[30px_1fr_100px] items-center py-3.5 px-3 hover:bg-slate-50 dark:hover:bg-slate-900/40 rounded-lg group transition-colors text-sm cursor-pointer ${isSelected ? "bg-indigo-50/20 dark:bg-indigo-950/10 text-indigo-600 dark:text-indigo-400 font-bold" : "text-gray-800 dark:text-slate-200"}`}
                                                     >
-                                                        <div className="flex items-center text-gray-400">
+                                                        <div className="flex items-center text-gray-450">
                                                             <ListMusic className={`w-4 h-4 ${isSelected ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
                                                         </div>
                                                         <div className="truncate">
@@ -1022,7 +1170,7 @@ function Profile({ userId }: ProfileProps) {
                                                                                 handlePlayChord(chord);
                                                                             }}
                                                                         />
-                                                                        <div className="font-medium text-gray-700 dark:text-slate-200 truncate pl-1 group-hover/track:text-indigo-600 dark:group-hover/track:text-indigo-400">
+                                                                        <div className="font-semibold text-gray-700 dark:text-slate-200 truncate pl-1 group-hover/track:text-indigo-600 dark:group-hover/track:text-indigo-400">
                                                                             {chord.title}
                                                                             <span className="block sm:hidden text-[10px] text-gray-400 mt-0.5 font-normal">
                                                                                 {chord.artistName || chord.author || "Unknown"} • {chord.views || 0} views
@@ -1051,46 +1199,49 @@ function Profile({ userId }: ProfileProps) {
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
-                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gradient-to-br from-pink-100 to-red-50 dark:from-pink-950/20 dark:to-red-950/10 overflow-hidden border border-red-100 dark:border-red-950/30 shadow-sm flex items-center justify-center rounded mx-auto sm:mx-0">
+                    {/* Tab 4: Liked Posts */}
+                    {activeTab === 'likes' && (
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fadeIn">
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-gradient-to-br from-pink-100 to-red-50 dark:from-pink-950/20 dark:to-red-950/10 overflow-hidden border border-red-100 dark:border-red-950/30 shadow-sm flex items-center justify-center rounded-2xl mx-auto lg:mx-0">
                                 <Heart className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 fill-red-200" />
                             </div>
 
-                            <div className="flex-1 w-full">
+                            <div className="flex-1 w-full text-left">
                                 <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <Flame className="w-5 h-5 text-red-500" />
+                                        <Flame className="w-5 h-5 text-red-505" />
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Bài viết đã thích</h3>
                                     </div>
-                                    <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-900 px-2 py-1 rounded-full border border-transparent dark:border-slate-800/80">
+                                    <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-900 px-2.5 py-1 rounded-full border border-transparent dark:border-slate-800/80 font-semibold">
                                         {likedPosts.length} bài viết
                                     </span>
                                 </div>
 
                                 {likedPostsLoading ? (
-                                    <div className="flex items-center gap-2 py-4 text-gray-400">
+                                    <div className="flex items-center gap-2 py-8 text-gray-400 justify-center">
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        <span className="text-sm">Đang tải...</span>
+                                        <span className="text-sm font-medium">Đang tải...</span>
                                     </div>
                                 ) : likedPosts.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                                        <Heart className="w-10 h-10 text-gray-200 mb-2" />
-                                        <p className="text-sm text-gray-400">Bạn chưa thích bài viết nào.</p>
+                                    <div className="flex flex-col items-center justify-center py-10 text-center bg-white dark:bg-[#11131c] border border-gray-100 dark:border-slate-800 rounded-2xl p-6">
+                                        <Heart className="w-10 h-10 text-gray-250 mb-2" />
+                                        <p className="text-sm text-gray-450">Bạn chưa thích bài viết nào.</p>
                                         <button
                                             onClick={() => navigate('/community')}
-                                            className="mt-3 text-xs text-indigo-500 hover:underline font-medium"
+                                            className="mt-3 text-xs text-indigo-500 hover:underline font-medium cursor-pointer"
                                         >
                                             Khám phá cộng đồng →
                                         </button>
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="space-y-3">
+                                        <div className="space-y-4">
                                             {paginatedLikedPosts.map((post) => (
                                                 <div
                                                     key={post.id}
-                                                    className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800/80 rounded-lg p-3 sm:p-4 shadow-xs hover:shadow-sm transition-all group"
+                                                    className="bg-white dark:bg-[#11131c] border border-gray-100 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all group"
                                                 >
                                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                                                         <div className="flex items-center gap-2.5">
@@ -1102,69 +1253,54 @@ function Profile({ userId }: ProfileProps) {
                                                                 )}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 leading-none">
+                                                                <p className="text-sm font-bold text-gray-800 dark:text-slate-200 leading-none">
                                                                     {post.fullName || post.username || 'Người dùng'}
                                                                 </p>
-                                                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                <p className="text-[10px] text-gray-400 mt-1">
                                                                     {formatTimeAgo(post.createdAt)}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                         <button
-                                                            onClick={() => navigate('/community')}
-                                                            className="text-[10px] text-indigo-500 hover:underline font-medium shrink-0 opacity-0 group-hover:opacity-100 transition-opacity self-end sm:self-auto"
+                                                            onClick={() => navigate(`/community`)}
+                                                            className="text-[10px] text-indigo-500 hover:underline font-semibold shrink-0 opacity-0 group-hover:opacity-100 transition-opacity self-end sm:self-auto cursor-pointer"
                                                         >
                                                             Xem bài viết
                                                         </button>
                                                     </div>
 
-                                                    <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed line-clamp-3 mb-3">
+                                                    <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line pl-2 border-l-2 border-indigo-500 dark:border-indigo-400">
                                                         {post.content}
                                                     </p>
 
                                                     {post.images && post.images.length > 0 && (
-                                                        <div className={`grid gap-1 mb-3 rounded-lg overflow-hidden ${post.images.length === 1 ? 'grid-cols-1' :
-                                                            post.images.length === 2 ? 'grid-cols-2' :
-                                                                'grid-cols-2'
-                                                            }`}>
-                                                            {post.images.slice(0, 4).map((img: string, idx: number) => (
-                                                                <div key={idx} className="aspect-video relative overflow-hidden bg-gray-100">
-                                                                    <img src={img} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
-                                                                    {idx === 3 && post.images.length > 4 && (
-                                                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                                                            <span className="text-white font-bold text-sm">+{post.images.length - 4}</span>
-                                                                        </div>
-                                                                    )}
+                                                        <div className="mt-3 grid grid-cols-2 gap-2 max-w-md">
+                                                            {post.images.slice(0, 4).map((imgUrl, i) => (
+                                                                <div key={i} className="aspect-video rounded-xl overflow-hidden bg-gray-50 border border-gray-100/50 dark:border-slate-850">
+                                                                    <img src={imgUrl} alt={`Attached ${i}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
 
-                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2 border-t border-gray-50 dark:border-slate-800/60 gap-2 sm:gap-0">
-                                                        <div className="flex items-center gap-4">
-                                                            <button
-                                                                onClick={() => handleUnlikePost(post.id)}
-                                                                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
-                                                                title="Bỏ thích bài viết này"
-                                                            >
-                                                                <Heart className="w-4 h-4 fill-red-500" />
-                                                                <span>{likedPostLikeCounts[post.id] ?? '—'}</span>
-                                                            </button>
-                                                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                                                    <div className="mt-4 pt-3 border-t border-gray-50 dark:border-slate-850 flex items-center justify-between">
+                                                        <div className="flex items-center gap-4 text-gray-400 text-xs font-semibold">
+                                                            <span className="flex items-center gap-1 hover:text-red-500 transition-colors cursor-pointer" onClick={() => handleUnlikePost(post.id)}>
+                                                                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                                                                <span>{likedPostLikeCounts[post.id] || 0}</span>
+                                                            </span>
+                                                            <span className="flex items-center gap-1">
                                                                 <MessageCircle className="w-4 h-4" />
-                                                                <span>{likedPostCommentCounts[post.id] ?? '—'}</span>
-                                                            </div>
+                                                                <span>{likedPostCommentCounts[post.id] || 0}</span>
+                                                            </span>
                                                         </div>
-                                                        <span className="text-[10px] text-gray-400">
-                                                            {formatTimeAgo(post.createdAt)}
-                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
 
                                         {likedTotalPages > 1 && (
-                                            <div className="mt-4 flex justify-center sm:justify-end">
+                                            <div className="mt-6 flex justify-center">
                                                 <Pagination>
                                                     <PaginationContent className="flex flex-wrap gap-1">
                                                         <PaginationItem>
@@ -1204,9 +1340,9 @@ function Profile({ userId }: ProfileProps) {
                                 )}
                             </div>
                         </div>
-                    </div>
-                </main>
-            </div>
+                    )}
+                </div>
+            </main>
 
             {currentPlayingSong && (
                 <>

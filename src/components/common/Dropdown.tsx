@@ -4,7 +4,7 @@ import { type IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 type DropdownItem = {
     name: string;
-    icon: IconDefinition;
+    icon?: IconDefinition;
     onClick: () => void;
 };
 
@@ -45,7 +45,7 @@ const Dropdown: React.FC<DropdownProps> = ({ items, trigger }) => {
                             }}
                             className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
                         >
-                            <FontAwesomeIcon icon={item.icon} className="text-gray-400 dark:text-slate-500 w-4" />
+                            {item.icon && <FontAwesomeIcon icon={item.icon} className="text-gray-400 dark:text-slate-500 w-4" />}
                             <span className="text-sm font-medium">{item.name}</span>
                         </div>
                     ))}

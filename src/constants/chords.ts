@@ -509,6 +509,275 @@ export const CSM7_CHORDS = [
         ],
     },
 ];
+
+export const CMAJ7_CHORDS = [
+    {
+        name: "Cmaj7",
+        startingFret: 1,
+        openStrings: [1, 2, 3],
+        mutedStrings: [6],
+        fingerings: [
+            [2, 4, 2],
+            [3, 5, 3],
+        ],
+    },
+];
+export const DMAJ7_CHORDS = [
+    {
+        name: "Dmaj7",
+        startingFret: 1,
+        openStrings: [4],
+        mutedStrings: [5, 6],
+        fingerings: [
+            [1, 3, 2],
+            [2, 2, 2],
+            [3, 1, 2],
+        ],
+    },
+];
+export const EMAJ7_CHORDS = [
+    {
+        name: "Emaj7",
+        startingFret: 1,
+        openStrings: [1, 2, 6],
+        mutedStrings: [],
+        fingerings: [
+            [1, 3, 1],
+            [2, 4, 1],
+            [3, 5, 2],
+        ],
+    },
+];
+export const FMAJ7_CHORDS = [
+    {
+        name: "Fmaj7",
+        startingFret: 1,
+        openStrings: [1],
+        mutedStrings: [5, 6],
+        fingerings: [
+            [1, 2, 1],
+            [2, 3, 2],
+            [3, 4, 3],
+        ],
+    },
+];
+export const GMAJ7_CHORDS = [
+    {
+        name: "Gmaj7",
+        startingFret: 1,
+        openStrings: [2, 3, 4],
+        mutedStrings: [],
+        fingerings: [
+            [1, 1, 2],
+            [2, 5, 2],
+            [3, 6, 3],
+        ],
+    },
+];
+export const AMAJ7_CHORDS = [
+    {
+        name: "Amaj7",
+        startingFret: 1,
+        openStrings: [1, 5],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 3, 1],
+            [2, 4, 2],
+            [3, 2, 2],
+        ],
+    },
+];
+export const BMAJ7_CHORDS = [
+    {
+        name: "Bmaj7",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 1, 2],
+            [1, 5, 2],
+            [3, 4, 4],
+            [2, 3, 3],
+            [4, 2, 4],
+        ],
+    },
+];
+export const CSMAJ7_CHORDS = [
+    {
+        name: "C#maj7",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 1, 4],
+            [1, 5, 4],
+            [3, 4, 6],
+            [2, 3, 5],
+            [4, 2, 6],
+        ],
+    },
+];
+export const DSMAJ7_CHORDS = [
+    {
+        name: "D#maj7",
+        startingFret: 5,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 1, 5],
+            [1, 5, 5],
+            [3, 4, 7],
+            [2, 3, 6],
+            [4, 2, 7],
+        ],
+    },
+];
+export const FSMAJ7_CHORDS = [
+    {
+        name: "F#maj7",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [],
+        fingerings: [
+            [1, 1, 2],
+            [1, 6, 2],
+            [2, 4, 3],
+            [3, 3, 3],
+            [1, 2, 2],
+        ],
+    },
+];
+export const GSMAJ7_CHORDS = [
+    {
+        name: "G#maj7",
+        startingFret: 3,
+        openStrings: [],
+        mutedStrings: [5],
+        fingerings: [
+            [2, 6, 4],
+            [3, 4, 5],
+            [4, 3, 5],
+            [1, 2, 4],
+            [1, 1, 3],
+        ],
+    },
+];
+export const ASMAJ7_CHORDS = [
+    {
+        name: "A#maj7",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 1],
+            [3, 4, 3],
+            [2, 3, 2],
+            [4, 2, 3],
+            [1, 1, 1],
+        ],
+    },
+];
+export const CS7_CHORDS = [
+    {
+        name: "C#7",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 4],
+            [1, 3, 4],
+            [3, 4, 6],
+            [4, 2, 6],
+        ],
+    },
+];
+export const DS7_CHORDS = [
+    {
+        name: "D#7",
+        startingFret: 5,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 5],
+            [1, 3, 5],
+            [3, 4, 7],
+            [4, 2, 7],
+        ],
+    },
+];
+export const AS7_CHORDS = [
+    {
+        name: "A#7",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 1],
+            [1, 3, 1],
+            [3, 4, 3],
+            [4, 2, 3],
+        ],
+    },
+];
+export const FSM7_CHORDS = [
+    {
+        name: "F#m7",
+        startingFret: 2,
+        openStrings: [],
+        mutedStrings: [5],
+        fingerings: [
+            [1, 6, 2],
+            [1, 4, 2],
+            [1, 3, 2],
+            [1, 2, 2],
+            [1, 1, 2],
+        ],
+    },
+];
+export const GSM7_CHORDS = [
+    {
+        name: "G#m7",
+        startingFret: 4,
+        openStrings: [],
+        mutedStrings: [5],
+        fingerings: [
+            [1, 6, 4],
+            [1, 4, 4],
+            [1, 3, 4],
+            [1, 2, 4],
+            [1, 1, 4],
+        ],
+    },
+];
+export const ASM7_CHORDS = [
+    {
+        name: "A#m7",
+        startingFret: 1,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 1],
+            [1, 3, 1],
+            [3, 4, 3],
+            [2, 2, 2],
+        ],
+    },
+];
+export const DSM7_CHORDS = [
+    {
+        name: "D#m7",
+        startingFret: 6,
+        openStrings: [],
+        mutedStrings: [6],
+        fingerings: [
+            [1, 5, 6],
+            [1, 3, 6],
+            [3, 4, 8],
+            [2, 2, 7],
+        ],
+    },
+];
+
 const CHORD_DATA_MAP = {
     C: C_CHORDS,
     ["C#"]: CS_CHORDS,
@@ -550,6 +819,29 @@ const CHORD_DATA_MAP = {
     Dm7: DM7_CHORDS,
     Em7: EM7_CHORDS,
     Am7: AM7_CHORDS,
+
+    Cmaj7: CMAJ7_CHORDS,
+    Dmaj7: DMAJ7_CHORDS,
+    Emaj7: EMAJ7_CHORDS,
+    Fmaj7: FMAJ7_CHORDS,
+    Gmaj7: GMAJ7_CHORDS,
+    Amaj7: AMAJ7_CHORDS,
+    Bmaj7: BMAJ7_CHORDS,
+
+    ["C#maj7"]: CSMAJ7_CHORDS,
+    ["D#maj7"]: DSMAJ7_CHORDS,
+    ["F#maj7"]: FSMAJ7_CHORDS,
+    ["G#maj7"]: GSMAJ7_CHORDS,
+    ["A#maj7"]: ASMAJ7_CHORDS,
+
+    ["C#7"]: CS7_CHORDS,
+    ["D#7"]: DS7_CHORDS,
+    ["A#7"]: AS7_CHORDS,
+
+    ["F#m7"]: FSM7_CHORDS,
+    ["G#m7"]: GSM7_CHORDS,
+    ["A#m7"]: ASM7_CHORDS,
+    ["D#m7"]: DSM7_CHORDS,
 };
 
 export const getChordData = (name) => {
@@ -710,6 +1002,25 @@ export const getAllChords = (): ChordInfo[] => {
             else if (key === 'C#m7') fullName = 'Đô thăng thứ 7 (C# Minor 7)';
             else if (key === 'F#7') fullName = 'Fa thăng 7 (F# Dominant 7)';
             else if (key === 'G#7') fullName = 'Sol thăng 7 (G# Dominant 7)';
+            else if (key === 'Cmaj7') fullName = 'Đô trưởng 7 (C Major 7)';
+            else if (key === 'Dmaj7') fullName = 'Rê trưởng 7 (D Major 7)';
+            else if (key === 'Emaj7') fullName = 'Mi trưởng 7 (E Major 7)';
+            else if (key === 'Fmaj7') fullName = 'Fa trưởng 7 (F Major 7)';
+            else if (key === 'Gmaj7') fullName = 'Sol trưởng 7 (G Major 7)';
+            else if (key === 'Amaj7') fullName = 'La trưởng 7 (A Major 7)';
+            else if (key === 'Bmaj7') fullName = 'Si trưởng 7 (B Major 7)';
+            else if (key === 'C#maj7') fullName = 'Đô thăng trưởng 7 (C# Major 7)';
+            else if (key === 'D#maj7') fullName = 'Rê thăng trưởng 7 (D# Major 7)';
+            else if (key === 'F#maj7') fullName = 'Fa thăng trưởng 7 (F# Major 7)';
+            else if (key === 'G#maj7') fullName = 'Sol thăng trưởng 7 (G# Major 7)';
+            else if (key === 'A#maj7') fullName = 'La thăng trưởng 7 (A# Major 7)';
+            else if (key === 'C#7') fullName = 'Đô thăng 7 (C# Dominant 7)';
+            else if (key === 'D#7') fullName = 'Rê thăng 7 (D# Dominant 7)';
+            else if (key === 'A#7') fullName = 'La thăng 7 (A# Dominant 7)';
+            else if (key === 'F#m7') fullName = 'Fa thăng thứ 7 (F# Minor 7)';
+            else if (key === 'G#m7') fullName = 'Sol thăng thứ 7 (G# Minor 7)';
+            else if (key === 'A#m7') fullName = 'La thăng thứ 7 (A# Minor 7)';
+            else if (key === 'D#m7') fullName = 'Rê thăng thứ 7 (D# Minor 7)';
             else {
                 fullName = `${key} - Hợp âm guitar`;
             }

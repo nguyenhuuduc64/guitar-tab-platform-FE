@@ -92,7 +92,7 @@ export function Comment({
     };
 
     return (
-        <div className={`w-full bg-white dark:bg-slate-900/60 rounded-xl shadow-sm hover:shadow-md border border-transparent dark:border-slate-800/40 transition-all duration-200 ${className}`}>
+        <div className={`w-full bg-white dark:bg-slate-900/60 transition-all duration-200 ${className}`}>
             <div className="p-4">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-2">
@@ -206,7 +206,7 @@ export function Comment({
                             </button>
                         )}
                         {/* Action buttons */}
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-slate-800/80">
+                        <div className="flex items-center justify-between pt-2">
                             <div className="flex items-center gap-1">
                                 {/* Like button */}
                                 <button
@@ -240,15 +240,7 @@ export function Comment({
                                 </button>
                             </div>
 
-                            {/* Translate button */}
-                            {onTranslate && (
-                                <button
-                                    onClick={onTranslate}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300 hover:bg-zinc-50 dark:hover:bg-slate-800/40 transition-all duration-200"
-                                >
-                                    Dịch
-                                </button>
-                            )}
+
                         </div>
                     </div>
                 )}

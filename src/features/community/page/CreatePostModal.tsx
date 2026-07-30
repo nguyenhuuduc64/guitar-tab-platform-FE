@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { X, Loader2, Music, Send, User } from "lucide-react";
 import instance from "../../../config/axios";
 import { getUserInfo } from "../../../utils/auth";
@@ -109,7 +110,7 @@ export function CreatePostModal({ isOpen, onClose, userId, onSuccess }: CreatePo
 
     const handleSubmit = async () => {
         if (!content.trim()) {
-            alert("Vui lòng nhập nội dung bài đăng");
+            toast.warn("Vui lòng nhập nội dung bài đăng");
             return;
         }
 
@@ -131,7 +132,7 @@ export function CreatePostModal({ isOpen, onClose, userId, onSuccess }: CreatePo
             }
         } catch (error: any) {
             console.error("Error creating post:", error);
-            alert(error.response?.data?.message || "Có lỗi xảy ra khi tạo bài đăng");
+            toast.error(error.response?.data?.message || "Có lỗi xảy ra khi tạo bài đăng");
         } finally {
             setIsSubmitting(false);
         }

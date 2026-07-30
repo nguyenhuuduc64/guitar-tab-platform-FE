@@ -1,7 +1,7 @@
 import { type Chord } from "./chord";
 import { type ArtistStat } from "./artist";
 
-export interface Collection {
+export interface Playlist {
     id: string;
     name: string;
     slug: string;
@@ -15,15 +15,13 @@ export interface Collection {
     artistCount?: number;
 }
 
-export type Playlist = Collection;
-
-export interface CollectionStats {
-    totalCollections: number;
+export interface PlaylistStats {
+    totalPlaylists: number;
     totalChords: number;
     totalViews: number;
     totalArtists: number;
-    topCollections: Collection[];
-    recentCollections: Collection[];
+    topPlaylists: Playlist[];
+    recentPlaylists: Playlist[];
     artistStats: ArtistStat[];
-    collectionsByCategory: Record<string, number>;
+    playlistsByCategory: Record<string, number>;
 }

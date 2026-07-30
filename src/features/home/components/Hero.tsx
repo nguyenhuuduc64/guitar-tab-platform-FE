@@ -13,7 +13,7 @@ export const Hero = () => {
 
     return (
         <section
-            className="rounded-xl relative w-full overflow-hidden bg-gray-100 dark:bg-slate-900 min-h-[360px] md:min-h-[40vh] flex items-center p-8 md:p-12 h-full"
+            className="rounded-xl relative w-full overflow-hidden bg-gray-100 dark:bg-slate-900 min-h-[50vh] md:min-h-[20vh] flex items-center p-5 md:p-8 h-[50vh] md:h-full"
             style={{
                 backgroundImage: `url(${heroImage})`,
                 backgroundSize: "cover",
@@ -28,11 +28,11 @@ export const Hero = () => {
                     KHÁM PHÁ
                 </span>
 
-                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2 leading-tight">
-                    Bài hát mới nổi bật <br /> tuần này
+                <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1 leading-tight">
+                    Bài hát mới nổi bật tuần này
                 </h1>
 
-                <p className="text-xs text-white/80 mb-6 font-medium">
+                <p className="text-[11px] text-white/80 mb-3.5 font-medium">
                     Khám phá bộ công cụ trí tuệ nhân tạo tạo lời và phối vòng hòa âm Guitar.
                 </p>
 

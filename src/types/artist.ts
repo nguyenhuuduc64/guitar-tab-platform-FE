@@ -23,7 +23,7 @@ export interface ArtistStat {
     artistId: string;
     artistName: string;
     imageUrl?: string;
-    collectionCount: number;
+    playlistCount: number;
     totalViews: number;
     chordCount: number;
     topChord?: Chord;

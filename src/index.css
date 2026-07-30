@@ -118,7 +118,7 @@ body[data-scroll-locked] {
     --card-inner: #fafafa;
     /* inner nhẹ hơn nền */
     --sidebar-user-width: 256px;
-    --subnav-height: 34px;
+    --subnav-height: 0px;
     --ranking-right-width: 400px;
     --border-subtle: #e5e5e5;
     --primary-color: #097fc3;
@@ -217,7 +217,11 @@ body[data-scroll-locked] {
     }
 
     html {
-        @apply font-sans;
+        @apply font-sans bg-background text-foreground;
+    }
+
+    html.dark {
+        background-color: #0a0a0a !important;
     }
 
     body, button, input, textarea, select {
@@ -449,4 +453,42 @@ body[data-scroll-locked] {
 }
 .animate-float-note-4 {
     animation: float-note 32s infinite linear;
+}
+
+/* ===== AI Loading Animation Styles ===== */
+@keyframes ai-pulse-glow {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 25px rgba(139, 92, 246, 0.4), 0 0 50px rgba(236, 72, 153, 0.2);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 45px rgba(139, 92, 246, 0.7), 0 0 80px rgba(236, 72, 153, 0.5);
+    }
+}
+
+@keyframes spin-slow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes scanner-line {
+    0% { left: -30%; }
+    100% { left: 100%; }
+}
+
+.animate-ai-pulse {
+    animation: ai-pulse-glow 3s infinite ease-in-out;
+}
+
+.animate-spin-slow {
+    animation: spin-slow 12s infinite linear;
+}
+
+.animate-spin-reverse-slow {
+    animation: spin-slow 16s infinite linear reverse;
+}
+
+.animate-scanner {
+    animation: scanner-line 2.2s infinite linear;
 }

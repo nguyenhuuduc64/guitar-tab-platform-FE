@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Star, Plus, Music2, X, Eye, User as UserIcon } from "lucide-react";
+import { toast } from "react-toastify";
+import { Star, Plus, Music2, X, Eye, User as UserIcon, Play, Pause, RotateCcw } from "lucide-react";
 import { getYoutubeEmbedUrl } from "../../../helper/youtube";
 import { getChordById } from "../../../services/chordService";
 import { getArtistById } from "../../../services/artistService";
@@ -12,6 +13,152 @@ import type { Chord } from "../../../types/chord";
 import type { Artist } from "../../../types/artist";
 import type { User } from "../../../types/user";
 import { useChordContext } from "../../../context/ChordContext";
+
+const getThumbnailUrl = (songId: string | number) => {
+    if (!songId) return "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=500";
+    const strId = String(songId);
+    let hash = 0;
+    for (let i = 0; i < strId.length; i++) {
+        hash = strId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % 85) + 1; // 1 to 85
+    return new URL(`../../../assets/thumbnail/anh-thumbnail-${index}.jpg`, import.meta.url).href;
+};
+
+const AudioPlayerCard = ({ 
+    url, 
+    title, 
+    artistName, 
+    chordId 
+}: { 
+    url: string; 
+    title: string; 
+    artistName?: string; 
+    chordId: string;
+}) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(err => console.error(err));
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseFloat(e.target.value);
+        if (audioRef.current) {
+            audioRef.current.currentTime = val;
+            setCurrentTime(val);
+        }
+    };
+
+    const formatTime = (time: number) => {
+        if (isNaN(time)) return "0:00";
+        const mins = Math.floor(time / 60);
+        const secs = Math.floor(time % 60);
+        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    };
+
+    const coverUrl = getThumbnailUrl(chordId);
+
+    return (
+        <div 
+            className="w-full h-full p-4 sm:p-6 flex flex-col justify-between text-white rounded-none shadow-lg relative overflow-hidden group border border-white/10 bg-cover bg-center bg-no-repeat"
+            style={{ 
+                backgroundImage: `url(${coverUrl})`
+            }}
+        >
+            <audio
+                ref={audioRef}
+                src={url}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+            />
+
+            {/* Title & Info */}
+            <div className="flex items-center gap-3 sm:gap-4 z-10">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 dark:bg-slate-800/60 rounded-none flex items-center justify-center border border-white/10 shrink-0 shadow-lg overflow-hidden">
+                    <img 
+                        src={coverUrl} 
+                        alt="Cover" 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                </div>
+                <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold tracking-tight truncate pr-2">
+                        {title}
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-slate-300 truncate mt-0.5">
+                        {artistName || "Nghệ sĩ ẩn danh"}
+                    </p>
+                </div>
+            </div>
+
+            {/* Progress Bar & Time */}
+            <div className="space-y-1.5 sm:space-y-2 z-10">
+                <input
+                    type="range"
+                    min="0"
+                    max={duration || 100}
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="w-full accent-indigo-500 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-0"
+                />
+                <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-400">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-center gap-6 z-10">
+                <button
+                    onClick={() => {
+                        if (audioRef.current) {
+                            audioRef.current.currentTime = 0;
+                        }
+                    }}
+                    className="p-2 text-slate-400 hover:text-white transition duration-200"
+                    title="Phát lại từ đầu"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={togglePlay}
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-white text-slate-900 rounded-full flex items-center justify-center hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md"
+                >
+                    {isPlaying ? (
+                        <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 fill-current" />
+                    ) : (
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 fill-current translate-x-0.5" />
+                    )}
+                </button>
+                <div className="w-8" />
+            </div>
+        </div>
+    );
+};
 
 const ChordPage = () => {
     const { id } = useParams();
@@ -181,14 +328,26 @@ const ChordPage = () => {
                 scrollIntervalRef.current = setInterval(() => {
                     if (!scrollContainerRef.current) return;
                     const container = scrollContainerRef.current;
-                    container.scrollBy({ top: 1, behavior: "smooth" });
+                    const isContainerScrollable = container.scrollHeight > container.clientHeight;
 
-                    const isBottom =
-                        container.scrollTop + container.clientHeight >=
-                        container.scrollHeight - 5;
-                    if (isBottom) {
-                        clearInterval(scrollIntervalRef.current);
-                        setAutoScroll(false);
+                    if (isContainerScrollable) {
+                        container.scrollBy({ top: 1, behavior: "smooth" });
+                        const isBottom =
+                            container.scrollTop + container.clientHeight >=
+                            container.scrollHeight - 5;
+                        if (isBottom) {
+                            clearInterval(scrollIntervalRef.current);
+                            setAutoScroll(false);
+                        }
+                    } else {
+                        window.scrollBy({ top: 1, behavior: "smooth" });
+                        const isWindowBottom =
+                            window.innerHeight + window.scrollY >=
+                            document.documentElement.scrollHeight - 5;
+                        if (isWindowBottom) {
+                            clearInterval(scrollIntervalRef.current);
+                            setAutoScroll(false);
+                        }
                     }
                 }, 25);
             }
@@ -221,7 +380,7 @@ const ChordPage = () => {
     const handleAddToPlaylist = async (playlistId: string) => {
         try {
             await instance.post(`/playlists/${playlistId}/chords/${id}`);
-            alert("Đã thêm vào playlist");
+            toast.success("Đã thêm vào playlist");
             setOpenPlaylistModal(false);
         } catch (err) {
             console.error(err);
@@ -284,12 +443,33 @@ const ChordPage = () => {
     const currentChordData = hoveredChord ? getChordData(hoveredChord) : null;
 
     return (
-        <div className="h-[calc(100vh-64px)] p-2 sm:p-3 md:p-4 max-w-7xl mx-auto">
+        <div className="h-auto lg:h-[calc(100vh-64px)] p-2 sm:p-3 md:p-4 max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 h-full">
                 <div
                     ref={scrollContainerRef}
-                    className="w-full lg:flex-[2] bg-white dark:bg-slate-900 rounded-sm overflow-y-auto border border-gray-100 dark:border-slate-800/80 h-[50vh] lg:h-[calc(100vh-64px)]"
+                    className="w-full lg:flex-[2] bg-white dark:bg-slate-900 rounded-sm lg:overflow-y-auto border border-gray-100 dark:border-slate-800/80 h-auto lg:h-[calc(100vh-64px)]"
                 >
+                    {/* Mobile-only Media Player (Audio first, YouTube second) */}
+                    {chord.audio?.url ? (
+                        <div className="w-full aspect-video shrink-0 lg:hidden sticky top-[64px] z-20">
+                            <AudioPlayerCard
+                                url={chord.audio.url}
+                                title={chord.title}
+                                artistName={artist?.name || chord.artistName}
+                                chordId={chord.id}
+                            />
+                        </div>
+                    ) : chord.youtubeUrl ? (
+                        <div className="w-full aspect-video bg-white dark:bg-slate-900 shrink-0 rounded-0 lg:hidden sticky top-[64px] z-20">
+                            <iframe
+                                className="w-full h-full"
+                                src={getYoutubeEmbedUrl(chord.youtubeUrl)}
+                                title="YouTube video"
+                                allowFullScreen
+                            />
+                        </div>
+                    ) : null}
+
                     <div className="p-3 sm:p-4 md:p-6">
                         <div className="flex flex-col gap-3 mb-4 sm:mb-6">
                             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -359,15 +539,22 @@ const ChordPage = () => {
                 </div>
 
                 <div className="w-full lg:flex-[1] bg-white dark:bg-slate-900 flex flex-col gap-3 sm:gap-4 h-auto lg:h-[calc(100vh-64px)] overflow-y-auto border border-transparent lg:border-gray-100 lg:dark:border-slate-800/80">
-                    <div className="w-full aspect-video bg-white dark:bg-slate-900 shrink-0 rounded-0 sticky top-0 z-10">
-                        {chord.youtubeUrl && (
+                    <div className="w-full aspect-video bg-white dark:bg-slate-900 shrink-0 rounded-0 sticky top-0 z-10 hidden lg:block p-2 lg:p-0">
+                        {chord.audio?.url ? (
+                            <AudioPlayerCard
+                                url={chord.audio.url}
+                                title={chord.title}
+                                artistName={artist?.name || chord.artistName}
+                                chordId={chord.id}
+                            />
+                        ) : chord.youtubeUrl ? (
                             <iframe
                                 className="w-full h-full"
                                 src={getYoutubeEmbedUrl(chord.youtubeUrl)}
                                 title="YouTube video"
                                 allowFullScreen
                             />
-                        )}
+                        ) : null}
                     </div>
 
                     <div className="flex-1 border-t border-gray-100 dark:border-slate-800 p-3 sm:p-4 overflow-y-auto">

@@ -71,7 +71,14 @@ export const RankingRight = () => {
 
     return (
         <div className="rounded-xl flex flex-col bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 overflow-hidden h-full w-full">
-            <div className="flex flex-col divide-y divide-gray-50 dark:divide-slate-800/50 bg-white dark:bg-slate-900 flex-1">
+            <div className="flex flex-col divide-y divide-gray-50 dark:divide-slate-800/50 bg-white dark:bg-slate-900 flex-1 overflow-y-auto min-h-0
+                [&::-webkit-scrollbar]:w-1.5
+                [&::-webkit-scrollbar-track]:bg-transparent
+                [&::-webkit-scrollbar-thumb]:bg-neutral-300
+                [&::-webkit-scrollbar-thumb]:rounded-full
+                hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400
+                dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700
+                dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600">
                 {loading ? (
                     <div className="py-8 text-center text-xs text-gray-400">
                         Đang tải...
@@ -81,7 +88,7 @@ export const RankingRight = () => {
                         Chưa có dữ liệu
                     </div>
                 ) : (
-                    songs.slice(0, 8).map((song, index) => {
+                    songs.slice(0, 10).map((song, index) => {
                         const artistInfo = song.artistId ? artistsMap[song.artistId] : null;
                         const displayArtistName = artistInfo?.name || song.artistName || "Chưa cập nhật";
                         const displayAvatar = artistInfo?.imageUrl || DEFAULT_AVATAR;

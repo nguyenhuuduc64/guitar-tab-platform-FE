@@ -18,9 +18,11 @@ import {
     Star,
     Hash,
     BookOpen,
-    Play
+    Play,
+    FileSpreadsheet
 } from "lucide-react";
 import { Doughnut, Bar } from "react-chartjs-2";
+import { exportDashboardToExcel } from "../utils/excelExport";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -330,10 +332,12 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-4 border-[#A155FF] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-400 font-medium">Đang tải dữ liệu...</p>
+            <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200 text-slate-850 dark:text-slate-100">
+                <div className="flex items-center justify-center min-h-[60vh] w-full">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-4 border-[#A155FF] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm text-gray-400 font-medium">Đang tải dữ liệu...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -341,35 +345,55 @@ export default function Dashboard() {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200 text-slate-850 dark:text-slate-100">
+                <div className="flex items-center justify-center min-h-[60vh] w-full">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center">
+                            <AlertCircle className="w-8 h-8 text-red-500" />
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-slate-300 font-medium">{error}</p>
+                        <Button
+                            onClick={() => window.location.reload()}
+                            className="bg-[#A155FF] hover:bg-[#8B3FE0] text-white"
+                        >
+                            Thử lại
+                        </Button>
                     </div>
-                    <p className="text-sm text-gray-600 font-medium">{error}</p>
-                    <Button
-                        onClick={() => window.location.reload()}
-                        className="bg-[#A155FF] hover:bg-[#8B3FE0] text-white"
-                    >
-                        Thử lại
-                    </Button>
                 </div>
             </div>
         );
     }
     return (
-        <div className="bg-[#F8F9FC] dark:bg-slate-950 min-h-screen font-sans text-[#333333] dark:text-slate-200 transition-colors duration-200">
-            <div className="p-8 space-y-8 max-w-[1440px] mx-auto w-full">
+        <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200 text-slate-850 dark:text-slate-100">
+            <div className="space-y-8 w-full">
+                {/* Header Title & Export Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-150 dark:border-slate-800 pb-5">
+                    <div className="text-left">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                            Bảng điều khiển Admin
+                        </h1>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                            Tổng hợp và báo cáo số liệu hoạt động của hệ thống
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => exportDashboardToExcel(stats, artistsMap)}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors border-none cursor-pointer shadow-xs shrink-0 self-start sm:self-auto"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span>Xuất Excel</span>
+                    </button>
+                </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white dark:bg-slate-900 p-5 shadow-sm border border-gray-50 dark:border-slate-800 hover:shadow-md transition-all rounded-xl">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="text-2xl font-bold text-[#A155FF]">{formatNumber(stats.totalChords)}</div>
+                                <div className="text-2xl font-bold text-slate-800 dark:text-white">{formatNumber(stats.totalChords)}</div>
                                 <div className="text-xs text-gray-400 dark:text-slate-400 font-medium mt-1">Tổng hợp âm</div>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-950/20 flex items-center justify-center">
-                                <Music className="w-6 h-6 text-[#A155FF]" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Music className="w-6 h-6 text-slate-500 dark:text-slate-400" />
                             </div>
                         </div>
                     </div>
@@ -377,11 +401,11 @@ export default function Dashboard() {
                     <div className="bg-white dark:bg-slate-900 p-5 shadow-sm border border-gray-50 dark:border-slate-800 hover:shadow-md transition-all rounded-xl">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="text-2xl font-bold text-[#FF8F2D]">{stats.totalArtists}</div>
+                                <div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.totalArtists}</div>
                                 <div className="text-xs text-gray-400 dark:text-slate-400 font-medium mt-1">Tổng nghệ sĩ</div>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
-                                <Users className="w-6 h-6 text-[#FF8F2D]" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Users className="w-6 h-6 text-slate-500 dark:text-slate-400" />
                             </div>
                         </div>
                     </div>
@@ -389,11 +413,11 @@ export default function Dashboard() {
                     <div className="bg-white dark:bg-slate-900 p-5 shadow-sm border border-gray-50 dark:border-slate-800 hover:shadow-md transition-all rounded-xl">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="text-2xl font-bold text-[#2D6CFF]">{formatNumber(stats.totalViews)}</div>
+                                <div className="text-2xl font-bold text-slate-800 dark:text-white">{formatNumber(stats.totalViews)}</div>
                                 <div className="text-xs text-gray-400 dark:text-slate-400 font-medium mt-1">Tổng lượt xem</div>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center">
-                                <Eye className="w-6 h-6 text-[#2D6CFF]" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Eye className="w-6 h-6 text-slate-500 dark:text-slate-400" />
                             </div>
                         </div>
                     </div>
@@ -401,11 +425,11 @@ export default function Dashboard() {
                     <div className="bg-white dark:bg-slate-900 p-5 shadow-sm border border-gray-50 dark:border-slate-800 hover:shadow-md transition-all rounded-xl">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="text-2xl font-bold text-[#00C49F]">{stats.categoryStats.length}</div>
+                                <div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.categoryStats.length}</div>
                                 <div className="text-xs text-gray-400 dark:text-slate-400 font-medium mt-1">Thể loại</div>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/20 flex items-center justify-center">
-                                <Layers className="w-6 h-6 text-[#00C49F]" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Layers className="w-6 h-6 text-slate-500 dark:text-slate-400" />
                             </div>
                         </div>
                     </div>
@@ -458,7 +482,7 @@ export default function Dashboard() {
                                 <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">Hợp âm thịnh hành</h3>
                                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Top bài hát được xem nhiều nhất</p>
                             </div>
-                            <TrendingUp className="w-4 h-4 text-[#FF2D6C]" />
+                            <TrendingUp className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         </div>
                         <div className="space-y-3">
                             {stats.topChords.slice(0, 5).map((chord, index) => {
@@ -498,7 +522,7 @@ export default function Dashboard() {
                                 <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">Hợp âm mới</h3>
                                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Cập nhật gần đây</p>
                             </div>
-                            <Zap className="w-4 h-4 text-yellow-500" />
+                            <Zap className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         </div>
                         <div className="space-y-3">
                             {stats.recentChords.slice(0, 5).map((chord) => {
@@ -529,14 +553,14 @@ export default function Dashboard() {
                 </div>
 
                 {stats.trendingChords.length > 0 && (
-                    <div className="bg-white dark:bg-[#121212] p-8 rounded-2xl shadow-sm dark:shadow-xl border border-slate-100 dark:border-zinc-850/50 transition-colors duration-200">
+                    <div className="bg-white dark:bg-[#121212] p-8 rounded-none shadow-sm dark:shadow-xl border border-slate-100 dark:border-zinc-850/50 transition-colors duration-200">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">Những bài hát thịnh hành</h3>
                                 <p className="text-xs text-gray-400 dark:text-zinc-400 mt-1">Hợp âm và bài hát được nghe nhiều nhất tuần này</p>
                             </div>
-                            <div className="w-9 h-9 rounded-full bg-[#FF2D6C]/10 flex items-center justify-center">
-                                <Zap className="w-4 h-4 text-[#FF2D6C]" />
+                            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Zap className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -556,13 +580,13 @@ export default function Dashboard() {
                                                     <Disc3 className="w-10 h-10 text-zinc-400 dark:text-zinc-650 animate-pulse" />
                                                 </div>
                                             )}
-                                            {/* Spotify style hover play button */}
-                                            <div className="absolute bottom-3 right-3 w-10 h-10 bg-[#1db954] hover:bg-[#1ed760] text-black rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 z-10">
+                                            {/* Hover play button - color becomes primary when hovered */}
+                                            <div className="absolute bottom-3 right-3 w-10 h-10 bg-white hover:bg-[var(--primary-color)] text-zinc-900 hover:text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 z-10 border border-zinc-200/50 hover:border-transparent">
                                                 <Play size={18} fill="currentColor" className="ml-0.5" />
                                             </div>
                                         </div>
                                         <div className="mt-4 flex-1 flex flex-col min-w-0">
-                                            <p className="font-bold text-sm text-gray-800 dark:text-white truncate transition-colors duration-200 group-hover:text-[#A155FF] dark:group-hover:text-[#1db954]">{chord.title}</p>
+                                            <p className="font-bold text-sm text-gray-800 dark:text-white truncate transition-colors duration-200 group-hover:text-[var(--primary-color)]">{chord.title}</p>
                                             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 truncate">{artistInfo?.name || chord.artistName || 'Nghệ sĩ'}</p>
                                         </div>
                                     </div>

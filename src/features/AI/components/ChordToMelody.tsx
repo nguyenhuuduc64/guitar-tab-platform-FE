@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
     Play, Pause, Type, Sliders, SlidersHorizontal,
@@ -7,8 +8,9 @@ import {
 } from "lucide-react";
 import instance from "../../../config/axios";
 import { getUserInfo } from "../../../utils/auth";
+import { DotLoader } from "react-spinners";
 
-const DEBUG = false;
+const DEBUG = true;
 const DEBUG_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
 interface Track {
@@ -24,6 +26,7 @@ interface Track {
     audioUrl?: string;
     chordId?: string;
     contentPlusChord?: string;
+    isPublic?: boolean;
 }
 
 interface AudioResponse {
@@ -38,7 +41,151 @@ interface ChordResponse {
     artistName?: string;
     content?: string;
     contentPlusChord?: string;
+    isPublic?: boolean;
 }
+
+const ShootingStarsBackground: React.FC = () => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        let animationFrameId: number;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+
+        const handleResize = () => {
+            if (!canvas) return;
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener("resize", handleResize);
+
+        // Twinkling stars
+        const stars: { x: number; y: number; size: number; alpha: number; speed: number }[] = [];
+        for (let i = 0; i < 60; i++) {
+            stars.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 1.5 + 0.5,
+                alpha: Math.random(),
+                speed: Math.random() * 0.02 + 0.005,
+            });
+        }
+
+        // Shooting stars
+        const shootingStars: {
+            x: number;
+            y: number;
+            len: number;
+            speed: number;
+            angle: number;
+            alpha: number;
+            active: boolean;
+        }[] = [];
+
+        const createShootingStar = () => {
+            return {
+                x: Math.random() * width * 1.2 - width * 0.2,
+                y: Math.random() * (height * 0.4),
+                len: Math.random() * 80 + 40,
+                speed: Math.random() * 8 + 4,
+                angle: Math.PI / 6 + Math.random() * (Math.PI / 12),
+                alpha: 1,
+                active: true,
+            };
+        };
+
+        for (let i = 0; i < 3; i++) {
+            shootingStars.push(createShootingStar());
+        }
+
+        const render = () => {
+            const isDark = document.documentElement.classList.contains("dark");
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw twinkling stars
+            stars.forEach((star) => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) {
+                    star.speed = -star.speed;
+                }
+                ctx.fillStyle = isDark
+                    ? `rgba(255, 255, 255, ${Math.abs(star.alpha)})`
+                    : `rgba(99, 102, 241, ${Math.abs(star.alpha) * 0.45})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw shooting stars
+            shootingStars.forEach((star, idx) => {
+                if (!star.active) {
+                    if (Math.random() < 0.008) {
+                        shootingStars[idx] = createShootingStar();
+                    }
+                    return;
+                }
+
+                const dx = Math.cos(star.angle) * star.speed;
+                const dy = Math.sin(star.angle) * star.speed;
+                star.x += dx;
+                star.y += dy;
+                star.alpha -= 0.015;
+
+                if (star.alpha <= 0 || star.x > width || star.y > height) {
+                    star.active = false;
+                    return;
+                }
+
+                const grad = ctx.createLinearGradient(
+                    star.x,
+                    star.y,
+                    star.x - Math.cos(star.angle) * star.len,
+                    star.y - Math.sin(star.angle) * star.len
+                );
+
+                const starColor = isDark ? "255, 255, 255" : "99, 102, 241";
+                grad.addColorStop(0, `rgba(${starColor}, ${star.alpha})`);
+                grad.addColorStop(0.1, `rgba(${starColor}, ${star.alpha * 0.8})`);
+                grad.addColorStop(1, `rgba(${starColor}, 0)`);
+
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = isDark ? 2 : 1.5;
+                ctx.lineCap = "round";
+                ctx.beginPath();
+                ctx.moveTo(star.x, star.y);
+                ctx.lineTo(star.x - Math.cos(star.angle) * star.len, star.y - Math.sin(star.angle) * star.len);
+                ctx.stroke();
+            });
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
+    return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />;
+};
+
+const getThumbnailUrl = (songId: string | number) => {
+    if (!songId) return "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80";
+    const strId = String(songId);
+    let hash = 0;
+    for (let i = 0; i < strId.length; i++) {
+        hash = strId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % 85) + 1; // 1 to 85
+    return new URL(`../../../assets/thumbnail/anh-thumbnail-${index}.jpg`, import.meta.url).href;
+};
 
 const INITIAL_TRACKS: Track[] = [
     {
@@ -48,7 +195,7 @@ const INITIAL_TRACKS: Track[] = [
         duration: "3:58",
         description: "Một bản ballad nhạc pop sâu lắng với âm hưởng ban đêm và điệp khúc hoành tráng.",
         tags: ["pop", "ballad", "cinematic"],
-        coverUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80",
+        coverUrl: getThumbnailUrl("init-1"),
         lyrics: "[Intro]\n(Melancholic Piano)\n\n[Verse 1]\nFound a box of memories today\nFaded photographs of yesterday\nWalking down the streets we used to know\nWhere the neon lights no longer glow...",
         chordLyrics: "[Intro]\n(Melancholic Piano)\n\n[Verse 1]\n[C]Found a box of memories today\n[G]Faded photographs of yesterday\n[Am]Walking down the streets we used to know\n[F]Where the neon lights no longer glow..."
     }
@@ -62,6 +209,8 @@ export default function SunoMeloflowLightUI() {
     const [lyrics, setLyrics] = useState<string>("");
     const [chordLyrics, setChordLyrics] = useState<string>("");
     const [styles, setStyles] = useState<string>("pop, acoustic guitar, happy");
+    const [generatorTab, setGeneratorTab] = useState<"request" | "lyrics">("request");
+    const [promptText, setPromptText] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [statusMessage, setStatusMessage] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
@@ -69,6 +218,11 @@ export default function SunoMeloflowLightUI() {
     const [mode, setMode] = useState<"text2melody" | "melody2chord">("melody2chord");
     const [tracks, setTracks] = useState<Track[]>(INITIAL_TRACKS);
     const [activeTrack, setActiveTrack] = useState<Track | null>(null);
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+    const [editTitle, setEditTitle] = useState<string>("");
+    const [editIsPublic, setEditIsPublic] = useState<boolean>(true);
+    const [isSavingSettings, setIsSavingSettings] = useState<boolean>(false);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [currentTime, setCurrentTime] = useState<number>(0);
     const [durationSec, setDurationSec] = useState<number>(180);
@@ -133,9 +287,24 @@ export default function SunoMeloflowLightUI() {
         if (isPlaying && activeTrack) {
             timerRef.current = setInterval(() => {
                 if (audioHtmlRef.current) {
-                    setCurrentTime(Math.floor(audioHtmlRef.current.currentTime));
+                    const time = Math.floor(audioHtmlRef.current.currentTime);
+                    if (time >= 120) {
+                        audioHtmlRef.current.pause();
+                        setIsPlaying(false);
+                        audioHtmlRef.current.currentTime = 0;
+                        setCurrentTime(0);
+                    } else {
+                        setCurrentTime(time);
+                    }
                 } else {
-                    setCurrentTime((prev) => (prev >= durationSec ? 0 : prev + 1));
+                    setCurrentTime((prev) => {
+                        const next = prev + 1;
+                        if (next >= 120) {
+                            setIsPlaying(false);
+                            return 0;
+                        }
+                        return next;
+                    });
                 }
             }, 1000);
         } else {
@@ -171,7 +340,8 @@ export default function SunoMeloflowLightUI() {
                             chordTitle: chord.title || "Không có tiêu đề",
                             artistName: chord.artistName || "",
                             chordContent: chord.content || "",
-                            contentPlusChord: chord.contentPlusChord || ""
+                            contentPlusChord: chord.contentPlusChord || "",
+                            isPublic: chord.isPublic !== undefined ? chord.isPublic : true
                         };
                     } catch (error) {
                         console.error(`Lỗi khi lấy chord cho audio ${audio.id}:`, error);
@@ -180,7 +350,8 @@ export default function SunoMeloflowLightUI() {
                             chordTitle: "Không tìm thấy bài hát",
                             artistName: "",
                             chordContent: "",
-                            contentPlusChord: ""
+                            contentPlusChord: "",
+                            isPublic: true
                         };
                     }
                 })
@@ -193,15 +364,16 @@ export default function SunoMeloflowLightUI() {
                     id: audio.id,
                     title: audio.chordTitle || "Bài hát không tên",
                     subTitle: audio.artistName || "Không có nghệ sĩ",
-                    duration: "0:00",
+                    duration: "2:00",
                     description: audio.chordTitle || "",
                     tags: [],
-                    coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
+                    coverUrl: getThumbnailUrl(audio.id),
                     audioUrl: audio.url,
                     chordId: audio.chordId,
                     lyrics: cleanLyrics || undefined,
                     chordLyrics: chordContent || undefined,
-                    contentPlusChord: audio.contentPlusChord || undefined
+                    contentPlusChord: audio.contentPlusChord || undefined,
+                    isPublic: audio.isPublic
                 };
             });
 
@@ -214,21 +386,23 @@ export default function SunoMeloflowLightUI() {
         }
     };
 
-    const appendAndPlayTrack = async (id: string, audioUrl: string) => {
-        const cleanLyrics = (chordLyrics.trim() || lyrics.trim() || "").replace(/\[.*?\]/g, "");
+    const appendAndPlayTrack = async (id: string, audioUrl: string, generatedLyrics?: string) => {
+        const finalLyrics = generatedLyrics || lyrics.trim() || "";
+        const cleanLyrics = (chordLyrics.trim() || finalLyrics || "").replace(/\[.*?\]/g, "");
 
         if (DEBUG) {
             const generatedTrack: Track = {
                 id: id,
-                title: chords.trim().substring(0, 24) || "Mock Test Composition",
-                subTitle: "DEBUG Mock Mode",
+                title: "Mock Test Composition",
+                subTitle: "AI",
                 duration: "2:00",
                 description: styles || "Bản nhạc mô phỏng cấu trúc giao diện sáng.",
                 tags: styles.split(",").map(s => s.trim()).filter(Boolean),
-                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
-                lyrics: cleanLyrics || undefined,
-                chordLyrics: (chordLyrics.trim() || lyrics.trim()) || undefined,
-                audioUrl: audioUrl
+                coverUrl: getThumbnailUrl(id),
+                lyrics: cleanLyrics || "Chưa có lời bài hát",
+                chordLyrics: chordLyrics.trim() || finalLyrics || "Chưa có lời bài hát",
+                audioUrl: audioUrl,
+                isPublic: true
             };
             setTracks((prevTracks) => [generatedTrack, ...prevTracks]);
             setLoading(false);
@@ -244,12 +418,11 @@ export default function SunoMeloflowLightUI() {
             // 1. Tạo Chord ở backend
             const chordResponse = await instance.post("/chords", {
                 title: chords.trim().substring(0, 24) || "AI Music Track",
-                content: chordLyrics.trim() || lyrics.trim() || "Chưa có lời bài hát",
+                content: chordLyrics.trim() || finalLyrics || "Chưa có lời bài hát",
                 isPublic: true,
-                artistName: "Sonauto AI",
+                artistName: "AI",
                 artistId: defaultArtistId || null,
-                categoryId: defaultCategoryId || null,
-                collectionId: null
+                categoryId: defaultCategoryId || null
             });
 
             const newChordId = chordResponse.data?.result?.id;
@@ -263,16 +436,17 @@ export default function SunoMeloflowLightUI() {
             // 3. Khởi tạo đối tượng Track để chơi nhạc
             const generatedTrack: Track = {
                 id: id,
-                title: chords.trim().substring(0, 24) || "AI Music Track",
-                subTitle: "Sonauto AI V3",
+                title: "AI Music Track",
+                subTitle: "AI",
                 duration: "2:00",
                 description: styles || "Bản nhạc do AI tạo.",
                 tags: styles.split(",").map(s => s.trim()).filter(Boolean),
-                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
-                lyrics: cleanLyrics || undefined,
-                chordLyrics: (chordLyrics.trim() || lyrics.trim()) || undefined,
+                coverUrl: getThumbnailUrl(id),
+                lyrics: cleanLyrics || "Chưa có lời bài hát",
+                chordLyrics: chordLyrics.trim() || finalLyrics || "Chưa có lời bài hát",
                 audioUrl: audioUrl,
-                chordId: newChordId
+                chordId: newChordId,
+                isPublic: true
             };
 
             setTracks((prevTracks) => [generatedTrack, ...prevTracks]);
@@ -309,7 +483,11 @@ export default function SunoMeloflowLightUI() {
                     const resultData = await resultResponse.json();
                     if (resultData.song_paths && resultData.song_paths.length > 0) {
                         if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-                        appendAndPlayTrack(taskId, resultData.song_paths[0]);
+                        const generatedLyrics = resultData.lyrics || "";
+                        if (generatedLyrics) {
+                            setLyrics(generatedLyrics);
+                        }
+                        appendAndPlayTrack(taskId, resultData.song_paths[0], generatedLyrics);
                     } else {
                         throw new Error("Không tìm thấy đường dẫn âm thanh.");
                     }
@@ -330,8 +508,12 @@ export default function SunoMeloflowLightUI() {
 
     const handleGenerateMusic = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!chords.trim()) {
-            setError("Vui lòng nhập chuỗi hợp âm hoặc prompt mô tả giai điệu.");
+        if (generatorTab === "request" && !promptText.trim()) {
+            setError("Vui lòng nhập mô tả yêu cầu.");
+            return;
+        }
+        if (generatorTab === "lyrics" && !lyrics.trim()) {
+            setError("Vui lòng nhập lời bài hát.");
             return;
         }
 
@@ -352,7 +534,9 @@ export default function SunoMeloflowLightUI() {
 
         try {
             setStatusMessage("Đang gửi yêu cầu tạo bài hát đến Sonauto V3...");
-            const fullPrompt = `Chord Progression: ${chords.trim()}. Style: ${styles}. Max duration: 120 seconds.`;
+            const fullPrompt = generatorTab === "request"
+                ? `Style: ${styles}. Description: ${promptText.trim()}. Max duration: 120 seconds.`
+                : `Style: ${styles}. Max duration: 120 seconds.`;
 
             const response = await fetch("/api-sonauto/v1/generations/v3", {
                 method: "POST",
@@ -360,7 +544,7 @@ export default function SunoMeloflowLightUI() {
                 body: JSON.stringify({
                     prompt: fullPrompt,
                     duration: 120,
-                    ...(lyrics.trim() && { lyrics: lyrics.trim() })
+                    ...(generatorTab === "lyrics" && lyrics.trim() && { lyrics: lyrics.trim() })
                 }),
             });
 
@@ -557,7 +741,7 @@ export default function SunoMeloflowLightUI() {
 
         try {
             await instance.delete(`/audios/${track.id}`);
-            alert("Đã xóa bài hát thành công!");
+            toast.success("Đã xóa bài hát thành công!");
             fetchUserAudios();
             if (activeTrack && activeTrack.id === track.id) {
                 setActiveTrack(null);
@@ -566,7 +750,38 @@ export default function SunoMeloflowLightUI() {
             }
         } catch (err) {
             console.error("Lỗi khi xóa bài hát:", err);
-            alert("Không thể xóa bài hát này.");
+            toast.error("Không thể xóa bài hát này.");
+        }
+    };
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!activeTrack || !activeTrack.chordId) return;
+
+        try {
+            setIsSavingSettings(true);
+            await instance.put(`/chords/${activeTrack.chordId}`, {
+                title: editTitle.trim(),
+                isPublic: editIsPublic,
+                content: activeTrack.chordLyrics || activeTrack.lyrics || "Chưa có lời bài hát",
+                contentPlusChord: activeTrack.contentPlusChord
+            });
+
+            const updatedTrack = {
+                ...activeTrack,
+                title: editTitle.trim(),
+                isPublic: editIsPublic
+            };
+            setActiveTrack(updatedTrack);
+            setTracks(prev => prev.map(t => t.chordId === activeTrack.chordId ? { ...t, title: editTitle.trim(), isPublic: editIsPublic } : t));
+
+            setIsEditModalOpen(false);
+            toast.success("Đã lưu cài đặt bài hát thành công!");
+        } catch (err) {
+            console.error("Lỗi khi lưu cài đặt bài hát:", err);
+            toast.error("Không thể lưu cài đặt bài hát này.");
+        } finally {
+            setIsSavingSettings(false);
         }
     };
 
@@ -596,75 +811,102 @@ export default function SunoMeloflowLightUI() {
             <audio
                 ref={audioHtmlRef}
                 onLoadedMetadata={() => {
-                    if (audioHtmlRef.current) setDurationSec(Math.floor(audioHtmlRef.current.duration));
+                    if (audioHtmlRef.current) {
+                        const dur = Math.floor(audioHtmlRef.current.duration);
+                        setDurationSec(dur > 120 ? 120 : dur);
+                    }
                 }}
                 onEnded={() => setIsPlaying(false)}
                 className="hidden"
             />
 
-            <div className="flex h-full w-full overflow-hidden relative bg-[#EFEFEF] dark:bg-zinc-900">
-                <form onSubmit={handleGenerateMusic} className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out shrink-0 border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0" : "w-80 p-6"}`}>
+            <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden relative bg-[#EFEFEF] dark:bg-zinc-900">
+                <form onSubmit={handleGenerateMusic} className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out shrink-0 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0 border-b-0 h-0" : "w-full lg:w-80 h-[380px] lg:h-full p-6"}`}>
                     <div className="space-y-4">
                         {/* Navigation buttons - giống sidebar */}
-                        <div className="flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800/60 p-1 rounded-lg w-fit border border-zinc-300/50 dark:border-zinc-700/50">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800/60 p-1 rounded-lg w-fit border border-zinc-300/50 dark:border-zinc-700/50">
+                                <button
+                                    type="button"
+                                    onClick={() => handleModeChange("text2melody")}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "text2melody"
+                                        ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
+                                        : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                        }`}
+                                >
+                                    <span>tạo lời bài hát</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleModeChange("melody2chord")}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "melody2chord"
+                                        ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
+                                        : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                        }`}
+                                >
+                                    <span>tạo giai điệu</span>
+                                </button>
+                            </div>
                             <button
                                 type="button"
-                                onClick={() => handleModeChange("text2melody")}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "text2melody"
-                                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
-                                    }`}
+                                onClick={() => setSidebarCollapsed(true)}
+                                className="lg:hidden px-2.5 py-1.5 border border-zinc-300/50 dark:border-zinc-700/50 text-[10px] font-bold text-zinc-550 dark:text-zinc-400 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors uppercase tracking-wider"
                             >
-                                <Music size={13} />
-                                <ArrowRight size={10} className="opacity-60" />
-                                <Sparkles size={13} />
-                                <span className="ml-0.5">Lời bài hát</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleModeChange("melody2chord")}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer ${mode === "melody2chord"
-                                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
-                                    }`}
-                            >
-                                <Sparkles size={13} />
-                                <ArrowRight size={10} className="opacity-60" />
-                                <GripVertical size={13} />
-                                <span className="ml-0.5">Giai điệu</span>
+                                Ẩn bảng
                             </button>
                         </div>
 
                         {DEBUG && <span className="text-[10px] bg-amber-100 border border-amber-200 text-amber-700 font-bold px-2 py-0.5 rounded-md uppercase tracking-wider animate-pulse">Debug On</span>}
 
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Chuỗi hợp âm / Ý tưởng nhạc</label>
-                            <input type="text" value={chords} onChange={(e) => setChords(e.target.value)} disabled={loading} placeholder="Ví dụ: C - G - Am - F" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 disabled:bg-zinc-100 dark:disabled:bg-zinc-900" />
+                        {/* Tab Switcher for Generator Mode */}
+                        <div className="flex bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl w-full border border-zinc-300/40 dark:border-zinc-700/50 mb-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setGeneratorTab("request")}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${generatorTab === "request"
+                                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/30 dark:border-zinc-750"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                    }`}
+                            >
+                                <Sparkles size={12} />
+                                <span>Yêu cầu</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setGeneratorTab("lyrics")}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${generatorTab === "lyrics"
+                                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/30 dark:border-zinc-750"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                    }`}
+                            >
+                                <Type size={12} />
+                                <span>Lời bài hát</span>
+                            </button>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><Type size={13} /> Lyrics (Tùy chọn)</label>
-                            <textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} disabled={loading} placeholder="Nhập lời bài hát tại đây..." rows={5} className="w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 font-mono resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900" />
-                        </div>
+                        {generatorTab === "request" ? (
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Mô tả yêu cầu</label>
+                                <textarea value={promptText} onChange={(e) => setPromptText(e.target.value)} disabled={loading} placeholder="Ví dụ: Một bài hát ballad nhẹ nhàng về mưa chiều Hà Nội buồn cô đơn..." rows={5} className="w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900" />
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Lời bài hát thuần (không điền hợp âm)</label>
+                                <textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} disabled={loading} placeholder="Dán lời bài hát thuần của bạn tại đây..." rows={5} className="w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 font-mono resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900" />
+                            </div>
+                        )}
 
                         <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><Sliders size={13} /> Phong cách & Nhạc cụ (Tags)</label>
+                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Phong cách & Nhạc cụ (Tags)</label>
                             <textarea value={styles} onChange={(e) => setStyles(e.target.value)} disabled={loading} placeholder="Ví dụ: pop, rock" rows={2} className="w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900" />
                         </div>
 
                         {error && <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl border border-red-100 dark:border-red-900/30 animate-fadeIn">{error}</div>}
-
-                        {statusMessage && (
-                            <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 text-xs rounded-xl border border-indigo-100 dark:border-indigo-900/30 animate-pulse">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
-                                <span>{statusMessage}</span>
-                            </div>
-                        )}
                     </div>
 
                     <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
                         <button type="submit" disabled={loading} className={`w-full font-bold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${loading ? "bg-zinc-400 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-500 cursor-not-allowed" : "bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 hover:shadow-lg"}`}>
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <SlidersHorizontal size={14} />}
+                            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                             {loading ? "Đang xử lý luồng AI..." : "Tạo Nhạc AI"}
                         </button>
                     </div>
@@ -684,11 +926,36 @@ export default function SunoMeloflowLightUI() {
                     )}
                 </button>
 
-                <div className="flex-1 min-w-0 flex flex-col overflow-y-auto bg-[#F5F5F3] dark:bg-zinc-950">
+                <div className="flex-1 min-w-0 flex flex-col bg-gradient-to-br from-[#EFF1F5] via-[#F5F5F3] to-[#E5E9F0] dark:from-zinc-950 dark:via-slate-950 dark:to-zinc-900 relative overflow-y-auto">
+                    <ShootingStarsBackground />
+                    {loading && (
+                        <div className="absolute inset-0 bg-black/75 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fadeIn gap-6 text-center">
+                            {/* Glowing AI Orb with DotLoader */}
+                            <div className="relative w-28 h-28 flex items-center justify-center">
+                                <div className="z-10">
+                                    <DotLoader color="#8b5cf6" size={60} speedMultiplier={1.2} />
+                                </div>
+                            </div>
+
+
+                        </div>
+                    )}
+
                     {!activeTrack ? (
-                        <div className="w-full max-w-2xl mx-auto space-y-2.5 animate-fadeIn mt-5">
+                        <div className="w-full max-w-2xl mx-auto space-y-2.5 animate-fadeIn mt-5 px-4 sm:px-6 lg:px-0">
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pl-1">Bản nhạc đã tạo</h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pl-1">Bản nhạc đã tạo</h3>
+                                    {sidebarCollapsed && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSidebarCollapsed(false)}
+                                            className="lg:hidden text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/60 px-2 py-0.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-colors uppercase tracking-wider animate-pulse"
+                                        >
+                                            Mở bảng tạo nhạc
+                                        </button>
+                                    )}
+                                </div>
                                 <button
                                     onClick={fetchUserAudios}
                                     className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
@@ -729,10 +996,10 @@ export default function SunoMeloflowLightUI() {
                             ))}
                         </div>
                     ) : (
-                        <div className="w-full h-full overflow-hidden bg-[#F8F9FC] dark:bg-zinc-950 shadow-sm animate-fadeIn border dark:border-zinc-800 transition-colors duration-500">
-                            <div className="w-full h-full relative flex flex-col">
-                                {/* Simple light/dark background */}
-                                <div className="absolute inset-0 bg-[#F8F9FC] dark:bg-zinc-950 transition-colors duration-500 z-0" />
+                        <div className="w-full h-full overflow-hidden bg-transparent shadow-none animate-fadeIn border-none transition-colors duration-500 relative">
+                            <div className="w-full h-full relative flex flex-col z-10">
+                                {/* Semi-translucent glass overlay */}
+                                <div className="absolute inset-0 bg-white/20 dark:bg-black/35 backdrop-blur-[2px] transition-colors duration-500 z-0" />
 
                                 <button
                                     onClick={() => {
@@ -757,26 +1024,23 @@ export default function SunoMeloflowLightUI() {
                                                 </p>
                                             </div>
                                             {activeTrack.audioUrl && (activeTrack.lyrics || activeTrack.chordLyrics) && (
-                                                <div className="flex items-center gap-3 bg-zinc-200/50 dark:bg-white/5 backdrop-blur-md px-4 py-2 rounded-2xl border border-zinc-300 dark:border-white/10 shadow-lg select-none">
-                                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-white/95 flex items-center gap-2">
-                                                        <Sparkles size={14} className={`${isKaraokeMode ? "text-yellow-500 animate-pulse" : "text-zinc-400"}`} />
+                                                <div className="flex items-center gap-3 bg-zinc-200/50 dark:bg-white/5 backdrop-blur-md px-4 py-2 rounded-2xl border border-zinc-300 dark:border-white/10 select-none">
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-white/95">
                                                         Hợp âm động (AI)
                                                     </span>
                                                     <button
                                                         onClick={handleToggleKaraoke}
                                                         disabled={isKaraokeLoading}
-                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${
-                                                            isKaraokeLoading
-                                                                ? "bg-indigo-400/50 cursor-not-allowed"
-                                                                : isKaraokeMode
-                                                                    ? "bg-indigo-600 hover:bg-indigo-700"
-                                                                    : "bg-zinc-300 dark:bg-white/20 hover:bg-zinc-400 dark:hover:bg-white/35"
-                                                        }`}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${isKaraokeLoading
+                                                            ? "bg-indigo-400/50 cursor-not-allowed"
+                                                            : isKaraokeMode
+                                                                ? "bg-indigo-600 hover:bg-indigo-700"
+                                                                : "bg-zinc-300 dark:bg-white/20 hover:bg-zinc-400 dark:hover:bg-white/35"
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
-                                                                isKaraokeMode ? "translate-x-6" : "translate-x-1"
-                                                            }`}
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${isKaraokeMode ? "translate-x-6" : "translate-x-1"
+                                                                }`}
                                                         >
                                                             {isKaraokeLoading && (
                                                                 <Loader2 size={10} className="animate-spin text-indigo-600" />
@@ -835,13 +1099,13 @@ export default function SunoMeloflowLightUI() {
                                         ) : (
                                             <div className="flex-1 min-h-0 overflow-y-auto pr-4 scrollbar-none select-text">
                                                 {activeTrack.chordLyrics ? (
-                                                    <pre className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
+                                                    <div className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
                                                         {activeTrack.chordLyrics}
-                                                    </pre>
+                                                    </div>
                                                 ) : activeTrack.lyrics ? (
-                                                    <pre className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
+                                                    <div className="text-base lg:text-lg text-zinc-800 dark:text-white font-sans font-medium leading-relaxed whitespace-pre-wrap">
                                                         {activeTrack.lyrics}
-                                                    </pre>
+                                                    </div>
                                                 ) : (
                                                     <p className="text-xl text-zinc-850 dark:text-white font-serif leading-relaxed italic">
                                                         {activeTrack.description}
@@ -852,7 +1116,7 @@ export default function SunoMeloflowLightUI() {
                                     </div>
                                 </div>
 
-                                <div className="relative z-10 bg-zinc-100/90 dark:bg-zinc-950/80 backdrop-blur-sm border-t border-zinc-200 dark:border-white/5 pt-4 pb-4 px-6 transition-all duration-500 shrink-0">
+                                <div className="relative z-10 bg-transparent border-t border-zinc-200 dark:border-white/5 pt-4 pb-4 px-6 transition-all duration-500 shrink-0">
                                     <div className="w-full max-w-4xl mx-auto flex flex-col gap-3">
                                         <div className="flex items-center justify-between">
                                             <div className="min-w-[120px]">
@@ -875,7 +1139,18 @@ export default function SunoMeloflowLightUI() {
                                                 <SkipForward size={18} className="text-zinc-500 hover:text-zinc-800 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                             </div>
 
-                                            <div className="flex items-center gap-3 text-zinc-500 dark:text-white/60 min-w-[120px] justify-end">
+                                            <div className="flex items-center gap-3 text-zinc-550 dark:text-white/60 min-w-[120px] justify-end">
+                                                {!activeTrack.id.startsWith("init-") && activeTrack.chordId && (
+                                                    <Settings
+                                                        size={17}
+                                                        onClick={() => {
+                                                            setEditTitle(activeTrack.title);
+                                                            setEditIsPublic(activeTrack.isPublic !== undefined ? activeTrack.isPublic : true);
+                                                            setIsEditModalOpen(true);
+                                                        }}
+                                                        className="hover:text-zinc-800 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110"
+                                                    />
+                                                )}
                                                 <Volume2 size={17} className="hover:text-zinc-800 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                                 <Share2 size={17} className="hover:text-zinc-800 dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-110" />
                                             </div>
@@ -910,6 +1185,64 @@ export default function SunoMeloflowLightUI() {
                     )}
                 </div>
             </div>
+
+            {/* Edit Settings Modal */}
+            {isEditModalOpen && activeTrack && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl relative select-none">
+                        <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-4">Cài đặt bài hát</h3>
+                        <form onSubmit={handleSaveSettings} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Tên bài hát</label>
+                                <input
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    required
+                                    placeholder="Nhập tên bài hát..."
+                                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 text-sm text-zinc-800 dark:text-zinc-200"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-150 dark:border-zinc-800 rounded-xl">
+                                <div>
+                                    <label className="text-sm font-bold text-zinc-800 dark:text-zinc-200 block">Chế độ công khai</label>
+                                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5 block">Ai cũng có thể tìm kiếm và nghe bản nhạc này</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditIsPublic(!editIsPublic)}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer border-none ${editIsPublic ? "bg-indigo-650" : "bg-zinc-300 dark:bg-white/20"
+                                        }`}
+                                >
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${editIsPublic ? "translate-x-6" : "translate-x-1"
+                                            }`}
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer bg-transparent border-none"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingSettings}
+                                    className="px-4 py-2 text-xs font-bold bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border-none"
+                                >
+                                    {isSavingSettings && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    Lưu cài đặt
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
 
 

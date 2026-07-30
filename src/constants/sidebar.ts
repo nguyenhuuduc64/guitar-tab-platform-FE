@@ -8,6 +8,7 @@ import {
     History,
     Settings,
     User,
+    Music,
 } from "lucide-react";
 
 export const sidebarItems = [
@@ -24,6 +25,7 @@ export const sidebarItems = [
 
     { name: "Người dùng", path: "/admin/nguoi-dung", icon: User },
     { name: "Nghệ sĩ", path: "/admin/nghe-si", icon: Wallet },
-    { name: "Bộ sưu tập", path: "/admin/bo-suu-tap", icon: LayoutGrid },
+    { name: "Playlist", path: "/admin/playlist", icon: LayoutGrid },
+    { name: "Bài hát", path: "/admin/bai-hat", icon: Music },
     { name: "Cài đặt", path: "/admin/cai-dat", icon: Settings },
 ];

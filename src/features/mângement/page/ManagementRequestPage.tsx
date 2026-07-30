@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {
     LayoutGrid,
@@ -30,7 +31,6 @@ import {
 const TABS = [
     { id: "ALL", label: "All Requests", icon: <LayoutGrid size={18} /> },
     { id: "CHORD", label: "Chords", icon: <Music size={18} /> },
-    { id: "ARTIST", label: "Artists", icon: <UserRound size={18} /> },
     { id: "MELODY", label: "Melodies", icon: <Mic2 size={18} /> },
 ];
 
@@ -66,7 +66,7 @@ export default function ManagementRequestPage() {
             setRequests((prev) => prev.filter((req) => req.id !== id));
         } catch (err) {
             console.error(`${action} error:`, err);
-            alert(`Failed to ${action} request.`);
+            toast.error(`Failed to ${action} request.`);
         } finally {
             setActionLoading((prev) => ({ ...prev, [id]: null }));
         }
@@ -76,8 +76,6 @@ export default function ManagementRequestPage() {
         switch (req.type) {
             case "CHORD":
                 return req.data?.title;
-            case "ARTIST":
-                return req.data?.name;
             case "MELODY":
                 return req.data?.title || req.data?.name;
             default:
@@ -89,8 +87,6 @@ export default function ManagementRequestPage() {
         switch (req.type) {
             case "CHORD":
                 return req.data?.content?.slice(0, 140);
-            case "ARTIST":
-                return req.data?.description || req.data?.slug;
             case "MELODY":
                 return req.data?.description || req.data?.content;
             default:
@@ -195,9 +191,7 @@ export default function ManagementRequestPage() {
                                                 ${
                                                     req.type === "CHORD"
                                                         ? "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
-                                                        : req.type === "ARTIST"
-                                                          ? "bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"
-                                                          : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+                                                        : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
                                                 }`}
                                             >
                                                 {req.type}

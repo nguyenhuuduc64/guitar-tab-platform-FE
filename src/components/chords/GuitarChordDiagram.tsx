@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getChordData } from "../../constants/chords";
 import { useChordContext } from "../../context/ChordContext";
+import { Volume2 } from "lucide-react";
 
 // Helper dynamically loading external scripts
 const loadScript = (url: string): Promise<void> => {
@@ -162,7 +163,7 @@ const GuitarChordDiagram = ({ initialChordName = "C" }) => {
                     className={`cursor-pointer text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-all p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center ${isSoundLoading ? "opacity-50 cursor-not-allowed animate-pulse" : ""}`}
                     title={isSoundLoading ? "Đang tải âm thanh..." : "Nghe thử hợp âm"}
                 >
-                    🔊
+                    <Volume2 className="w-5 h-5" />
                 </button>
             </div>
 

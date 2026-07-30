@@ -3,6 +3,7 @@ import LoginPage from "../features/login/page/LoginPage";
 import TestPage from "../features/test/page/TestPage";
 import UpLoadChordPage from "../features/upload/page/uploadChordPage";
 import ChordPage from "../features/chord/page/ChordPage";
+import ChordLibraryPage from "../features/chord/page/ChordLibraryPage";
 import DashBoard from "../features/dashboard/page/DashBoard";
 import ArtistManagement from "../features/artist/page/ArtistManagement";
 import RegisterPage from "../features/register/page/RegisterPage";
@@ -15,7 +16,8 @@ import AIPage from "../features/AI/page/AIPage";
 import TextToChord from "../features/AI/components/TextToChord";
 import CommunityPage from "../features/community/page/CommunityPage";
 import UserManagement from "../features/mângement/page/UserManagement";
-import CollectionManagement from "../features/mângement/page/CollectionManagement";
+import PlaylistManagement from "../features/mângement/page/PlaylistManagement";
+import SongManagement from "../features/mângement/page/SongManagement";
 import MusicPage from "../features/music/page/MusicPage";
 interface RouteConfig {
     path: string;
@@ -33,8 +35,10 @@ export const publicRoutes: RouteConfig[] = [
     { path: "/bai-viet/:slug", component: PostDetailPage },
     { path: "/playlist", component: PlaylistPage },
     { path: "/community", component: CommunityPage },
+    { path: "/following-feed", component: CommunityPage },
+    { path: "/profile/:userId", component: Profile },
     { path: "/bai-hat", component: MusicPage },
-
+    { path: "/hop-am", component: ChordLibraryPage },
 ];
 
 export const privateRoutes: RouteConfig[] = [
@@ -50,7 +54,8 @@ export const adminRoutes: RouteConfig[] = [
     { path: "/admin/bang-tinh", component: UpLoadChordPage },
     { path: "/admin/nguoi-dung", component: UserManagement },
     { path: "/admin/nghe-si", component: ArtistManagement },
-    { path: "/admin/bo-suu-tap", component: CollectionManagement },
+    { path: "/admin/playlist", component: PlaylistManagement },
+    { path: "/admin/bai-hat", component: SongManagement },
     { path: "/admin/lich-su", component: UpLoadChordPage },
     { path: "/admin/cai-dat", component: UpLoadChordPage },
 ];

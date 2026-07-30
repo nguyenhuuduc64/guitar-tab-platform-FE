@@ -38,11 +38,11 @@ function App() {
                                 key={`private-${index}`}
                                 path={route.path}
                                 element={
-                                    <ProtectedRoute>
-                                        <DefaultLayout>
+                                    <DefaultLayout>
+                                        <ProtectedRoute>
                                             <Page />
-                                        </DefaultLayout>
-                                    </ProtectedRoute>
+                                        </ProtectedRoute>
+                                    </DefaultLayout>
                                 }
                             />
                         );
@@ -55,11 +55,11 @@ function App() {
                                 key={`admin-${index}`}
                                 path={route.path}
                                 element={
-                                    <ProtectedRoute>
-                                        <AdminDefaultLayout>
+                                    <AdminDefaultLayout>
+                                        <ProtectedRoute>
                                             <Page />
-                                        </AdminDefaultLayout>
-                                    </ProtectedRoute>
+                                        </ProtectedRoute>
+                                    </AdminDefaultLayout>
                                 }
                             />
                         );

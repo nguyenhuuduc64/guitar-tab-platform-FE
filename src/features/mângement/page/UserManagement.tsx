@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Plus, Pencil, Trash2, Search, Mail, Calendar, Shield } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/Input";
@@ -93,7 +94,7 @@ export default function UserManagement() {
             loadData();
         } catch (err) {
             console.error("Lỗi khi lưu user:", err);
-            alert("Có lỗi xảy ra. Vui lòng thử lại.");
+            toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
         }
     };
 
@@ -103,7 +104,7 @@ export default function UserManagement() {
             loadData();
         } catch (err) {
             console.error("Lỗi khi xóa user:", err);
-            alert("Không thể xóa user này.");
+            toast.error("Không thể xóa user này.");
         }
     };
 
