@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import TextToChord from "../components/TextToChord";
 import ChordToMelody from "../components/ChordToMelody";
+import AudioExtend from "../components/AudioExtend";
 
 export default function AIPage() {
     const location = useLocation();
@@ -11,6 +12,9 @@ export default function AIPage() {
         }
         if (location.pathname.includes("/ai-composer/melody2chord")) {
             return <ChordToMelody />;
+        }
+        if (location.pathname.includes("/ai-composer/extend")) {
+            return <AudioExtend />;
         }
 
         return null;

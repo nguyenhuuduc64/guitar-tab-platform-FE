@@ -588,7 +588,7 @@ export default function PlaylistManagement() {
             <div className="space-y-8 w-full">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Quản lý playlist</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Quản lý danh sách hát</h1>
                         <p className="text-sm text-gray-400 mt-1">
                             Quản lý và theo dõi các playlist của bạn
                             {playlists.length > 0 && ` (${playlists.length} playlist)`}

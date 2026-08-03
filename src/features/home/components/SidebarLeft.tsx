@@ -53,7 +53,7 @@ export const SidebarLeft = () => {
                 [&::-webkit-scrollbar-thumb]:rounded-full">
                 <div className="space-y-6">
                     {/* Header Logo */}
-                    <div className="flex items-center gap-2.5 px-3 py-1 cursor-pointer shrink-0" onClick={() => navigate("/")}>
+                    <div className="flex items-center gap-2.5 px-3 py-1 cursor-pointer  shrink-0" onClick={() => navigate("/")}>
                         <img src={logo} alt="Logo" className="h-8 w-auto filter dark:brightness-200" />
                         <span className="text-sm font-black tracking-widest text-orange-500 uppercase">
                             Hatcungtoi

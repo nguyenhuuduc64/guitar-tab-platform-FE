@@ -1,4 +1,4 @@
-import { Search, Sun, Moon } from "lucide-react";
+import { Search, Sun, Moon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Input } from "../ui/Input";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/Avatar";
 import NotificationDropdown from "./NotificationDropdown";
@@ -6,7 +6,12 @@ import { useTheme } from "../../context/ThemeContext";
 import { useState, useEffect } from "react";
 import { getUserInfo } from "../../utils/auth";
 
-export default function TopHeader() {
+interface TopHeaderProps {
+    collapsed?: boolean;
+    setCollapsed?: (val: boolean) => void;
+}
+
+export default function TopHeader({ collapsed, setCollapsed }: TopHeaderProps) {
     const { theme, toggleTheme } = useTheme();
     const [user, setUser] = useState<any>(null);
 
@@ -24,17 +29,30 @@ export default function TopHeader() {
 
     return (
         <header className="flex h-16 items-center justify-between px-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-850 text-slate-800 dark:text-slate-150">
-            {/* Search Bar */}
-            <div className="relative w-full max-w-md">
-                <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
-                    size={18}
-                />
-                <Input
-                    type="text"
-                    placeholder="Search or type a command"
-                    className="w-full pl-10 bg-slate-50 dark:bg-slate-800/80 border-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-lg text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
+            {/* Left Section: Toggle & Search */}
+            <div className="flex items-center gap-4 flex-1 max-w-md">
+                {setCollapsed && (
+                    <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="hidden md:flex p-2 hover:bg-slate-100 dark:hover:bg-slate-800/40 rounded-lg transition-all text-slate-500 dark:text-slate-400 cursor-pointer border-none outline-none bg-transparent shrink-0"
+                        title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+                    >
+                        {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+                    </button>
+                )}
+
+                {/* Search Bar */}
+                <div className="relative w-full">
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                        size={18}
+                    />
+                    <Input
+                        type="text"
+                        placeholder="Search or type a command"
+                        className="w-full pl-10 bg-slate-50 dark:bg-slate-800/80 border-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-lg text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    />
+                </div>
             </div>
 
             {/* Actions: Notification & Profile */}

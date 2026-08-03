@@ -99,8 +99,8 @@ function Profile({ userId: propUserId }: ProfileProps) {
     const [likedPostsLoading, setLikedPostsLoading] = useState<boolean>(false);
     const { openForm } = useFormStore();
 
-    const [currentPage, setCurrentPage] = useState<number>(0);
-    const [totalPages, setTotalPages] = useState<number>(0);
+    const [audioPage, setAudioPage] = useState<number>(0);
+    const [lyricsPage, setLyricsPage] = useState<number>(0);
     const [pageSize] = useState<number>(5);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [selectedChordId, setSelectedChordId] = useState<string | number | null>(null);
@@ -252,7 +252,8 @@ function Profile({ userId: propUserId }: ProfileProps) {
     };
 
     useEffect(() => {
-        setCurrentPage(0);
+        setAudioPage(0);
+        setLyricsPage(0);
         setSelectedPlaylist(null);
         setSelectedChordId(null);
         setLikedPage(0);
@@ -287,7 +288,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                     return;
                 }
 
-                const chordRes = await instance.get(`/chords/user/${userData.id}?page=${currentPage}&size=${pageSize}`, {
+                const chordRes = await instance.get(`/chords/user/${userData.id}?page=0&size=9999`, {
                     signal: controller.signal
                 });
 
@@ -320,7 +321,6 @@ function Profile({ userId: propUserId }: ProfileProps) {
                 });
 
                 setChords(chordsWithAudio);
-                setTotalPages(chordRes.data.result?.totalPages || 0);
 
                 if (userData?.id) {
                     const [playlistRes, likedRes] = await Promise.allSettled([
@@ -396,7 +396,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
         return () => {
             controller.abort();
         };
-    }, [userId, currentPage, pageSize, isOwnProfile]);
+    }, [userId, isOwnProfile]);
 
     const handleToggleChordAudio = async (chordId: string | number) => {
         if (selectedChordId === chordId) {
@@ -429,9 +429,17 @@ function Profile({ userId: propUserId }: ProfileProps) {
         }
     };
 
-    const handlePageChange = (pageIndex: number) => {
-        if (pageIndex >= 0 && pageIndex < totalPages) {
-            setCurrentPage(pageIndex);
+    const handleAudioPageChange = (pageIndex: number) => {
+        const total = Math.ceil(chordsWithAudio.length / pageSize);
+        if (pageIndex >= 0 && pageIndex < total) {
+            setAudioPage(pageIndex);
+        }
+    };
+
+    const handleLyricsPageChange = (pageIndex: number) => {
+        const total = Math.ceil(chordsWithoutAudio.length / pageSize);
+        if (pageIndex >= 0 && pageIndex < total) {
+            setLyricsPage(pageIndex);
         }
     };
 
@@ -476,6 +484,19 @@ function Profile({ userId: propUserId }: ProfileProps) {
             { chordsWithAudio: [] as Chord[], chordsWithoutAudio: [] as Chord[] }
         );
     }, [chords]);
+
+    const paginatedAudioChords = useMemo(() => {
+        const start = audioPage * pageSize;
+        return chordsWithAudio.slice(start, start + pageSize);
+    }, [chordsWithAudio, audioPage, pageSize]);
+
+    const paginatedLyricsChords = useMemo(() => {
+        const start = lyricsPage * pageSize;
+        return chordsWithoutAudio.slice(start, start + pageSize);
+    }, [chordsWithoutAudio, lyricsPage, pageSize]);
+
+    const audioTotalPages = Math.ceil(chordsWithAudio.length / pageSize);
+    const lyricsTotalPages = Math.ceil(chordsWithoutAudio.length / pageSize);
 
     const paginatedLikedPosts = useMemo(() => {
         const start = likedPage * likedPageSize;
@@ -551,7 +572,12 @@ function Profile({ userId: propUserId }: ProfileProps) {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex text-gray-800 dark:text-slate-100 font-sans pb-24">
             <div className="w-[var(--sidebar-user-width)] fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800/60 hidden md:block mt-[calc(var(--header-height)_+_var(--subnav-height))]">
-                <SidebarProfileUser userId={userId} />
+                <SidebarProfileUser 
+                    userId={userId} 
+                    chordsCount={chords.length}
+                    playlistsCount={playlists.length}
+                    likedPostsCount={likedPosts.length}
+                />
             </div>
 
             <main className="flex-grow md:pl-[var(--sidebar-user-width)] p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
@@ -789,7 +815,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
 
                                                     {/* Track List (7 cols) */}
                                                     <div className="lg:col-span-7 space-y-1.5">
-                                                        {chordsWithAudio.map((chord, idx) => {
+                                                        {paginatedAudioChords.map((chord, idx) => {
                                                             const isCurrent = currentPlayingSong?.id === chord.id;
                                                             return (
                                                                 <div
@@ -808,7 +834,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                                                                 <span className="w-0.5 bg-indigo-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s', animationDuration: '0.7s' }} />
                                                                             </div>
                                                                         ) : (
-                                                                            <span className="text-xs font-semibold text-gray-400 group-hover:hidden">{idx + 1}</span>
+                                                                            <span className="text-xs font-semibold text-gray-400 group-hover:hidden">{audioPage * pageSize + idx + 1}</span>
                                                                         )}
                                                                         <button
                                                                             onClick={() => handlePlayChord(chord)}
@@ -856,7 +882,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                             ) : (
                                                 /* Grid View */
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                                                    {chordsWithAudio.map((chord) => {
+                                                    {paginatedAudioChords.map((chord) => {
                                                         const isCurrent = currentPlayingSong?.id === chord.id;
                                                         return (
                                                             <div
@@ -934,7 +960,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                     </div>
                                 )}
 
-                                {totalPages > 1 && (
+                                {audioTotalPages > 1 && (
                                     <div className="mt-8 flex justify-center lg:justify-end">
                                         <Pagination>
                                             <PaginationContent className="flex flex-wrap gap-1">
@@ -942,17 +968,17 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                                     <PaginationPrevious
                                                         size="default"
                                                         href="#"
-                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}
-                                                        className={currentPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                        onClick={(e) => { e.preventDefault(); handleAudioPageChange(audioPage - 1); }}
+                                                        className={audioPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
                                                     />
                                                 </PaginationItem>
-                                                {[...Array(totalPages)].map((_, idx) => (
+                                                {[...Array(audioTotalPages)].map((_, idx) => (
                                                     <PaginationItem key={idx}>
                                                         <PaginationLink
                                                             size="default"
                                                             href="#"
-                                                            isActive={currentPage === idx}
-                                                            onClick={(e) => { e.preventDefault(); handlePageChange(idx); }}
+                                                            isActive={audioPage === idx}
+                                                            onClick={(e) => { e.preventDefault(); handleAudioPageChange(idx); }}
                                                             className="cursor-pointer"
                                                         >
                                                             {idx + 1}
@@ -963,8 +989,8 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                                     <PaginationNext
                                                         size="default"
                                                         href="#"
-                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}
-                                                        className={currentPage === totalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                        onClick={(e) => { e.preventDefault(); handleAudioPageChange(audioPage + 1); }}
+                                                        className={audioPage === audioTotalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
                                                     />
                                                 </PaginationItem>
                                             </PaginationContent>
@@ -996,7 +1022,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                     <p className="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-205 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/10">Chưa có lời bài hát nào.</p>
                                 ) : (
                                     <div className="w-full space-y-0.5 border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-[#11131c] p-4 shadow-2xs">
-                                        {chordsWithoutAudio.map((chord, index) => {
+                                        {paginatedLyricsChords.map((chord, index) => {
                                             return (
                                                 <div key={chord.id || index} className="border-b border-gray-100/70 dark:border-slate-800/40 last:border-0">
                                                     <div
@@ -1064,7 +1090,7 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                     </div>
                                 )}
 
-                                {totalPages > 1 && (
+                                {lyricsTotalPages > 1 && (
                                     <div className="mt-8 flex justify-center lg:justify-end">
                                         <Pagination>
                                             <PaginationContent className="flex flex-wrap gap-1">
@@ -1072,17 +1098,17 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                                     <PaginationPrevious
                                                         size="default"
                                                         href="#"
-                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}
-                                                        className={currentPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                        onClick={(e) => { e.preventDefault(); handleLyricsPageChange(lyricsPage - 1); }}
+                                                        className={lyricsPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
                                                     />
                                                 </PaginationItem>
-                                                {[...Array(totalPages)].map((_, idx) => (
+                                                {[...Array(lyricsTotalPages)].map((_, idx) => (
                                                     <PaginationItem key={idx}>
                                                         <PaginationLink
                                                             size="default"
                                                             href="#"
-                                                            isActive={currentPage === idx}
-                                                            onClick={(e) => { e.preventDefault(); handlePageChange(idx); }}
+                                                            isActive={lyricsPage === idx}
+                                                            onClick={(e) => { e.preventDefault(); handleLyricsPageChange(idx); }}
                                                             className="cursor-pointer"
                                                         >
                                                             {idx + 1}
@@ -1093,8 +1119,8 @@ function Profile({ userId: propUserId }: ProfileProps) {
                                                     <PaginationNext
                                                         size="default"
                                                         href="#"
-                                                        onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}
-                                                        className={currentPage === totalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
+                                                        onClick={(e) => { e.preventDefault(); handleLyricsPageChange(lyricsPage + 1); }}
+                                                        className={lyricsPage === lyricsTotalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
                                                     />
                                                 </PaginationItem>
                                             </PaginationContent>

@@ -106,10 +106,10 @@ export default function ManagementRequestPage() {
         <div className="p-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs transition-colors duration-200">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    Request Management
+                    Quản lý yêu cầu tạo
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Review and approve user contributions
+                    Xem và duyệt yêu cầu của người dùng
                 </p>
             </div>
 
@@ -119,10 +119,9 @@ export default function ManagementRequestPage() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2 px-4 py-3 cursor-pointer text-sm font-medium transition-all border-b-2
-                            ${
-                                activeTab === tab.id
-                                    ? "border-[var(--primary-color)] text-[var(--primary-color)]"
-                                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
+                            ${activeTab === tab.id
+                                ? "border-[var(--primary-color)] text-[var(--primary-color)]"
+                                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300"
                             }`}
                     >
                         {tab.icon} {tab.label}
@@ -188,11 +187,10 @@ export default function ManagementRequestPage() {
                                         <TableCell>
                                             <span
                                                 className={`px-2 py-1 rounded text-[10px] font-bold uppercase 
-                                                ${
-                                                    req.type === "CHORD"
+                                                ${req.type === "CHORD"
                                                         ? "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
                                                         : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
-                                                }`}
+                                                    }`}
                                             >
                                                 {req.type}
                                             </span>

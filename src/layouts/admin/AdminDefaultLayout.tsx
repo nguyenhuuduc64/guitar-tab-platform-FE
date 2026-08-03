@@ -36,7 +36,7 @@ const AdminDefaultLayout = ({ children }: { children: React.ReactNode }) => {
                     </span>
                 </div>
 
-                <TopHeader />
+                <TopHeader collapsed={collapsed} setCollapsed={setCollapsed} />
 
                 <main className="flex-1 overflow-y-auto p-4 md:p-6">
                     {children}

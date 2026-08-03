@@ -10,9 +10,17 @@ import { type User as UserType } from "../../types/user";
 
 interface SidebarProfileUserProps {
     userId?: string | number;
+    chordsCount?: number;
+    playlistsCount?: number;
+    likedPostsCount?: number;
 }
 
-export function SidebarProfileUser({ userId }: SidebarProfileUserProps) {
+export function SidebarProfileUser({ 
+    userId,
+    chordsCount,
+    playlistsCount,
+    likedPostsCount
+}: SidebarProfileUserProps) {
     const [user, setUser] = useState<UserType | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [isFollowing, setIsFollowing] = useState<boolean>(false);
@@ -107,15 +115,21 @@ export function SidebarProfileUser({ userId }: SidebarProfileUserProps) {
             <div className="w-full border-t border-gray-100 dark:border-slate-800/60 pt-6 space-y-3">
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Bài hát</span>
-                    <span className="font-semibold text-gray-900 dark:text-slate-200">16</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-                    <span>Album</span>
-                    <span className="font-semibold text-gray-900 dark:text-slate-200">2</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">
+                        {chordsCount !== undefined ? chordsCount : 0}
+                    </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Bộ sưu tập</span>
-                    <span className="font-semibold text-gray-900 dark:text-slate-200">5</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">
+                        {playlistsCount !== undefined ? playlistsCount : 0}
+                    </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
+                    <span>Đã thích</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">
+                        {likedPostsCount !== undefined ? likedPostsCount : 0}
+                    </span>
                 </div>
             </div>
 

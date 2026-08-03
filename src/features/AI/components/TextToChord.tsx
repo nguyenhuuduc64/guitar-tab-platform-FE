@@ -76,9 +76,16 @@ Quy tắc ép buộc đầu ra:
                 <div className="absolute inset-0 bg-black/75 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fadeIn gap-6 text-center">
                     {/* Glowing AI Orb with DotLoader */}
                     <div className="relative w-28 h-28 flex items-center justify-center">
+                        {/* Glowing Orange Gradient Radial Orb */}
+                        <div 
+                            className="absolute inset-0 rounded-full animate-pulse blur-xl opacity-75"
+                            style={{
+                                background: 'radial-gradient(circle, rgba(255, 94, 54, 0.6) 0%, rgba(255, 160, 0, 0.1) 70%)',
+                            }}
+                        />
                         {/* Innermost DotLoader */}
                         <div className="z-10">
-                            <DotLoader color="#8b5cf6" size={60} speedMultiplier={1.2} />
+                            <DotLoader color="#ff5e36" size={60} speedMultiplier={1.2} />
                         </div>
                     </div>
 
@@ -87,29 +94,30 @@ Quy tắc ép buộc đầu ra:
             )}
             <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden relative bg-[#EFEFEF] dark:bg-zinc-900">
                 {/* Left Panel - Input (3 cột) */}
-                <div className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out shrink-0 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0 border-b-0 h-0" : "w-full lg:w-80 h-[380px] lg:h-full p-6"}`}>
-                    <div className="space-y-4">
+                <div className={`bg-[#FBFBFB] dark:bg-zinc-900 flex flex-col justify-between overflow-y-auto lg:overflow-hidden transition-all duration-300 ease-in-out shrink-0 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-zinc-800 ${sidebarCollapsed ? "w-0 p-0 border-r-0 border-b-0 h-0" : "w-full lg:w-80 h-[380px] lg:h-full p-6"}`}>
+                    <div className="flex-1 flex flex-col min-h-0 space-y-4">
                         {/* Navigation buttons - giống sidebar */}
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2 shrink-0">
                             <div className="flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800/60 p-1 rounded-lg w-fit border border-zinc-300/50 dark:border-zinc-700/50">
                                 <button
                                     type="button"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-white dark:bg-zinc-850 text-zinc-900 dark:text-black shadow-sm border border-zinc-200 dark:border-zinc-750 cursor-default"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-750 cursor-default"
                                 >
-                                    <Music size={13} />
-                                    <ArrowRight size={10} className="opacity-60" />
-                                    <Sparkles size={13} />
-                                    <span className="ml-0.5">Lời bài hát</span>
+                                    <span>tạo lời bài hát</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => navigate("/ai-composer/melody2chord")}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
                                 >
-                                    <Sparkles size={13} />
-                                    <ArrowRight size={10} className="opacity-60" />
-                                    <GripVertical size={13} />
-                                    <span className="ml-0.5">Giai điệu</span>
+                                    <span>tạo giai điệu</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/ai-composer/extend")}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                >
+                                    <span>mở rộng</span>
                                 </button>
                             </div>
                             <button
@@ -121,40 +129,37 @@ Quy tắc ép buộc đầu ra:
                             </button>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block">Ý tưởng sáng tác</label>
+                        <div className="flex-1 flex flex-col min-h-0 space-y-1">
+                            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest block shrink-0">Ý tưởng sáng tác</label>
                             <textarea
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 disabled={loading}
                                 placeholder="Nhập chủ đề hoặc ý tưởng bài hát..."
-                                rows={6}
-                                className="w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900"
+                                className="w-full flex-1 min-h-[150px] lg:min-h-0 p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 text-sm text-zinc-800 dark:text-zinc-200 resize-none disabled:bg-zinc-100 dark:disabled:bg-zinc-900"
                             />
                         </div>
+                    </div>
 
+                    <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-4 shrink-0">
                         <button
                             onClick={handleGenerateChords}
                             disabled={loading || !prompt.trim()}
-                            className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 text-white font-bold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:bg-zinc-400 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 disabled:cursor-not-allowed"
+                            className={`w-full font-bold text-sm py-3.5 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-white hover:brightness-110 hover:shadow-[0_6px_20px_rgba(255,94,54,0.45)] disabled:opacity-50`}
+                            style={
+                                loading 
+                                    ? {} 
+                                    : { 
+                                        background: 'linear-gradient(135deg, #ff5e36 0%, #ffa000 100%)',
+                                        boxShadow: '0 4px 15px rgba(255, 94, 54, 0.3)'
+                                      }
+                            }
                         >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Đang xử lý...
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="w-4 h-4" />
-                                    Sáng tác
-                                </>
-                            )}
+                            {loading ? "Đang xử lý..." : "Tạo"}
                         </button>
-                    </div>
 
-                    <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
                         {historyPrompt && (
-                            <div className="bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-300 border border-purple-100 dark:border-purple-900/30 rounded-xl px-4 py-3 text-sm">
+                            <div className="bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-300 border border-purple-100 dark:border-purple-900/30 rounded-xl px-4 py-3 text-sm animate-fadeIn">
                                 <p className="text-[10px] font-bold text-purple-400 dark:text-purple-500 uppercase tracking-wider mb-1">Yêu cầu của bạn</p>
                                 <p className="text-sm text-zinc-700 dark:text-zinc-300">{historyPrompt}</p>
                             </div>

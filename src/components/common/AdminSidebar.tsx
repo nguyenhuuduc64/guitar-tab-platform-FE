@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen, Music2, LogOut } from "lucide-react";
 
 import { cn } from "../../utils/cn";
+import logo from "../../assets/logo.png";
 import { sidebarItems } from "../../constants/sidebar";
 import { handleLogout } from "../../utils/auth";
 
@@ -41,43 +42,28 @@ export default function AdminSidebar({
                     "md:translate-x-0",
                 )}
             >
-                <div className="h-[72px] bg-[var(--primary-color)] px-5 flex items-center justify-between">
+                <div className="h-[72px] bg-[var(--primary-color)] px-4 flex items-center justify-between">
                     <div
                         className={cn(
-                            "flex items-center",
-                            collapsed ? "justify-center w-full" : "gap-3",
+                            "flex items-center cursor-pointer select-none",
+                            collapsed ? "justify-center w-full" : "gap-2.5",
                         )}
+                        onClick={() => navigate("/")}
                     >
+                        <img src={logo} alt="Logo" className="h-8 w-auto filter brightness-200 shrink-0" />
                         {!collapsed && (
-                            <div>
-                                <h1 className="text-white font-semibold text-[20px] leading-none">
+                            <div className="flex flex-col text-left">
+                                <span className="text-white font-black tracking-widest text-[16px] uppercase leading-tight">
                                     Hatcungtoi
-                                </h1>
-
-                                <p className="text-violet-100 text-[11px] mt-1">
+                                </span>
+                                <span className="text-violet-150 text-[10px] tracking-wider uppercase font-bold leading-none mt-0.5">
                                     Admin Dashboard
-                                </p>
+                                </span>
                             </div>
                         )}
                     </div>
 
-                    {!collapsed && (
-                        <button
-                            onClick={() => setCollapsed(true)}
-                            className="hidden md:flex text-white/90 hover:text-white transition cursor-pointer"
-                        >
-                            <PanelLeftClose size={18} />
-                        </button>
-                    )}
 
-                    {collapsed && (
-                        <button
-                            onClick={() => setCollapsed(false)}
-                            className="hidden md:flex absolute top-6 right-3 text-white/90 hover:text-white transition cursor-pointer"
-                        >
-                            <PanelLeftOpen size={18} />
-                        </button>
-                    )}
 
                     <button
                         onClick={() => setOpen(false)}

@@ -56,7 +56,7 @@ function App() {
                                 path={route.path}
                                 element={
                                     <AdminDefaultLayout>
-                                        <ProtectedRoute>
+                                        <ProtectedRoute allowedRoles={["admin"]}>
                                             <Page />
                                         </ProtectedRoute>
                                     </AdminDefaultLayout>

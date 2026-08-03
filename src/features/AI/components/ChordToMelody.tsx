@@ -10,7 +10,7 @@ import instance from "../../../config/axios";
 import { getUserInfo } from "../../../utils/auth";
 import { DotLoader } from "react-spinners";
 
-const DEBUG = true;
+const DEBUG = false;
 const DEBUG_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
 interface Track {
@@ -786,12 +786,13 @@ export default function SunoMeloflowLightUI() {
     };
 
     // Hàm chuyển đổi route
-    const handleModeChange = (newMode: "text2melody" | "melody2chord") => {
-        setMode(newMode);
+    const handleModeChange = (newMode: "text2melody" | "melody2chord" | "extend") => {
         if (newMode === "text2melody") {
             navigate("/ai-composer/text2melody");
-        } else {
+        } else if (newMode === "melody2chord") {
             navigate("/ai-composer/melody2chord");
+        } else if (newMode === "extend") {
+            navigate("/ai-composer/extend");
         }
     };
 
@@ -845,6 +846,13 @@ export default function SunoMeloflowLightUI() {
                                         }`}
                                 >
                                     <span>tạo giai điệu</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleModeChange("extend")}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-250"
+                                >
+                                    <span>mở rộng</span>
                                 </button>
                             </div>
                             <button
@@ -905,9 +913,17 @@ export default function SunoMeloflowLightUI() {
                     </div>
 
                     <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                        <button type="submit" disabled={loading} className={`w-full font-bold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${loading ? "bg-zinc-400 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-500 cursor-not-allowed" : "bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 hover:shadow-lg"}`}>
-                            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {loading ? "Đang xử lý luồng AI..." : "Tạo Nhạc AI"}
+                        <button type="submit" disabled={loading} className={`w-full font-bold text-sm py-3.5 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-white hover:brightness-110 hover:shadow-[0_6px_20px_rgba(255,94,54,0.45)] disabled:opacity-50`}
+                            style={
+                                loading
+                                    ? {}
+                                    : {
+                                        background: 'linear-gradient(135deg, #ff5e36 0%, #ffa000 100%)',
+                                        boxShadow: '0 4px 15px rgba(255, 94, 54, 0.3)'
+                                    }
+                            }
+                        >
+                            {loading ? "Đang xử lý..." : "Tạo"}
                         </button>
                     </div>
                 </form>
@@ -932,8 +948,15 @@ export default function SunoMeloflowLightUI() {
                         <div className="absolute inset-0 bg-black/75 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fadeIn gap-6 text-center">
                             {/* Glowing AI Orb with DotLoader */}
                             <div className="relative w-28 h-28 flex items-center justify-center">
+                                {/* Glowing Orange Gradient Radial Orb */}
+                                <div
+                                    className="absolute inset-0 rounded-full animate-pulse blur-xl opacity-75"
+                                    style={{
+                                        background: 'radial-gradient(circle, rgba(255, 94, 54, 0.6) 0%, rgba(255, 160, 0, 0.1) 70%)',
+                                    }}
+                                />
                                 <div className="z-10">
-                                    <DotLoader color="#8b5cf6" size={60} speedMultiplier={1.2} />
+                                    <DotLoader color="#ff5e36" size={60} speedMultiplier={1.2} />
                                 </div>
                             </div>
 

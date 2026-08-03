@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 interface Props {
     children: React.ReactNode;
+    allowedRoles?: string[];
 }
 
-const ProtectedRoute = ({ children }: Props) => {
+const ProtectedRoute = ({ children, allowedRoles }: Props) => {
     const [userInfo, setUserInfo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -26,11 +27,25 @@ const ProtectedRoute = ({ children }: Props) => {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            </div>
+        );
     }
 
     if (!userInfo) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (
+        allowedRoles &&
+        (!userInfo.roles ||
+            !allowedRoles
+                .map((r) => r.toLowerCase())
+                .includes(userInfo.roles.name.toLowerCase()))
+    ) {
+        return <Navigate to="/" replace />;
     }
 
     return <>{children}</>;

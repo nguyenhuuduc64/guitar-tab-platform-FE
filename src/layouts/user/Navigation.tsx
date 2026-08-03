@@ -15,6 +15,77 @@ import logo from "../../assets/logo.png";
 import { useNavigate, Link } from "react-router-dom";
 import NotificationDropdown from "../../components/common/NotificationDropdown";
 
+// Helper functions for fuzzy search scoring in frontend console logging
+const removeAccents = (str: string): string => {
+    if (!str) return "";
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[đĐ]/g, (char) => (char === "đ" ? "d" : "D"));
+};
+
+const normalizeChat = (str: string): string => {
+    if (!str) return "";
+    let s = str.toLowerCase().trim().replace(/\s+/g, " ");
+    s = s.replace(/([a-z])j/g, "$1i").replace(/j([a-z])/g, "i$1");
+    if (s === "j") s = "i";
+    s = s.replace(/w/g, "u").replace(/f/g, "ph").replace(/z/g, "d").replace(/dz/g, "d");
+    s = s.replace(/aa/g, "a").replace(/ee/g, "e").replace(/oo/g, "o").replace(/dd/g, "d").replace(/uw/g, "u").replace(/ow/g, "o");
+    return s;
+};
+
+const getBigramsList = (str: string): string[] => {
+    const bigrams: string[] = [];
+    if (!str || str.length < 2) return bigrams;
+    for (let i = 0; i < str.length - 1; i++) {
+        bigrams.push(str.substring(i, i + 2));
+    }
+    return bigrams;
+};
+
+const getDiceCoef = (s1: string, s2: string): number => {
+    if (!s1 || !s2) return 0;
+    if (s1 === s2) return 1;
+    const b1 = getBigramsList(s1);
+    const b2 = getBigramsList(s2);
+    if (b1.length === 0 || b2.length === 0) return 0;
+    const counts: Record<string, number> = {};
+    b1.forEach(bg => counts[bg] = (counts[bg] || 0) + 1);
+    let intersection = 0;
+    b2.forEach(bg => {
+        if (counts[bg] && counts[bg] > 0) {
+            intersection++;
+            counts[bg]--;
+        }
+    });
+    return (2.0 * intersection) / (b1.length + b2.length);
+};
+
+const getBestDiceSub = (query: string, title: string): number => {
+    const qLen = query.length;
+    const tLen = title.length;
+    if (qLen >= tLen) return getDiceCoef(query, title);
+    let maxDice = 0;
+    const minWin = Math.max(1, qLen - 1);
+    const maxWin = Math.min(tLen, qLen + 2);
+    for (let len = minWin; len <= maxWin; len++) {
+        for (let i = 0; i <= tLen - len; i++) {
+            const sub = title.substring(i, i + len);
+            const dice = getDiceCoef(query, sub);
+            if (dice > maxDice) maxDice = dice;
+        }
+    }
+    return maxDice;
+};
+
+const calcMatchScore = (query: string, title: string): number => {
+    if (!query) return 0;
+    const qNorm = normalizeChat(removeAccents(query));
+    const tNorm = normalizeChat(removeAccents(title));
+    if (qNorm === tNorm) return 100;
+    return Math.round(getBestDiceSub(qNorm, tNorm) * 100);
+};
+
 export const Navigation = () => {
     const { theme, toggleTheme } = useTheme();
     const [user, setUser] = useState(null);
@@ -91,7 +162,16 @@ export const Navigation = () => {
                 const res = await instance.get(`/chords/ai-search`, {
                     params: { query: debouncedSearchQuery },
                 });
-                setSearchResults(res.data?.result || []);
+                const results = res.data?.result || [];
+                setSearchResults(results);
+
+                // Log độ tương đồng của từng gợi ý ra console frontend
+                console.log(`%c[AI Search] Từ khóa: "${debouncedSearchQuery}"`, "color: #ff6b6b; font-weight: bold;");
+                results.forEach((chord: any) => {
+                    const score = calcMatchScore(debouncedSearchQuery, chord.title);
+                    console.log(`  - "${chord.title}": ${score}% (Nghệ sĩ: ${chord.artistName || "Chưa rõ"})`);
+                });
+                console.log("-----------------------------------------");
             } catch (err) {
                 console.error("Lỗi tìm kiếm:", err);
                 setSearchResults([]);

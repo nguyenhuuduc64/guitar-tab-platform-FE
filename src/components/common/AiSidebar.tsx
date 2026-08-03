@@ -45,6 +45,19 @@ export function AiSidebar() {
                         <GripVertical size={14} className="shrink-0" />
                         <span className="truncate ml-0.5">Hợp âm</span>
                     </button>
+
+                    <button
+                        onClick={() => navigate("/ai-composer/extend")}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${currentPath.includes("extend")
+                                ? "bg-zinc-900 text-white"
+                                : "hover:bg-zinc-200/50 text-zinc-500 hover:text-zinc-900"
+                            }`}
+                    >
+                        <RefreshCw size={14} className="shrink-0" />
+                        <ArrowRight size={12} className="shrink-0 opacity-60" />
+                        <Sparkles size={14} className="shrink-0" />
+                        <span className="truncate ml-0.5">Mở rộng</span>
+                    </button>
                 </nav>
 
                 {/* Bottom Element tự lấp đầy */}

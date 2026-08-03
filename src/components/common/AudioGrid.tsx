@@ -159,17 +159,17 @@ export const AudioGrid = () => {
             {/* Left Scroll Button */}
             <button
                 onClick={() => scroll("left")}
-                className="absolute left-2 top-[calc(50%-18px)] -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 z-20 border-none shadow-md"
+                className="absolute left-2 top-[calc(50%-18px)] -translate-y-1/2 w-15 h-15 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 z-20 border-none shadow-md"
             >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={28} />
             </button>
 
             {/* Right Scroll Button */}
             <button
                 onClick={() => scroll("right")}
-                className="absolute right-2 top-[calc(50%-18px)] -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 z-20 border-none shadow-md"
+                className="absolute right-2 top-[calc(50%-18px)] -translate-y-1/2 w-15 h-15 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 z-20 border-none shadow-md"
             >
-                <ChevronRight size={18} />
+                <ChevronRight size={28} />
             </button>
 
             {/* Scroll Container Wrapper */}

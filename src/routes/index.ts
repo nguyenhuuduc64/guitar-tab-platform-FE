@@ -46,6 +46,7 @@ export const privateRoutes: RouteConfig[] = [
     { path: "/trang-ca-nhan", component: Profile },
     { path: "/ai-composer/text2melody", component: AIPage },
     { path: "/ai-composer/melody2chord", component: AIPage },
+    { path: "/ai-composer/extend", component: AIPage },
 ];
 
 export const adminRoutes: RouteConfig[] = [
